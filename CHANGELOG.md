@@ -1,0 +1,31 @@
+# Changelog
+
+All notable changes to HAdo will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.0.0] - 2026-04-09
+
+### Added
+- Material3 home screen with multi-list management
+- Glance 1.1.0 home screen widget with multi-list support
+- OAuth2 authentication with Home Assistant
+- Long-Lived Access Token authentication fallback
+- To-do item creation, editing, completion, and deletion
+- Drag-to-reorder items (via WebSocket)
+- Item descriptions with Markdown support (Markwon)
+- Due date and due time support with date/time pickers
+- Overdue item highlighting
+- Dynamic relative due dates (Today, Tomorrow, In 3d, etc.)
+- Full-screen list editor (Google Keep-inspired design)
+- Item detail dialog (long-press) with description and due date
+- Customizable widget appearance (font size, background opacity, compact mode)
+- Per-list icon customization (emoji, image, or disabled)
+- Show/hide widget title setting
+- Checkbox-only interaction mode for widget
+- Show/hide completed items in widget
+- Configurable refresh interval (15m / 30m / 1h / 2h / 4h)
+- Proactive OAuth token refresh (prevents 401 errors)
+- Dark and light theme support (follows system)
+- Adaptive launcher icon with monochrome support
