@@ -1,7 +1,6 @@
 package com.baer.hado.data.repository
 
 import android.net.Uri
-import android.util.Log
 import com.baer.hado.data.api.HaAuthService
 import com.baer.hado.data.api.TokenRefreshInterceptor.Companion.AUTH_CLIENT_ID
 import com.baer.hado.data.api.TokenRefreshInterceptor.Companion.AUTH_REDIRECT_URI
@@ -24,7 +23,6 @@ class AuthRepository @Inject constructor(
             .appendQueryParameter("response_type", "code")
             .build()
             .toString()
-        Log.d("HAdo", "Authorize URL: $url")
         return url
     }
 
