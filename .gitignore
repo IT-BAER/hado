@@ -11,6 +11,12 @@
 .cxx
 local.properties
 
+# Release signing keystore
+*.jks
+
+# Play Store internal docs
+PLAY_STORE_LISTING.md
+
 # Screenshots (local only)
 /screenshots
 
