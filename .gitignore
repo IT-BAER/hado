@@ -1,0 +1,21 @@
+*.iml
+.gradle
+.kotlin
+/local.properties
+/.idea
+.DS_Store
+/build
+/app/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Screenshots (local only)
+/screenshots
+
+# Decompiled APKs (reference only)
+/keep-apk
+
+# Large source assets
+ASSETS/*.psd

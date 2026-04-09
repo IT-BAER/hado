@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Checkmark icon representing to-do completion -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M38,54 L26,42 L22.6,45.4 L38,60.8 L70,28.8 L66.6,25.4 z" />
+
+    <!-- Small list lines -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M34,68 L74,68"
+        android:strokeWidth="2"
+        android:strokeColor="#FFFFFF" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M34,75 L64,75"
+        android:strokeWidth="2"
+        android:strokeColor="#FFFFFF" />
+</vector>

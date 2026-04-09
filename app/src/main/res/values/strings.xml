@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HAdo</string>
+    <string name="widget_name">HAdo To-Do</string>
+    <string name="widget_description">Home Assistant To-Do list widget</string>
+    <color name="ic_launcher_background">#03A9F4</color>
+</resources>
