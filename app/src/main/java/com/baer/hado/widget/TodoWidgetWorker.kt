@@ -13,6 +13,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.baer.hado.data.local.LocalTodoStore
 import com.baer.hado.data.local.TokenManager
 import com.baer.hado.data.model.TodoItem
 import com.google.gson.Gson
@@ -33,57 +34,10 @@ class TodoWidgetWorker @AssistedInject constructor(
     override suspend fun doWork(): Result {
         if (!tokenManager.isLoggedIn) return Result.failure()
 
-        val httpClient = WidgetHttpClient(context)
-
-        // Get all todo entities
-        val statesResponse = httpClient.get("api/states") ?: return Result.retry()
-        val statesJson = statesResponse.use { resp ->
-            if (!resp.isSuccessful) return Result.retry()
-            resp.body?.string() ?: return Result.failure()
-        }
-
-        data class SimpleState(
-            val entity_id: String,
-            val attributes: Map<String, Any>?
-        )
-
-        val statesType = object : TypeToken<List<SimpleState>>() {}.type
-        val states: List<SimpleState> = gson.fromJson(statesJson, statesType)
-        val todoEntities = states.filter { it.entity_id.startsWith("todo.") }
-
-        // Fetch items for ALL todo entities
-        val allLists = mutableListOf<WidgetListData>()
-        for (entity in todoEntities) {
-            val friendlyName = entity.attributes?.get("friendly_name") as? String
-                ?: entity.entity_id
-            val haIcon = entity.attributes?.get("icon") as? String
-            val supportedFeatures = (entity.attributes?.get("supported_features") as? Number)?.toInt()
-
-            val payload = gson.toJson(mapOf("entity_id" to entity.entity_id))
-            val items = try {
-                val response = httpClient.post(
-                    "api/services/todo/get_items?return_response", payload
-                )
-                response?.use { resp ->
-                    if (!resp.isSuccessful) return@use emptyList()
-                    val body = resp.body?.string() ?: return@use emptyList()
-                    parseItems(body, entity.entity_id)
-                } ?: emptyList()
-            } catch (_: Exception) {
-                emptyList()
-            }
-
-            val resolved = ListIconManager.resolveIcon(context, entity.entity_id, haIcon)
-            allLists.add(
-                WidgetListData(
-                    entityId = entity.entity_id,
-                    name = friendlyName,
-                    items = items,
-                    iconType = resolved?.type?.name?.lowercase(),
-                    iconValue = resolved?.value,
-                    supportedFeatures = supportedFeatures
-                )
-            )
+        val allLists = if (tokenManager.isDemoMode) {
+            fetchLocalModeLists()
+        } else {
+            fetchHaLists() ?: return Result.retry()
         }
 
         // Build GlanceId → appWidgetId mapping
@@ -120,6 +74,76 @@ class TodoWidgetWorker @AssistedInject constructor(
         }
 
         return Result.success()
+    }
+
+    private fun fetchLocalModeLists(): List<WidgetListData> {
+        val localStore = LocalTodoStore(context)
+        return localStore.getLists().map { list ->
+            val items = localStore.getItems(list.entityId)
+            val resolved = ListIconManager.resolveIcon(context, list.entityId)
+            WidgetListData(
+                entityId = list.entityId,
+                name = list.attributes.friendlyName ?: list.entityId,
+                items = items,
+                iconType = resolved?.type?.name?.lowercase(),
+                iconValue = resolved?.value,
+                supportedFeatures = list.attributes.supportedFeatures
+            )
+        }
+    }
+
+    private fun fetchHaLists(): List<WidgetListData>? {
+        val httpClient = WidgetHttpClient(context)
+
+        val statesResponse = httpClient.get("api/states") ?: return null
+        val statesJson = statesResponse.use { resp ->
+            if (!resp.isSuccessful) return null
+            resp.body?.string() ?: return null
+        }
+
+        data class SimpleState(
+            val entity_id: String,
+            val attributes: Map<String, Any>?
+        )
+
+        val statesType = object : TypeToken<List<SimpleState>>() {}.type
+        val states: List<SimpleState> = gson.fromJson(statesJson, statesType)
+        val todoEntities = states.filter { it.entity_id.startsWith("todo.") }
+
+        val allLists = mutableListOf<WidgetListData>()
+        for (entity in todoEntities) {
+            val friendlyName = entity.attributes?.get("friendly_name") as? String
+                ?: entity.entity_id
+            val haIcon = entity.attributes?.get("icon") as? String
+            val supportedFeatures = (entity.attributes?.get("supported_features") as? Number)?.toInt()
+
+            val payload = gson.toJson(mapOf("entity_id" to entity.entity_id))
+            val items = try {
+                val response = httpClient.post(
+                    "api/services/todo/get_items?return_response", payload
+                )
+                response?.use { resp ->
+                    if (!resp.isSuccessful) return@use emptyList()
+                    val body = resp.body?.string() ?: return@use emptyList()
+                    parseItems(body, entity.entity_id)
+                } ?: emptyList()
+            } catch (_: Exception) {
+                emptyList()
+            }
+
+            val resolved = ListIconManager.resolveIcon(context, entity.entity_id, haIcon)
+            allLists.add(
+                WidgetListData(
+                    entityId = entity.entity_id,
+                    name = friendlyName,
+                    items = items,
+                    iconType = resolved?.type?.name?.lowercase(),
+                    iconValue = resolved?.value,
+                    supportedFeatures = supportedFeatures
+                )
+            )
+        }
+        return allLists
     }
 
     private fun parseItems(json: String, entityId: String): List<TodoItem> {

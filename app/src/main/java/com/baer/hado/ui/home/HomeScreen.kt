@@ -67,6 +67,8 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var showAddDialog by remember { mutableStateOf(false) }
+    var showNewListDialog by remember { mutableStateOf(false) }
+    var showDeleteListDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.isLoggedOut) {
         if (uiState.isLoggedOut) onLoggedOut()
@@ -88,6 +90,11 @@ fun HomeScreen(
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ),
                 actions = {
+                    if (uiState.isLocalMode) {
+                        IconButton(onClick = { showNewListDialog = true }) {
+                            Icon(Icons.Default.Add, contentDescription = "New list")
+                        }
+                    }
                     IconButton(onClick = { viewModel.loadItems() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh")
                     }
@@ -113,23 +120,45 @@ fun HomeScreen(
         ) {
             // List selector
             if (uiState.todoLists.size > 1) {
-                ListSelector(
-                    lists = uiState.todoLists.map {
-                        it.entityId to (it.attributes.friendlyName ?: it.entityId)
-                    },
-                    selectedId = uiState.selectedListId,
-                    onSelect = viewModel::selectList,
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                )
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    ListSelector(
+                        lists = uiState.todoLists.map {
+                            it.entityId to (it.attributes.friendlyName ?: it.entityId)
+                        },
+                        selectedId = uiState.selectedListId,
+                        onSelect = viewModel::selectList,
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (uiState.isLocalMode) {
+                        IconButton(onClick = { showDeleteListDialog = true }) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete list",
+                                tint = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                }
             } else if (uiState.todoLists.size == 1) {
-                Text(
-                    text = uiState.todoLists.first().attributes.friendlyName
-                        ?: uiState.todoLists.first().entityId,
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(16.dp)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = uiState.todoLists.first().attributes.friendlyName
+                            ?: uiState.todoLists.first().entityId,
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (uiState.isLocalMode) {
+                        IconButton(onClick = { showDeleteListDialog = true }) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete list",
+                                tint = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                }
             }
 
             when {
@@ -150,12 +179,15 @@ fun HomeScreen(
                 }
                 uiState.todoLists.isEmpty() && !uiState.isLoadingLists -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = "No to-do lists found.\nCreate a to-do list in Home Assistant first.",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(32.dp)
-                        )
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = if (uiState.isLocalMode) "No lists yet.\nTap + in the top bar to create one!"
+                                else "No to-do lists found.\nCreate a to-do list in Home Assistant first.",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(32.dp)
+                            )
+                        }
                     }
                 }
                 else -> {
@@ -176,6 +208,35 @@ fun HomeScreen(
             onAdd = { summary ->
                 viewModel.addItem(summary)
                 showAddDialog = false
+            }
+        )
+    }
+
+    if (showNewListDialog) {
+        NewListDialog(
+            onDismiss = { showNewListDialog = false },
+            onCreate = { name ->
+                viewModel.createList(name)
+                showNewListDialog = false
+            }
+        )
+    }
+
+    if (showDeleteListDialog && uiState.selectedListId != null) {
+        val listName = uiState.todoLists.find { it.entityId == uiState.selectedListId }
+            ?.attributes?.friendlyName ?: uiState.selectedListId
+        AlertDialog(
+            onDismissRequest = { showDeleteListDialog = false },
+            title = { Text("Delete List") },
+            text = { Text("Delete \"$listName\" and all its items?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.deleteList(uiState.selectedListId!!)
+                    showDeleteListDialog = false
+                }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteListDialog = false }) { Text("Cancel") }
             }
         )
     }
@@ -387,6 +448,37 @@ private fun AddItemDialog(
                 onClick = { if (text.isNotBlank()) onAdd(text.trim()) },
                 enabled = text.isNotBlank()
             ) { Text("Add") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
+}
+
+@Composable
+private fun NewListDialog(
+    onDismiss: () -> Unit,
+    onCreate: (String) -> Unit
+) {
+    var text by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("New List") },
+        text = {
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it },
+                label = { Text("List name") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { if (text.isNotBlank()) onCreate(text.trim()) },
+                enabled = text.isNotBlank()
+            ) { Text("Create") }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel") }

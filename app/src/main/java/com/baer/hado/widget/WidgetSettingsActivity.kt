@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.baer.hado.data.local.LocalTodoStore
 import com.baer.hado.data.local.TokenManager
 import com.baer.hado.ui.theme.HadoTheme
 import com.google.gson.Gson
@@ -694,6 +695,18 @@ private fun SettingsSection(
 private suspend fun fetchAvailableLists(context: android.content.Context): List<Triple<String, String, String?>> {
     return withContext(Dispatchers.IO) {
         try {
+            val tokenManager = TokenManager(context)
+            if (tokenManager.isDemoMode) {
+                val localStore = LocalTodoStore(context)
+                return@withContext localStore.getLists().map { list ->
+                    Triple(
+                        list.entityId,
+                        list.attributes.friendlyName ?: list.entityId,
+                        null as String?
+                    )
+                }
+            }
+
             val httpClient = WidgetHttpClient(context)
             if (!httpClient.isLoggedIn) return@withContext emptyList()
 

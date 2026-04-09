@@ -8,6 +8,8 @@ import androidx.glance.GlanceId
 import androidx.glance.action.ActionParameters
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.state.updateAppWidgetState
+import com.baer.hado.data.local.LocalTodoStore
+import com.baer.hado.data.local.TokenManager
 import com.baer.hado.data.model.TodoItemStatus
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -82,16 +84,21 @@ class ToggleItemAction : ActionCallback {
         val wasCompleted = parameters[PARAM_COMPLETED]?.toBooleanStrictOrNull() ?: return
 
         val newStatus = if (wasCompleted) "needs_action" else "completed"
-        val payload = Gson().toJson(mapOf(
-            "entity_id" to entityId,
-            "item" to itemUid,
-            "status" to newStatus
-        ))
+        val tokenManager = TokenManager(context)
 
         withContext(Dispatchers.IO) {
             try {
-                val httpClient = WidgetHttpClient(context)
-                httpClient.post("api/services/todo/update_item", payload)?.close()
+                if (tokenManager.isDemoMode) {
+                    LocalTodoStore(context).updateItemStatus(entityId, itemUid, newStatus == "completed")
+                } else {
+                    val payload = Gson().toJson(mapOf(
+                        "entity_id" to entityId,
+                        "item" to itemUid,
+                        "status" to newStatus
+                    ))
+                    val httpClient = WidgetHttpClient(context)
+                    httpClient.post("api/services/todo/update_item", payload)?.close()
+                }
 
                 // Optimistic UI update
                 updateAppWidgetState(context, glanceId) { prefs ->

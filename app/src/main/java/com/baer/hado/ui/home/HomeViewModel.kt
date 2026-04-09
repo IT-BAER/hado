@@ -2,6 +2,7 @@ package com.baer.hado.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.baer.hado.data.local.TokenManager
 import com.baer.hado.data.model.HaState
 import com.baer.hado.data.model.TodoItem
 import com.baer.hado.data.repository.AuthRepository
@@ -20,19 +21,22 @@ data class HomeUiState(
     val isLoadingLists: Boolean = false,
     val isLoadingItems: Boolean = false,
     val error: String? = null,
-    val isLoggedOut: Boolean = false
+    val isLoggedOut: Boolean = false,
+    val isLocalMode: Boolean = false
 )
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val todoRepository: TodoRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val tokenManager: TokenManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
+        _uiState.value = _uiState.value.copy(isLocalMode = tokenManager.isDemoMode)
         loadTodoLists()
     }
 
@@ -118,6 +122,22 @@ class HomeViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(error = e.message)
                 }
             )
+        }
+    }
+
+    fun createList(name: String) {
+        viewModelScope.launch {
+            val newList = todoRepository.createList(name)
+            loadTodoLists()
+            selectList(newList.entityId)
+        }
+    }
+
+    fun deleteList(entityId: String) {
+        viewModelScope.launch {
+            todoRepository.deleteList(entityId)
+            _uiState.value = _uiState.value.copy(selectedListId = null)
+            loadTodoLists()
         }
     }
 

@@ -1,20 +1,32 @@
 package com.baer.hado.data.repository
 
+import android.content.Context
 import com.baer.hado.data.api.HaApiService
+import com.baer.hado.data.local.LocalTodoStore
+import com.baer.hado.data.local.TokenManager
 import com.baer.hado.data.model.HaState
 import com.baer.hado.data.model.TodoItem
 import com.baer.hado.data.model.TodoItemStatus
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class TodoRepository @Inject constructor(
     private val apiService: HaApiService,
-    private val gson: Gson
+    private val gson: Gson,
+    private val tokenManager: TokenManager,
+    @ApplicationContext private val context: Context
 ) {
+
+    private val localStore by lazy { LocalTodoStore(context) }
+
     suspend fun getTodoLists(): Result<List<HaState>> {
+        if (tokenManager.isDemoMode) {
+            return Result.success(localStore.getLists())
+        }
         return try {
             val states = apiService.getStates()
             val todoEntities = states.filter { it.entityId.startsWith("todo.") }
@@ -25,6 +37,9 @@ class TodoRepository @Inject constructor(
     }
 
     suspend fun getTodoItems(entityId: String): Result<List<TodoItem>> {
+        if (tokenManager.isDemoMode) {
+            return Result.success(localStore.getItems(entityId))
+        }
         return try {
             val body = mapOf(
                 "entity_id" to entityId
@@ -61,6 +76,14 @@ class TodoRepository @Inject constructor(
         }
     }
 
+    fun createList(name: String): HaState {
+        return localStore.createList(name)
+    }
+
+    fun deleteList(entityId: String) {
+        localStore.deleteList(entityId)
+    }
+
     suspend fun addItem(
         entityId: String,
         summary: String,
@@ -68,6 +91,10 @@ class TodoRepository @Inject constructor(
         dueDate: String? = null,
         dueDatetime: String? = null
     ): Result<Unit> {
+        if (tokenManager.isDemoMode) {
+            localStore.addItem(entityId, summary, description, dueDatetime ?: dueDate)
+            return Result.success(Unit)
+        }
         return try {
             val body = mutableMapOf(
                 "entity_id" to entityId,
@@ -89,6 +116,10 @@ class TodoRepository @Inject constructor(
         itemUid: String,
         completed: Boolean
     ): Result<Unit> {
+        if (tokenManager.isDemoMode) {
+            localStore.updateItemStatus(entityId, itemUid, completed)
+            return Result.success(Unit)
+        }
         return try {
             val status = if (completed) "completed" else "needs_action"
             val body = mapOf(
@@ -109,6 +140,10 @@ class TodoRepository @Inject constructor(
         itemUid: String,
         newName: String
     ): Result<Unit> {
+        if (tokenManager.isDemoMode) {
+            localStore.updateItemDetails(entityId, itemUid, rename = newName)
+            return Result.success(Unit)
+        }
         return try {
             val body = mapOf(
                 "entity_id" to entityId,
@@ -132,6 +167,16 @@ class TodoRepository @Inject constructor(
         dueDate: String? = null,
         dueDatetime: String? = null
     ): Result<Unit> {
+        if (tokenManager.isDemoMode) {
+            localStore.updateItemDetails(
+                entityId, itemUid,
+                rename = rename,
+                status = status,
+                description = description,
+                due = dueDatetime ?: dueDate
+            )
+            return Result.success(Unit)
+        }
         return try {
             val body = mutableMapOf(
                 "entity_id" to entityId,
@@ -151,6 +196,10 @@ class TodoRepository @Inject constructor(
     }
 
     suspend fun removeItem(entityId: String, itemUid: String): Result<Unit> {
+        if (tokenManager.isDemoMode) {
+            localStore.removeItem(entityId, itemUid)
+            return Result.success(Unit)
+        }
         return try {
             val body = mapOf(
                 "entity_id" to entityId,

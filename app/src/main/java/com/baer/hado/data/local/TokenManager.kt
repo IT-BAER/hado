@@ -39,8 +39,12 @@ class TokenManager @Inject constructor(
         get() = prefs.getString(KEY_SERVER_URL, null)
         set(value) = prefs.edit().putString(KEY_SERVER_URL, value).apply()
 
+    var isDemoMode: Boolean
+        get() = prefs.getBoolean(KEY_DEMO_MODE, false)
+        set(value) = prefs.edit().putBoolean(KEY_DEMO_MODE, value).apply()
+
     val isLoggedIn: Boolean
-        get() = accessToken != null && serverUrl != null
+        get() = isDemoMode || (accessToken != null && serverUrl != null)
 
     fun isTokenExpired(): Boolean {
         return System.currentTimeMillis() >= tokenExpiry
@@ -55,5 +59,6 @@ class TokenManager @Inject constructor(
         private const val KEY_REFRESH_TOKEN = "refresh_token"
         private const val KEY_TOKEN_EXPIRY = "token_expiry"
         private const val KEY_SERVER_URL = "server_url"
+        private const val KEY_DEMO_MODE = "demo_mode"
     }
 }

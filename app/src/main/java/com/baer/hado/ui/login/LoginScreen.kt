@@ -105,6 +105,7 @@ fun LoginScreen(
                     }
                 },
                 onSaveToken = { viewModel.saveWithToken() },
+                onTryDemo = { viewModel.enterDemoMode() },
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
@@ -120,6 +121,7 @@ private fun LoginForm(
     onTokenChanged: (String) -> Unit,
     onConnectOAuth: () -> Unit,
     onSaveToken: () -> Unit,
+    onTryDemo: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -228,6 +230,26 @@ private fun LoginForm(
 
         Text(
             text = "Your credentials are stored securely on-device.\nNo data is sent to external servers.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(Modifier.height(32.dp))
+
+        HorizontalDivider()
+
+        Spacer(Modifier.height(16.dp))
+
+        OutlinedButton(
+            onClick = onTryDemo,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Local Mode")
+        }
+
+        Text(
+            text = "Use as a standalone to-do app — no Home Assistant required.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center

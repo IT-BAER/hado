@@ -60,6 +60,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.baer.hado.data.local.LocalTodoStore
+import com.baer.hado.data.local.TokenManager
 import com.baer.hado.data.model.TodoItem
 import com.baer.hado.data.model.TodoItemStatus
 import com.baer.hado.data.model.TodoListFeature
@@ -80,6 +82,8 @@ class AddItemActivity : ComponentActivity() {
         val listName = intent.getStringExtra("list_name") ?: "To-Do"
         val supportedFeatures = intent.getIntExtra("supported_features", 0)
         val detailItemUid = intent.getStringExtra("detail_item_uid")
+        val tokenManager = TokenManager(this)
+        val isLocalMode = tokenManager.isDemoMode
 
         if (entityId.isNullOrBlank()) {
             finish()
@@ -94,6 +98,7 @@ class AddItemActivity : ComponentActivity() {
                     listName = listName,
                     supportedFeatures = supportedFeatures,
                     httpClient = WidgetHttpClient(this),
+                    isLocalMode = isLocalMode,
                     onBack = { finish() },
                     onChanged = { TodoWidgetWorker.enqueueOneTime(this) },
                     autoDetailItemUid = detailItemUid
@@ -131,12 +136,14 @@ private fun ListEditorScreen(
     listName: String,
     supportedFeatures: Int,
     httpClient: WidgetHttpClient,
+    isLocalMode: Boolean = false,
     onBack: () -> Unit,
     onChanged: () -> Unit,
     autoDetailItemUid: String? = null
 ) {
     val scope = rememberCoroutineScope()
     val gson = remember { Gson() }
+    val localStore = remember { if (isLocalMode) LocalTodoStore(context) else null }
     val supportsDescription = TodoListFeature.hasFeature(supportedFeatures, TodoListFeature.SET_DESCRIPTION_ON_ITEM)
     val supportsDueDate = TodoListFeature.hasFeature(supportedFeatures, TodoListFeature.SET_DUE_DATE_ON_ITEM)
     val supportsDueDatetime = TodoListFeature.hasFeature(supportedFeatures, TodoListFeature.SET_DUE_DATETIME_ON_ITEM)
@@ -182,26 +189,31 @@ private fun ListEditorScreen(
 
     // Fetch items on launch (background refresh)
     LaunchedEffect(entityId) {
-        withContext(Dispatchers.IO) {
-            try {
-                val payload = gson.toJson(mapOf("entity_id" to entityId))
-                val response = httpClient.post(
-                    "api/services/todo/get_items?return_response", payload
-                )
-                response?.use { resp ->
-                    if (resp.isSuccessful) {
-                        val body = resp.body?.string()
-                        if (body != null) {
-                            val freshItems = parseItemsFromResponse(gson, body, entityId)
-                            items = freshItems
-                            ItemsCache.save(context, entityId, freshItems)
+        if (isLocalMode) {
+            items = localStore?.getItems(entityId) ?: emptyList()
+            isLoading = false
+        } else {
+            withContext(Dispatchers.IO) {
+                try {
+                    val payload = gson.toJson(mapOf("entity_id" to entityId))
+                    val response = httpClient.post(
+                        "api/services/todo/get_items?return_response", payload
+                    )
+                    response?.use { resp ->
+                        if (resp.isSuccessful) {
+                            val body = resp.body?.string()
+                            if (body != null) {
+                                val freshItems = parseItemsFromResponse(gson, body, entityId)
+                                items = freshItems
+                                ItemsCache.save(context, entityId, freshItems)
+                            }
                         }
                     }
+                } catch (e: Exception) {
+                    Log.e("HAdo", "Failed to fetch items", e)
                 }
-            } catch (e: Exception) {
-                Log.e("HAdo", "Failed to fetch items", e)
+                isLoading = false
             }
-            isLoading = false
         }
     }
 
@@ -225,6 +237,15 @@ private fun ListEditorScreen(
 
         // Trigger re-focus on next frame for rapid multi-add
         refocusTrigger++
+
+        if (isLocalMode) {
+            val newItem = localStore?.addItem(entityId, trimmed)
+            if (newItem != null) {
+                items = items + newItem
+            }
+            onChanged()
+            return
+        }
 
         // Optimistic UI update — add item immediately to local list
         val tempItem = TodoItem(
@@ -261,6 +282,13 @@ private fun ListEditorScreen(
                 else TodoItemStatus.COMPLETED
             ) else it
         }
+
+        if (isLocalMode) {
+            localStore?.updateItemStatus(entityId, item.uid, newStatus == "completed")
+            onChanged()
+            return
+        }
+
         scope.launch(Dispatchers.IO) {
             try {
                 val payload = gson.toJson(mapOf(
@@ -290,6 +318,13 @@ private fun ListEditorScreen(
             items = items.filter { it.uid != item.uid }
             pendingDeletes = pendingDeletes - item.uid
         }
+
+        if (isLocalMode) {
+            localStore?.removeItem(entityId, item.uid)
+            onChanged()
+            return
+        }
+
         scope.launch(Dispatchers.IO) {
             try {
                 val payload = gson.toJson(mapOf(
@@ -467,8 +502,18 @@ private fun ListEditorScreen(
                                 val finishedUid = draggedItemUid
                                 draggedItemUid = null
                                 dragOffsetY = 0f
-                                // Sync to HA via WebSocket
                                 if (finishedUid != null) {
+                                    if (isLocalMode) {
+                                        // Persist new order locally
+                                        val finalUncompleted = currentItemsState.filter { !it.isCompleted }
+                                        val finalIndex = finalUncompleted.indexOfFirst { it.uid == finishedUid }
+                                        if (finalIndex >= 0) {
+                                            val prevUid = if (finalIndex > 0) finalUncompleted[finalIndex - 1].uid else null
+                                            localStore?.moveItem(entityId, finishedUid, prevUid)
+                                            onChanged()
+                                        }
+                                    } else {
+                                    // Sync to HA via WebSocket
                                     scope.launch(Dispatchers.IO) {
                                         try {
                                             val finalUncompleted = currentItemsState.filter { !it.isCompleted }
@@ -485,6 +530,7 @@ private fun ListEditorScreen(
                                         } catch (e: Exception) {
                                             Log.e("HAdo", "moveTodoItem error", e)
                                         }
+                                    }
                                     }
                                 }
                             }
@@ -557,6 +603,16 @@ private fun ListEditorScreen(
                 // Optimistic UI update
                 items = items.map { if (it.uid == item.uid) updatedItem else it }
                 detailItem = null
+
+                if (isLocalMode) {
+                    localStore?.updateItemDetails(
+                        entityId, item.uid,
+                        updatedItem.summary,
+                        updatedItem.description,
+                        updatedItem.due
+                    )
+                    onChanged()
+                } else {
                 scope.launch(Dispatchers.IO) {
                     try {
                         val body = mutableMapOf(
@@ -592,6 +648,7 @@ private fun ListEditorScreen(
                     } catch (e: Exception) {
                         Log.e("HAdo", "updateItemDetails failed", e)
                     }
+                }
                 }
             }
         )

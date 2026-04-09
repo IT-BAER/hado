@@ -30,6 +30,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.baer.hado.BuildConfig
+import com.baer.hado.data.local.LocalTodoStore
 import com.baer.hado.data.local.TokenManager
 import com.baer.hado.widget.ListIconManager
 import com.baer.hado.widget.TodoWidgetWorker
@@ -82,6 +83,23 @@ fun AppSettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Spacer(Modifier.height(4.dp))
+
+            // --- Demo mode banner ---
+            if (TokenManager(context).isDemoMode) {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Local Mode — your lists are stored on this device. Log out to connect to Home Assistant.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }
 
             // --- Refresh interval ---
             RefreshIntervalSection()
@@ -540,6 +558,18 @@ private fun SettingsSection(
 private suspend fun fetchLists(context: android.content.Context): List<Triple<String, String, String?>> {
     return withContext(Dispatchers.IO) {
         try {
+            val tokenManager = TokenManager(context)
+            if (tokenManager.isDemoMode) {
+                val localStore = LocalTodoStore(context)
+                return@withContext localStore.getLists().map { list ->
+                    Triple(
+                        list.entityId,
+                        list.attributes.friendlyName ?: list.entityId,
+                        null as String?
+                    )
+                }
+            }
+
             val httpClient = WidgetHttpClient(context)
             if (!httpClient.isLoggedIn) return@withContext emptyList()
 
