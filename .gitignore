@@ -17,8 +17,8 @@ local.properties
 # Play Store internal docs
 PLAY_STORE_LISTING.md
 
-# Screenshots (local only)
-/screenshots
+# Screenshots (tracked for README)
+# /screenshots
 
 # Decompiled APKs (reference only)
 /keep-apk
