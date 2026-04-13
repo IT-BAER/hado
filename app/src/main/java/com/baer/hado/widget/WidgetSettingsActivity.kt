@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -104,6 +105,19 @@ private fun WidgetSettingsScreen(
     var checkboxOnly by remember { mutableStateOf(existingSettings.checkboxOnly) }
     var showTitle by remember { mutableStateOf(existingSettings.showTitle) }
 
+    fun currentSettings() = WidgetSettings(
+        selectedListIds = selectedListIds,
+        showCompleted = showCompleted,
+        fontSize = fontSize,
+        backgroundOpacity = backgroundOpacity,
+        compactMode = compactMode,
+        checkboxOnly = checkboxOnly,
+        showTitle = showTitle
+    )
+
+    // Back gesture/button saves settings instead of discarding
+    BackHandler { onSave(currentSettings()) }
+
     // Available lists — fetched from HA (entityId, friendlyName, haIcon)
     var availableLists by remember { mutableStateOf<List<Triple<String, String, String?>>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
@@ -125,19 +139,7 @@ private fun WidgetSettingsScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = {
-                        onSave(
-                            WidgetSettings(
-                                selectedListIds = selectedListIds,
-                                showCompleted = showCompleted,
-                                fontSize = fontSize,
-                                backgroundOpacity = backgroundOpacity,
-                                compactMode = compactMode,
-                                checkboxOnly = checkboxOnly,
-                                showTitle = showTitle
-                            )
-                        )
-                    }) {
+                    IconButton(onClick = { onSave(currentSettings()) }) {
                         Icon(Icons.Default.Check, contentDescription = "Save")
                     }
                 }
