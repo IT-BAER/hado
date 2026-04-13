@@ -15,6 +15,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.baer.hado.data.local.LocalTodoStore
 import com.baer.hado.data.local.TokenManager
+import com.baer.hado.data.model.SimpleState
 import com.baer.hado.data.model.TodoItem
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -100,11 +101,6 @@ class TodoWidgetWorker @AssistedInject constructor(
             if (!resp.isSuccessful) return null
             resp.body?.string() ?: return null
         }
-
-        data class SimpleState(
-            val entity_id: String,
-            val attributes: Map<String, Any>?
-        )
 
         val statesType = object : TypeToken<List<SimpleState>>() {}.type
         val states: List<SimpleState> = gson.fromJson(statesJson, statesType)

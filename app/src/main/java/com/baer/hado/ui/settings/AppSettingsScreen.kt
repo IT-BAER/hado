@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import com.baer.hado.BuildConfig
 import com.baer.hado.data.local.LocalTodoStore
 import com.baer.hado.data.local.TokenManager
+import com.baer.hado.data.model.SimpleState
 import com.baer.hado.widget.ListIconManager
 import com.baer.hado.widget.TodoWidgetWorker
 import com.baer.hado.widget.WidgetHttpClient
@@ -578,11 +579,6 @@ private suspend fun fetchLists(context: android.content.Context): List<Triple<St
                 if (!resp.isSuccessful) return@withContext emptyList()
                 resp.body?.string() ?: return@withContext emptyList()
             }
-
-            data class SimpleState(
-                val entity_id: String,
-                val attributes: Map<String, Any>?
-            )
 
             val type = object : TypeToken<List<SimpleState>>() {}.type
             val states: List<SimpleState> = Gson().fromJson(json, type)

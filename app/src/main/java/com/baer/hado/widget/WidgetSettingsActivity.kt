@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.baer.hado.data.local.LocalTodoStore
 import com.baer.hado.data.local.TokenManager
+import com.baer.hado.data.model.SimpleState
 import com.baer.hado.ui.theme.HadoTheme
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -715,11 +716,6 @@ private suspend fun fetchAvailableLists(context: android.content.Context): List<
                 if (!resp.isSuccessful) return@withContext emptyList()
                 resp.body?.string() ?: return@withContext emptyList()
             }
-
-            data class SimpleState(
-                val entity_id: String,
-                val attributes: Map<String, Any>?
-            )
 
             val type = object : TypeToken<List<SimpleState>>() {}.type
             val states: List<SimpleState> = Gson().fromJson(json, type)

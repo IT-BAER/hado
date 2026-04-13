@@ -12,9 +12,22 @@
 -dontwarn retrofit2.KotlinExtensions
 -dontwarn retrofit2.KotlinExtensions$*
 
-# Gson
+# Gson — data model classes
 -keep class com.baer.hado.data.model.** { *; }
 -keep class com.baer.hado.data.local.LocalTodoStore$* { *; }
+
+# Gson — widget data classes serialized to/from Glance state
+-keep class com.baer.hado.widget.WidgetListData { *; }
+-keep class com.baer.hado.widget.WidgetSettings { *; }
+-keep class com.baer.hado.widget.WidgetSettings$** { *; }
+
+# Gson — inner data classes used for token refresh JSON parsing
+-keep class com.baer.hado.widget.WidgetHttpClient$RefreshTokenResponse { *; }
+
+# Gson — preserve @SerializedName on all fields (R8 full mode)
+-keepclassmembers,allowobfuscation class * {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
 
 # Gson TypeToken — preserve generic signatures for R8 full mode
 -keep class com.google.gson.reflect.TypeToken { *; }
@@ -22,6 +35,9 @@
 
 # Glance
 -keep class androidx.glance.** { *; }
+
+# OkHttp (prevent R8 from stripping platform classes)
+-dontwarn okhttp3.internal.platform.**
 
 # Strip debug/verbose log calls in release builds
 -assumenosideeffects class android.util.Log {

@@ -8,7 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.1] - 2026-04-13
 
 ### Fixed
-- Crash when creating a list in local mode caused by R8 stripping Gson TypeToken generic signatures
+- Release build: added ProGuard keep rules for widget data classes (`WidgetListData`, `WidgetSettings`, `RefreshTokenResponse`) that R8 was obfuscating, breaking Gson serialization
+- Release build: extracted local `SimpleState` classes to shared model package covered by existing keep rules, fixing HA API state parsing
+- Release build: added `@SerializedName` field preservation rule for R8 full mode (default in AGP 8.5+)
+- Release build: added `android:usesCleartextTraffic="true"` to allow HTTP connections to local Home Assistant instances
 - Added ProGuard keep rules for LocalTodoStore inner classes and Gson TypeToken
 
 ## [1.0.0] - 2026-04-09
