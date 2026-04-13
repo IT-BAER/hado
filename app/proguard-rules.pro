@@ -14,6 +14,11 @@
 
 # Gson
 -keep class com.baer.hado.data.model.** { *; }
+-keep class com.baer.hado.data.local.LocalTodoStore$* { *; }
+
+# Gson TypeToken — preserve generic signatures for R8 full mode
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken
 
 # Glance
 -keep class androidx.glance.** { *; }
