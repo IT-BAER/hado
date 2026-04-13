@@ -1,0 +1,5 @@
+HAdo 1.0.1
+
+Fixed
+• Release build stability — resolved R8 obfuscation breaking widget data
+• HTTP connections to local Home Assistant instances now work correctly

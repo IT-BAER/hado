@@ -1,0 +1,120 @@
+name: Release to Google Play & GitHub
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.1)'
+        required: true
+        type: string
+      confirm_release:
+        description: 'Type "RELEASE" to confirm deployment to Google Play'
+        required: true
+        type: string
+      track:
+        description: 'Google Play deployment track'
+        required: true
+        default: 'internal'
+        type: choice
+        options:
+          - internal
+          - alpha
+          - beta
+          - production
+      is_prerelease:
+        description: 'Mark GitHub release as pre-release (uncheck for stable/production releases)'
+        required: false
+        type: boolean
+        default: true
+
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-*'
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build & Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version & pre-release flag
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.version }}"
+            IS_PRERELEASE="${{ github.event.inputs.is_prerelease }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/v}"
+            # Tag-triggered builds are always pre-releases (internal testing phase).
+            # Use workflow_dispatch with is_prerelease=false for production releases.
+            IS_PRERELEASE="true"
+          fi
+          echo "name=$TAG" >> $GITHUB_OUTPUT
+          echo "is_prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Decode Release Keystore
+        run: |
+          echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > app/release.keystore
+
+      - name: Build Release APK & AAB
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleRelease bundleRelease
+        env:
+          RELEASE_KEYSTORE_FILE: ${{ github.workspace }}/app/release.keystore
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+
+      - name: Extract Changelog Entry
+        id: changelog
+        run: |
+          CHANGELOG_CONTENT=$(awk '/^## \[/ { if (count++) exit; next } { if (count) print }' CHANGELOG.md | sed '/^---/Q' | sed '/^$/d')
+          EOF=$(dd if=/dev/urandom bs=15 count=1 2>/dev/null | base64)
+          echo "body<<$EOF" >> "$GITHUB_OUTPUT"
+          echo "$CHANGELOG_CONTENT" >> "$GITHUB_OUTPUT"
+          echo "$EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy to Google Play
+        if: |
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.confirm_release == 'RELEASE') ||
+          (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.baer.hado
+          releaseFiles: app/build/outputs/bundle/release/*.aab
+          track: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.track || 'internal' }}
+          status: draft
+          whatsNewDirectory: whatsnew
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.name }}
+          name: HAdo v${{ steps.version.outputs.name }}
+          body: ${{ steps.changelog.outputs.body }}
+          prerelease: ${{ steps.version.outputs.is_prerelease == 'true' }}
+          files: app/build/outputs/apk/release/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
