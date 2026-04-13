@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_name">HAdo Taken</string>
+    <string name="widget_description">Home Assistant takenlijst-widget</string>
+
+    <!-- Login -->
+    <string name="app_subtitle">Home Assistant taken-widget</string>
+    <string name="login_url_label">Home Assistant URL</string>
+    <string name="login_url_placeholder">https://homeassistant.local:8123</string>
+    <string name="login_connect_oauth">Verbinden met OAuth</string>
+    <string name="login_or_token">Of gebruik een langlevend toegangstoken</string>
+    <string name="login_token_label">Langlevend toegangstoken</string>
+    <string name="login_token_placeholder">Plak token vanuit HA-profiel</string>
+    <string name="login_save_token">Token opslaan</string>
+    <string name="login_credentials_note">Je inloggegevens worden veilig op het apparaat opgeslagen.\nEr worden geen gegevens naar externe servers verzonden.</string>
+    <string name="login_local_mode">Lokale modus</string>
+    <string name="login_local_mode_desc">Gebruik als zelfstandige taken-app — geen Home Assistant vereist.</string>
+    <string name="login_auth_failed">Authenticatie mislukt</string>
+
+    <!-- Home -->
+    <string name="home_no_items">Nog geen items.\nTik op + om er een toe te voegen!</string>
+    <string name="home_no_lists_local">Nog geen lijsten.\nTik op + in de bovenste balk om er een aan te maken!</string>
+    <string name="home_no_lists_ha">Geen takenlijsten gevonden.\nMaak eerst een takenlijst aan in Home Assistant.</string>
+    <string name="label_todo_list">Takenlijst</string>
+    <string name="dialog_delete_list_title">Lijst verwijderen</string>
+    <string name="dialog_delete_list_text">\"%1$s\" en alle items verwijderen?</string>
+    <string name="dialog_add_item_title">Item toevoegen</string>
+    <string name="label_task">Taak</string>
+    <string name="dialog_new_list_title">Nieuwe lijst</string>
+    <string name="label_list_name">Lijstnaam</string>
+    <string name="label_emoji">Emoji</string>
+    <string name="emoji_placeholder">bijv. 🛒 📋 ⭐</string>
+    <string name="emoji_error">Alleen emoji\'s toegestaan</string>
+
+    <!-- Actions -->
+    <string name="action_add">Toevoegen</string>
+    <string name="action_cancel">Annuleren</string>
+    <string name="action_create">Aanmaken</string>
+    <string name="action_delete">Verwijderen</string>
+    <string name="action_save">Opslaan</string>
+    <string name="action_ok">OK</string>
+    <string name="action_logout">Uitloggen</string>
+    <string name="action_choose_image">Afbeelding kiezen</string>
+    <string name="action_reset_default">Standaard herstellen</string>
+    <string name="action_no_icon">Geen pictogram</string>
+    <string name="action_skip_time">Zonder tijd</string>
+    <string name="action_add_description">Beschrijving toevoegen…</string>
+
+    <!-- Content descriptions -->
+    <string name="cd_new_list">Nieuwe lijst</string>
+    <string name="cd_refresh">Vernieuwen</string>
+    <string name="cd_settings">Instellingen</string>
+    <string name="cd_add_item">Item toevoegen</string>
+    <string name="cd_delete_list">Lijst verwijderen</string>
+    <string name="cd_delete">Verwijderen</string>
+    <string name="cd_back">Terug</string>
+    <string name="cd_open_app">App openen</string>
+    <string name="cd_drag_reorder">Sleep om te herordenen</string>
+    <string name="cd_clear_due_date">Vervaldatum wissen</string>
+    <string name="cd_apply">Toepassen</string>
+    <string name="cd_save">Opslaan</string>
+    <string name="cd_cancel">Annuleren</string>
+
+    <!-- Settings -->
+    <string name="title_settings">Instellingen</string>
+    <string name="local_mode_banner">Lokale modus — je lijsten worden op dit apparaat opgeslagen. Log uit om met Home Assistant te verbinden.</string>
+    <string name="section_account">Account</string>
+    <string name="section_about">Over</string>
+    <string name="label_version">Versie</string>
+    <string name="label_developer">Ontwikkelaar</string>
+    <string name="label_privacy_policy">Privacybeleid</string>
+    <string name="label_source_code">Broncode</string>
+    <string name="section_refresh_interval">Vernieuwingsinterval</string>
+    <string name="refresh_description">Hoe vaak de widget nieuwe gegevens ophaalt van Home Assistant</string>
+    <string name="section_list_icons">Lijstpictogrammen</string>
+    <string name="label_tap_to_change">Tik om te wijzigen</string>
+    <string name="dialog_icon_title">Pictogram voor %1$s</string>
+    <string name="label_ha_icon">HA-pictogram: %1$s</string>
+
+    <!-- Widget Settings -->
+    <string name="title_widget_settings">Widget-instellingen</string>
+    <string name="settings_no_lists">Geen takenlijsten gevonden. Controleer of je bent ingelogd.</string>
+    <string name="settings_all_lists">Alle lijsten</string>
+    <string name="section_lists_to_show">Weer te geven lijsten</string>
+    <string name="section_completed_items">Voltooide items</string>
+    <string name="settings_show_completed">Voltooide tonen</string>
+    <string name="section_interaction">Interactie</string>
+    <string name="settings_checkbox_only">Alleen selectievakje</string>
+    <string name="settings_checkbox_only_desc">Alleen het selectievakje schakelt het item</string>
+    <string name="section_appearance">Uiterlijk</string>
+    <string name="settings_show_title">Widgettitel tonen</string>
+    <string name="settings_show_title_desc">HAdo-pictogram en titelbalk weergeven</string>
+    <string name="section_font_size">Lettergrootte</string>
+    <string name="section_bg_opacity">Achtergronddekking</string>
+    <string name="section_layout">Indeling</string>
+    <string name="settings_compact_mode">Compacte modus</string>
+    <string name="settings_compact_desc">Minder ruimte voor kleinere widgets</string>
+
+    <!-- List Editor -->
+    <string name="label_title_field">Titel</string>
+    <string name="label_description">Beschrijving</string>
+    <string name="placeholder_description">Beschrijving toevoegen (markdown ondersteund)</string>
+    <string name="label_preview">Voorbeeld</string>
+    <string name="label_due_date">Vervaldatum</string>
+    <string name="label_no_due_date">Geen vervaldatum</string>
+    <string name="placeholder_list_item">Lijstitem</string>
+    <string name="completed_count">%1$d voltooid</string>
+    <string name="cd_collapse">Inklappen</string>
+    <string name="cd_expand">Uitklappen</string>
+    <string name="dialog_set_time">Tijd instellen</string>
+
+    <!-- Widget -->
+    <string name="widget_no_lists">Geen lijsten geselecteerd</string>
+    <string name="widget_all_done">Alles klaar! ✓</string>
+
+    <!-- Due dates -->
+    <string name="due_days_ago">%1$d d geleden</string>
+    <string name="due_yesterday">Gisteren</string>
+    <string name="due_today">Vandaag</string>
+    <string name="due_tomorrow">Morgen</string>
+    <string name="due_in_days">Over %1$d d</string>
+    <string name="due_today_time">Vandaag %1$s</string>
+    <string name="due_tomorrow_time">Morgen %1$s</string>
+
+    <!-- Font sizes -->
+    <string name="font_small">Klein</string>
+    <string name="font_medium">Gemiddeld</string>
+    <string name="font_large">Groot</string>
+
+    <!-- Refresh intervals -->
+    <string name="refresh_15min">15 minuten</string>
+    <string name="refresh_30min">30 minuten</string>
+    <string name="refresh_1hour">1 uur</string>
+    <string name="refresh_2hours">2 uur</string>
+    <string name="refresh_4hours">4 uur</string>
+</resources>

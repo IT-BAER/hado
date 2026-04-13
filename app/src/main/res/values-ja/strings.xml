@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_name">HAdo タスク</string>
+    <string name="widget_description">Home Assistant ToDo リストウィジェット</string>
+
+    <!-- Login -->
+    <string name="app_subtitle">Home Assistant ToDo ウィジェット</string>
+    <string name="login_url_label">Home Assistant URL</string>
+    <string name="login_url_placeholder">https://homeassistant.local:8123</string>
+    <string name="login_connect_oauth">OAuthで接続</string>
+    <string name="login_or_token">または長期アクセストークンを使用</string>
+    <string name="login_token_label">長期アクセストークン</string>
+    <string name="login_token_placeholder">HAプロフィールからトークンを貼り付け</string>
+    <string name="login_save_token">トークンを保存</string>
+    <string name="login_credentials_note">認証情報はデバイスに安全に保存されます。\n外部サーバーにデータは送信されません。</string>
+    <string name="login_local_mode">ローカルモード</string>
+    <string name="login_local_mode_desc">スタンドアロンのToDoアプリとして使用 — Home Assistant不要。</string>
+    <string name="login_auth_failed">認証に失敗しました</string>
+
+    <!-- Home -->
+    <string name="home_no_items">まだアイテムがありません。\n+をタップして追加！</string>
+    <string name="home_no_lists_local">まだリストがありません。\n上部バーの+をタップして作成！</string>
+    <string name="home_no_lists_ha">ToDoリストが見つかりません。\nまずHome AssistantでToDoリストを作成してください。</string>
+    <string name="label_todo_list">ToDoリスト</string>
+    <string name="dialog_delete_list_title">リストを削除</string>
+    <string name="dialog_delete_list_text">「%1$s」とすべてのアイテムを削除しますか？</string>
+    <string name="dialog_add_item_title">アイテムを追加</string>
+    <string name="label_task">タスク</string>
+    <string name="dialog_new_list_title">新しいリスト</string>
+    <string name="label_list_name">リスト名</string>
+    <string name="label_emoji">絵文字</string>
+    <string name="emoji_placeholder">例 🛒 📋 ⭐</string>
+    <string name="emoji_error">絵文字のみ使用可能</string>
+
+    <!-- Actions -->
+    <string name="action_add">追加</string>
+    <string name="action_cancel">キャンセル</string>
+    <string name="action_create">作成</string>
+    <string name="action_delete">削除</string>
+    <string name="action_save">保存</string>
+    <string name="action_ok">OK</string>
+    <string name="action_logout">ログアウト</string>
+    <string name="action_choose_image">画像を選択</string>
+    <string name="action_reset_default">デフォルトに戻す</string>
+    <string name="action_no_icon">アイコンなし</string>
+    <string name="action_skip_time">時間なし</string>
+    <string name="action_add_description">説明を追加…</string>
+
+    <!-- Content descriptions -->
+    <string name="cd_new_list">新しいリスト</string>
+    <string name="cd_refresh">更新</string>
+    <string name="cd_settings">設定</string>
+    <string name="cd_add_item">アイテムを追加</string>
+    <string name="cd_delete_list">リストを削除</string>
+    <string name="cd_delete">削除</string>
+    <string name="cd_back">戻る</string>
+    <string name="cd_open_app">アプリを開く</string>
+    <string name="cd_drag_reorder">ドラッグして並べ替え</string>
+    <string name="cd_clear_due_date">期限をクリア</string>
+    <string name="cd_apply">適用</string>
+    <string name="cd_save">保存</string>
+    <string name="cd_cancel">キャンセル</string>
+
+    <!-- Settings -->
+    <string name="title_settings">設定</string>
+    <string name="local_mode_banner">ローカルモード — リストはこのデバイスに保存されます。ログアウトしてHome Assistantに接続できます。</string>
+    <string name="section_account">アカウント</string>
+    <string name="section_about">このアプリについて</string>
+    <string name="label_version">バージョン</string>
+    <string name="label_developer">開発者</string>
+    <string name="label_privacy_policy">プライバシーポリシー</string>
+    <string name="label_source_code">ソースコード</string>
+    <string name="section_refresh_interval">更新間隔</string>
+    <string name="refresh_description">ウィジェットがHome Assistantから新しいデータを取得する頻度</string>
+    <string name="section_list_icons">リストアイコン</string>
+    <string name="label_tap_to_change">タップして変更</string>
+    <string name="dialog_icon_title">%1$sのアイコン</string>
+    <string name="label_ha_icon">HAアイコン: %1$s</string>
+
+    <!-- Widget Settings -->
+    <string name="title_widget_settings">ウィジェット設定</string>
+    <string name="settings_no_lists">ToDoリストが見つかりません。ログインしているか確認してください。</string>
+    <string name="settings_all_lists">すべてのリスト</string>
+    <string name="section_lists_to_show">表示するリスト</string>
+    <string name="section_completed_items">完了したアイテム</string>
+    <string name="settings_show_completed">完了を表示</string>
+    <string name="section_interaction">操作</string>
+    <string name="settings_checkbox_only">チェックボックスのみ</string>
+    <string name="settings_checkbox_only_desc">チェックボックスのみでアイテムを切り替え</string>
+    <string name="section_appearance">外観</string>
+    <string name="settings_show_title">ウィジェットタイトルを表示</string>
+    <string name="settings_show_title_desc">HADoアイコンとタイトルバーを表示</string>
+    <string name="section_font_size">フォントサイズ</string>
+    <string name="section_bg_opacity">背景の不透明度</string>
+    <string name="section_layout">レイアウト</string>
+    <string name="settings_compact_mode">コンパクトモード</string>
+    <string name="settings_compact_desc">小さいウィジェット用にパディングを削減</string>
+
+    <!-- List Editor -->
+    <string name="label_title_field">タイトル</string>
+    <string name="label_description">説明</string>
+    <string name="placeholder_description">説明を追加（markdown対応）</string>
+    <string name="label_preview">プレビュー</string>
+    <string name="label_due_date">期限</string>
+    <string name="label_no_due_date">期限なし</string>
+    <string name="placeholder_list_item">リストアイテム</string>
+    <string name="completed_count">%1$d件完了</string>
+    <string name="cd_collapse">折りたたむ</string>
+    <string name="cd_expand">展開</string>
+    <string name="dialog_set_time">時間を設定</string>
+
+    <!-- Widget -->
+    <string name="widget_no_lists">リスト未選択</string>
+    <string name="widget_all_done">すべて完了！ ✓</string>
+
+    <!-- Due dates -->
+    <string name="due_days_ago">%1$d日前</string>
+    <string name="due_yesterday">昨日</string>
+    <string name="due_today">今日</string>
+    <string name="due_tomorrow">明日</string>
+    <string name="due_in_days">%1$d日後</string>
+    <string name="due_today_time">今日 %1$s</string>
+    <string name="due_tomorrow_time">明日 %1$s</string>
+
+    <!-- Font sizes -->
+    <string name="font_small">小</string>
+    <string name="font_medium">中</string>
+    <string name="font_large">大</string>
+
+    <!-- Refresh intervals -->
+    <string name="refresh_15min">15分</string>
+    <string name="refresh_30min">30分</string>
+    <string name="refresh_1hour">1時間</string>
+    <string name="refresh_2hours">2時間</string>
+    <string name="refresh_4hours">4時間</string>
+</resources>

@@ -51,10 +51,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.baer.hado.R
 import com.baer.hado.data.model.TodoItem
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -84,7 +87,7 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("HAdo") },
+                title = { Text(stringResource(R.string.app_name)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -92,14 +95,14 @@ fun HomeScreen(
                 actions = {
                     if (uiState.isLocalMode) {
                         IconButton(onClick = { showNewListDialog = true }) {
-                            Icon(Icons.Default.Add, contentDescription = "New list")
+                            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_new_list))
                         }
                     }
                     IconButton(onClick = { viewModel.loadItems() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                        Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.cd_refresh))
                     }
                     IconButton(onClick = onOpenSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings")
+                        Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.cd_settings))
                     }
                 }
             )
@@ -107,7 +110,7 @@ fun HomeScreen(
         floatingActionButton = {
             if (uiState.selectedListId != null) {
                 FloatingActionButton(onClick = { showAddDialog = true }) {
-                    Icon(Icons.Default.Add, contentDescription = "Add item")
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_add_item))
                 }
             }
         },
@@ -136,7 +139,7 @@ fun HomeScreen(
                     )
                     if (uiState.isLocalMode) {
                         IconButton(onClick = { showDeleteListDialog = true }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete list",
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.cd_delete_list),
                                 tint = MaterialTheme.colorScheme.error)
                         }
                     }
@@ -154,7 +157,7 @@ fun HomeScreen(
                     )
                     if (uiState.isLocalMode) {
                         IconButton(onClick = { showDeleteListDialog = true }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete list",
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.cd_delete_list),
                                 tint = MaterialTheme.colorScheme.error)
                         }
                     }
@@ -170,7 +173,7 @@ fun HomeScreen(
                 uiState.items.isEmpty() && uiState.selectedListId != null -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(
-                            text = "No items yet.\nTap + to add one!",
+                            text = stringResource(R.string.home_no_items),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(32.dp)
@@ -181,8 +184,8 @@ fun HomeScreen(
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = if (uiState.isLocalMode) "No lists yet.\nTap + in the top bar to create one!"
-                                else "No to-do lists found.\nCreate a to-do list in Home Assistant first.",
+                                text = if (uiState.isLocalMode) stringResource(R.string.home_no_lists_local)
+                                else stringResource(R.string.home_no_lists_ha),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(32.dp)
@@ -227,16 +230,16 @@ fun HomeScreen(
             ?.attributes?.friendlyName ?: uiState.selectedListId
         AlertDialog(
             onDismissRequest = { showDeleteListDialog = false },
-            title = { Text("Delete List") },
-            text = { Text("Delete \"$listName\" and all its items?") },
+            title = { Text(stringResource(R.string.dialog_delete_list_title)) },
+            text = { Text(stringResource(R.string.dialog_delete_list_text, listName!!)) },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.deleteList(uiState.selectedListId!!)
                     showDeleteListDialog = false
-                }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+                }) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteListDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showDeleteListDialog = false }) { Text(stringResource(R.string.action_cancel)) }
             }
         )
     }
@@ -262,7 +265,7 @@ private fun ListSelector(
             value = selectedName,
             onValueChange = {},
             readOnly = true,
-            label = { Text("To-Do List") },
+            label = { Text(stringResource(R.string.label_todo_list)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
             modifier = Modifier
                 .menuAnchor()
@@ -315,7 +318,7 @@ private fun TodoItemsList(
                     ) {
                         Icon(
                             Icons.Default.Delete,
-                            contentDescription = "Delete",
+                            contentDescription = stringResource(R.string.cd_delete),
                             tint = MaterialTheme.colorScheme.error
                         )
                     }
@@ -387,6 +390,7 @@ private fun TodoItemRow(
     }
 }
 
+@Composable
 private fun buildDueDisplay(item: TodoItem): String {
     val now = java.time.LocalDate.now()
     val icon = if (item.isOverdue) "⚠ " else "📅 "
@@ -397,11 +401,11 @@ private fun buildDueDisplay(item: TodoItem): String {
         val daysDiff = java.time.temporal.ChronoUnit.DAYS.between(now, dueDate)
         val timeStr = dt.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
         val relative = when {
-            daysDiff < -1L -> "${-daysDiff}d ago"
-            daysDiff == -1L -> "Yesterday"
-            daysDiff == 0L -> "Today $timeStr"
-            daysDiff == 1L -> "Tomorrow $timeStr"
-            daysDiff <= 7L -> "In ${daysDiff}d"
+            daysDiff < -1L -> stringResource(R.string.due_days_ago, -daysDiff)
+            daysDiff == -1L -> stringResource(R.string.due_yesterday)
+            daysDiff == 0L -> stringResource(R.string.due_today_time, timeStr)
+            daysDiff == 1L -> stringResource(R.string.due_tomorrow_time, timeStr)
+            daysDiff <= 7L -> stringResource(R.string.due_in_days, daysDiff)
             else -> dt.format(java.time.format.DateTimeFormatter.ofPattern("MMM d, yyyy HH:mm"))
         }
         return icon + relative
@@ -411,11 +415,11 @@ private fun buildDueDisplay(item: TodoItem): String {
     if (d != null) {
         val daysDiff = java.time.temporal.ChronoUnit.DAYS.between(now, d)
         val relative = when {
-            daysDiff < -1L -> "${-daysDiff}d ago"
-            daysDiff == -1L -> "Yesterday"
-            daysDiff == 0L -> "Today"
-            daysDiff == 1L -> "Tomorrow"
-            daysDiff <= 7L -> "In ${daysDiff}d"
+            daysDiff < -1L -> stringResource(R.string.due_days_ago, -daysDiff)
+            daysDiff == -1L -> stringResource(R.string.due_yesterday)
+            daysDiff == 0L -> stringResource(R.string.due_today)
+            daysDiff == 1L -> stringResource(R.string.due_tomorrow)
+            daysDiff <= 7L -> stringResource(R.string.due_in_days, daysDiff)
             else -> d.format(java.time.format.DateTimeFormatter.ofPattern("MMM d, yyyy"))
         }
         return icon + relative
@@ -433,12 +437,12 @@ private fun AddItemDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add Item") },
+        title = { Text(stringResource(R.string.dialog_add_item_title)) },
         text = {
             OutlinedTextField(
                 value = text,
                 onValueChange = { text = it },
-                label = { Text("Task") },
+                label = { Text(stringResource(R.string.label_task)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -447,10 +451,10 @@ private fun AddItemDialog(
             TextButton(
                 onClick = { if (text.isNotBlank()) onAdd(text.trim()) },
                 enabled = text.isNotBlank()
-            ) { Text("Add") }
+            ) { Text(stringResource(R.string.action_add)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
         }
     )
 }
@@ -464,12 +468,12 @@ private fun NewListDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("New List") },
+        title = { Text(stringResource(R.string.dialog_new_list_title)) },
         text = {
             OutlinedTextField(
                 value = text,
                 onValueChange = { text = it },
-                label = { Text("List name") },
+                label = { Text(stringResource(R.string.label_list_name)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -478,10 +482,10 @@ private fun NewListDialog(
             TextButton(
                 onClick = { if (text.isNotBlank()) onCreate(text.trim()) },
                 enabled = text.isNotBlank()
-            ) { Text("Create") }
+            ) { Text(stringResource(R.string.action_create)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
         }
     )
 }

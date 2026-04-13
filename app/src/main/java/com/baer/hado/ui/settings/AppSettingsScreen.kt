@@ -26,10 +26,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.baer.hado.BuildConfig
+import com.baer.hado.R
 import com.baer.hado.data.local.LocalTodoStore
 import com.baer.hado.data.local.TokenManager
 import com.baer.hado.data.model.SimpleState
@@ -66,10 +68,10 @@ fun AppSettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { Text(stringResource(R.string.title_settings)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 }
             )
@@ -94,7 +96,7 @@ fun AppSettingsScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "Local Mode — your lists are stored on this device. Log out to connect to Home Assistant.",
+                        text = stringResource(R.string.local_mode_banner),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onTertiaryContainer,
                         modifier = Modifier.padding(16.dp)
@@ -115,7 +117,7 @@ fun AppSettingsScreen(
             }
 
             // --- Logout ---
-            SettingsSection(title = "Account") {
+            SettingsSection(title = stringResource(R.string.section_account)) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -134,7 +136,7 @@ fun AppSettingsScreen(
                     )
                     Spacer(Modifier.width(12.dp))
                     Text(
-                        text = "Logout",
+                        text = stringResource(R.string.action_logout),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.error
                     )
@@ -153,7 +155,7 @@ fun AppSettingsScreen(
 private fun AboutSection() {
     val context = LocalContext.current
 
-    SettingsSection(title = "About") {
+    SettingsSection(title = stringResource(R.string.section_about)) {
         Column {
             // Version
             Row(
@@ -163,7 +165,7 @@ private fun AboutSection() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Version",
+                    text = stringResource(R.string.label_version),
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.weight(1f)
                 )
@@ -184,7 +186,7 @@ private fun AboutSection() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Developer",
+                    text = stringResource(R.string.label_developer),
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.weight(1f)
                 )
@@ -213,7 +215,7 @@ private fun AboutSection() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Privacy Policy",
+                    text = stringResource(R.string.label_privacy_policy),
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.weight(1f)
                 )
@@ -242,7 +244,7 @@ private fun AboutSection() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Source Code",
+                    text = stringResource(R.string.label_source_code),
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.weight(1f)
                 )
@@ -263,7 +265,7 @@ private fun RefreshIntervalSection() {
         mutableStateOf(WidgetSettingsManager.loadRefreshInterval(context))
     }
 
-    SettingsSection(title = "Refresh Interval") {
+    SettingsSection(title = stringResource(R.string.section_refresh_interval)) {
         Column {
             WidgetSettings.RefreshInterval.entries.forEachIndexed { index, interval ->
                 Row(
@@ -287,7 +289,7 @@ private fun RefreshIntervalSection() {
                         }
                     )
                     Text(
-                        text = interval.label,
+                        text = stringResource(interval.labelResId),
                         style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.padding(start = 8.dp)
                     )
@@ -297,7 +299,7 @@ private fun RefreshIntervalSection() {
                 }
             }
             Text(
-                text = "How often the widget fetches new data from Home Assistant",
+                text = stringResource(R.string.refresh_description),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -329,7 +331,7 @@ private fun AppListIconsSection(
         pendingImageEntityId = null
     }
 
-    SettingsSection(title = "List Icons") {
+    SettingsSection(title = stringResource(R.string.section_list_icons)) {
         availableLists.forEach { (entityId, name, haIcon) ->
             val resolved = remember(entityId, iconVersion) {
                 ListIconManager.resolveIcon(context, entityId, haIcon)
@@ -380,7 +382,7 @@ private fun AppListIconsSection(
                     modifier = Modifier.weight(1f)
                 )
                 Text(
-                    text = "Tap to change",
+                    text = stringResource(R.string.label_tap_to_change),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -448,12 +450,12 @@ private fun IconPickerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Icon for $listName") },
+        title = { Text(stringResource(R.string.dialog_icon_title, listName)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 if (haIcon != null) {
                     Text(
-                        text = "HA icon: $haIcon",
+                        text = stringResource(R.string.label_ha_icon, haIcon),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -464,12 +466,12 @@ private fun IconPickerDialog(
                     onValueChange = { input ->
                         emojiInput = input.filter { it !in 'a'..'z' && it !in 'A'..'Z' }
                     },
-                    label = { Text("Emoji") },
-                    placeholder = { Text("e.g. 🛒 📋 ⭐") },
+                    label = { Text(stringResource(R.string.label_emoji)) },
+                    placeholder = { Text(stringResource(R.string.emoji_placeholder)) },
                     singleLine = true,
                     isError = emojiInput.isNotBlank() && !isValidEmoji,
                     supportingText = if (emojiInput.isNotBlank() && !isValidEmoji) {
-                        { Text("Only emoji allowed") }
+                        { Text(stringResource(R.string.emoji_error)) }
                     } else null,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(
@@ -481,7 +483,7 @@ private fun IconPickerDialog(
                     trailingIcon = {
                         if (isValidEmoji) {
                             IconButton(onClick = { onEmojiPicked(emojiInput.trim()) }) {
-                                Icon(Icons.Default.Check, contentDescription = "Apply")
+                                Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_apply))
                             }
                         }
                     }
@@ -493,7 +495,7 @@ private fun IconPickerDialog(
                 ) {
                     Text("📷")
                     Spacer(Modifier.width(8.dp))
-                    Text("Choose image")
+                    Text(stringResource(R.string.action_choose_image))
                 }
 
                 // Clear button — reset to default (📋)
@@ -503,7 +505,7 @@ private fun IconPickerDialog(
                 ) {
                     Icon(Icons.Default.Refresh, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text("Reset to default")
+                    Text(stringResource(R.string.action_reset_default))
                 }
 
                 // Disable icon button
@@ -516,13 +518,13 @@ private fun IconPickerDialog(
                 ) {
                     Icon(Icons.Default.Delete, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text("No icon")
+                    Text(stringResource(R.string.action_no_icon))
                 }
             }
         },
         confirmButton = {},
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
         }
     )
 }

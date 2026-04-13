@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_name">HAdo 待办</string>
+    <string name="widget_description">Home Assistant 待办清单小组件</string>
+
+    <!-- Login -->
+    <string name="app_subtitle">Home Assistant 待办小组件</string>
+    <string name="login_url_label">Home Assistant 网址</string>
+    <string name="login_url_placeholder">https://homeassistant.local:8123</string>
+    <string name="login_connect_oauth">使用 OAuth 连接</string>
+    <string name="login_or_token">或使用长期访问令牌</string>
+    <string name="login_token_label">长期访问令牌</string>
+    <string name="login_token_placeholder">从 HA 个人资料粘贴令牌</string>
+    <string name="login_save_token">保存令牌</string>
+    <string name="login_credentials_note">您的凭据安全存储在设备上。\n不会向外部服务器发送任何数据。</string>
+    <string name="login_local_mode">本地模式</string>
+    <string name="login_local_mode_desc">作为独立待办应用使用——无需 Home Assistant。</string>
+    <string name="login_auth_failed">认证失败</string>
+
+    <!-- Home -->
+    <string name="home_no_items">还没有项目。\n点击 + 添加一个！</string>
+    <string name="home_no_lists_local">还没有列表。\n点击顶部栏的 + 创建一个！</string>
+    <string name="home_no_lists_ha">未找到待办列表。\n请先在 Home Assistant 中创建待办列表。</string>
+    <string name="label_todo_list">待办列表</string>
+    <string name="dialog_delete_list_title">删除列表</string>
+    <string name="dialog_delete_list_text">删除"%1$s"及其所有项目？</string>
+    <string name="dialog_add_item_title">添加项目</string>
+    <string name="label_task">任务</string>
+    <string name="dialog_new_list_title">新建列表</string>
+    <string name="label_list_name">列表名称</string>
+    <string name="label_emoji">表情符号</string>
+    <string name="emoji_placeholder">例如 🛒 📋 ⭐</string>
+    <string name="emoji_error">仅允许表情符号</string>
+
+    <!-- Actions -->
+    <string name="action_add">添加</string>
+    <string name="action_cancel">取消</string>
+    <string name="action_create">创建</string>
+    <string name="action_delete">删除</string>
+    <string name="action_save">保存</string>
+    <string name="action_ok">确定</string>
+    <string name="action_logout">退出登录</string>
+    <string name="action_choose_image">选择图片</string>
+    <string name="action_reset_default">恢复默认</string>
+    <string name="action_no_icon">无图标</string>
+    <string name="action_skip_time">不设时间</string>
+    <string name="action_add_description">添加描述…</string>
+
+    <!-- Content descriptions -->
+    <string name="cd_new_list">新建列表</string>
+    <string name="cd_refresh">刷新</string>
+    <string name="cd_settings">设置</string>
+    <string name="cd_add_item">添加项目</string>
+    <string name="cd_delete_list">删除列表</string>
+    <string name="cd_delete">删除</string>
+    <string name="cd_back">返回</string>
+    <string name="cd_open_app">打开应用</string>
+    <string name="cd_drag_reorder">拖动以重新排序</string>
+    <string name="cd_clear_due_date">清除截止日期</string>
+    <string name="cd_apply">应用</string>
+    <string name="cd_save">保存</string>
+    <string name="cd_cancel">取消</string>
+
+    <!-- Settings -->
+    <string name="title_settings">设置</string>
+    <string name="local_mode_banner">本地模式——您的列表存储在此设备上。退出以连接 Home Assistant。</string>
+    <string name="section_account">账户</string>
+    <string name="section_about">关于</string>
+    <string name="label_version">版本</string>
+    <string name="label_developer">开发者</string>
+    <string name="label_privacy_policy">隐私政策</string>
+    <string name="label_source_code">源代码</string>
+    <string name="section_refresh_interval">刷新间隔</string>
+    <string name="refresh_description">小组件从 Home Assistant 获取新数据的频率</string>
+    <string name="section_list_icons">列表图标</string>
+    <string name="label_tap_to_change">点击更改</string>
+    <string name="dialog_icon_title">%1$s的图标</string>
+    <string name="label_ha_icon">HA 图标：%1$s</string>
+
+    <!-- Widget Settings -->
+    <string name="title_widget_settings">小组件设置</string>
+    <string name="settings_no_lists">未找到待办列表。请确保已登录。</string>
+    <string name="settings_all_lists">所有列表</string>
+    <string name="section_lists_to_show">要显示的列表</string>
+    <string name="section_completed_items">已完成的项目</string>
+    <string name="settings_show_completed">显示已完成</string>
+    <string name="section_interaction">交互</string>
+    <string name="settings_checkbox_only">仅复选框</string>
+    <string name="settings_checkbox_only_desc">仅复选框切换项目状态</string>
+    <string name="section_appearance">外观</string>
+    <string name="settings_show_title">显示小组件标题</string>
+    <string name="settings_show_title_desc">显示 HAdo 图标和标题栏</string>
+    <string name="section_font_size">字体大小</string>
+    <string name="section_bg_opacity">背景不透明度</string>
+    <string name="section_layout">布局</string>
+    <string name="settings_compact_mode">紧凑模式</string>
+    <string name="settings_compact_desc">减少小组件的内边距</string>
+
+    <!-- List Editor -->
+    <string name="label_title_field">标题</string>
+    <string name="label_description">描述</string>
+    <string name="placeholder_description">添加描述（支持 Markdown）</string>
+    <string name="label_preview">预览</string>
+    <string name="label_due_date">截止日期</string>
+    <string name="label_no_due_date">无截止日期</string>
+    <string name="placeholder_list_item">列表项</string>
+    <string name="completed_count">%1$d 项已完成</string>
+    <string name="cd_collapse">折叠</string>
+    <string name="cd_expand">展开</string>
+    <string name="dialog_set_time">设置时间</string>
+
+    <!-- Widget -->
+    <string name="widget_no_lists">未选择列表</string>
+    <string name="widget_all_done">全部完成！ ✓</string>
+
+    <!-- Due dates -->
+    <string name="due_days_ago">%1$d天前</string>
+    <string name="due_yesterday">昨天</string>
+    <string name="due_today">今天</string>
+    <string name="due_tomorrow">明天</string>
+    <string name="due_in_days">%1$d天后</string>
+    <string name="due_today_time">今天 %1$s</string>
+    <string name="due_tomorrow_time">明天 %1$s</string>
+
+    <!-- Font sizes -->
+    <string name="font_small">小</string>
+    <string name="font_medium">中</string>
+    <string name="font_large">大</string>
+
+    <!-- Refresh intervals -->
+    <string name="refresh_15min">15 分钟</string>
+    <string name="refresh_30min">30 分钟</string>
+    <string name="refresh_1hour">1 小时</string>
+    <string name="refresh_2hours">2 小时</string>
+    <string name="refresh_4hours">4 小时</string>
+</resources>

@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Widget settings: back gesture/button now saves changes instead of discarding them
 
+### Added
+- Full i18n support for 10 languages: English, German, Spanish, French, Portuguese (Brazil), Dutch, Russian, Japanese, Korean, Chinese (Simplified)
+
 ## [1.0.1] - 2026-04-13
 
 ### Fixed

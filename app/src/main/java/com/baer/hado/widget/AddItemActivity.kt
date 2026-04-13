@@ -54,12 +54,14 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.baer.hado.R
 import com.baer.hado.data.local.LocalTodoStore
 import com.baer.hado.data.local.TokenManager
 import com.baer.hado.data.model.TodoItem
@@ -354,7 +356,7 @@ private fun ListEditorScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.cd_back)
                         )
                     }
                 },
@@ -369,7 +371,7 @@ private fun ListEditorScreen(
                     }) {
                         Icon(
                             Icons.Default.Settings,
-                            contentDescription = "Open app",
+                            contentDescription = stringResource(R.string.cd_open_app),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -698,7 +700,7 @@ private fun TodoItemRow(
         if (showDragHandle) {
             Icon(
                 Icons.Default.DragIndicator,
-                contentDescription = "Drag to reorder",
+                contentDescription = stringResource(R.string.cd_drag_reorder),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .size(48.dp)
@@ -773,7 +775,7 @@ private fun TodoItemRow(
         ) {
             Icon(
                 Icons.Default.Close,
-                contentDescription = "Delete",
+                contentDescription = stringResource(R.string.cd_delete),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(24.dp)
             )
@@ -797,13 +799,13 @@ private fun CompletedSectionHeader(
         Icon(
             imageVector = if (expanded) Icons.Default.KeyboardArrowUp
             else Icons.Default.KeyboardArrowDown,
-            contentDescription = if (expanded) "Collapse" else "Expand",
+            contentDescription = if (expanded) stringResource(R.string.cd_collapse) else stringResource(R.string.cd_expand),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(48.dp).padding(12.dp)
         )
         Spacer(modifier = Modifier.width(6.dp))
         Text(
-            text = "$count completed",
+            text = stringResource(R.string.completed_count, count),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -825,7 +827,7 @@ private fun AddItemRow(
     ) {
         Icon(
             Icons.Default.Add,
-            contentDescription = "Add",
+            contentDescription = stringResource(R.string.cd_add_item),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(24.dp)
         )
@@ -835,7 +837,7 @@ private fun AddItemRow(
             onValueChange = onTextChange,
             placeholder = {
                 Text(
-                    "List item",
+                    stringResource(R.string.placeholder_list_item),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
@@ -865,7 +867,7 @@ private fun AddItemRow(
             }) {
                 Icon(
                     Icons.Default.Send,
-                    contentDescription = "Add item",
+                    contentDescription = stringResource(R.string.cd_add_item),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(22.dp)
                 )
@@ -942,7 +944,7 @@ private fun ItemDetailDialog(
             OutlinedTextField(
                 value = summary,
                 onValueChange = { summary = it },
-                label = { Text("Title") },
+                label = { Text(stringResource(R.string.label_title_field)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -952,7 +954,7 @@ private fun ItemDetailDialog(
                 // Description section
                 if (supportsDescription) {
                     Text(
-                        "Description",
+                        stringResource(R.string.label_description),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 4.dp)
@@ -964,11 +966,11 @@ private fun ItemDetailDialog(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .heightIn(min = 100.dp),
-                            placeholder = { Text("Add description (markdown supported)") },
+                            placeholder = { Text(stringResource(R.string.placeholder_description)) },
                             maxLines = 10
                         )
                         TextButton(onClick = { isEditingDescription = false }) {
-                            Text("Preview")
+                            Text(stringResource(R.string.label_preview))
                         }
                     } else {
                         if (description.isNotBlank()) {
@@ -1001,7 +1003,7 @@ private fun ItemDetailDialog(
                                 onClick = { isEditingDescription = true },
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text("Add description...")
+                                Text(stringResource(R.string.action_add_description))
                             }
                         }
                     }
@@ -1012,7 +1014,7 @@ private fun ItemDetailDialog(
                 // Due date section
                 if (supportsDueDate || supportsDueDatetime) {
                     Text(
-                        "Due date",
+                        stringResource(R.string.label_due_date),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 4.dp)
@@ -1024,7 +1026,7 @@ private fun ItemDetailDialog(
                         val dateDisplay = if (dueString != null) {
                             val parsed = item.copy(due = dueString)
                             formatDueDisplay(parsed).removePrefix("⚠ ").removePrefix("📅 ")
-                        } else "No due date"
+                        } else stringResource(R.string.label_no_due_date)
 
                         TextButton(onClick = { showDatePicker = true }) {
                             Icon(
@@ -1039,7 +1041,7 @@ private fun ItemDetailDialog(
                             IconButton(onClick = { dueString = null }) {
                                 Icon(
                                     Icons.Default.Close,
-                                    contentDescription = "Clear due date",
+                                    contentDescription = stringResource(R.string.cd_clear_due_date),
                                     modifier = Modifier.size(18.dp)
                                 )
                             }
@@ -1058,12 +1060,12 @@ private fun ItemDetailDialog(
                     )
                 )
             }) {
-                Text("Save")
+                Text(stringResource(R.string.action_save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.action_cancel))
             }
         }
     )
@@ -1090,10 +1092,10 @@ private fun ItemDetailDialog(
                             showTimePicker = true
                         }
                     }
-                }) { Text("OK") }
+                }) { Text(stringResource(R.string.action_ok)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
+                TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.action_cancel)) }
             }
         ) {
             DatePicker(state = datePickerState)
@@ -1109,7 +1111,7 @@ private fun ItemDetailDialog(
         )
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
-            title = { Text("Set time") },
+            title = { Text(stringResource(R.string.dialog_set_time)) },
             text = { TimePicker(state = timePickerState) },
             confirmButton = {
                 TextButton(onClick = {
@@ -1117,14 +1119,14 @@ private fun ItemDetailDialog(
                     val datePrefix = dueString?.substringBefore("T") ?: dueString ?: return@TextButton
                     dueString = "${datePrefix}T${String.format("%02d:%02d:00", timePickerState.hour, timePickerState.minute)}"
                     showTimePicker = false
-                }) { Text("OK") }
+                }) { Text(stringResource(R.string.action_ok)) }
             },
             dismissButton = {
                 TextButton(onClick = {
                     // Keep date-only (no time)
                     dueString = dueString?.substringBefore("T")
                     showTimePicker = false
-                }) { Text("Skip time") }
+                }) { Text(stringResource(R.string.action_skip_time)) }
             }
         )
     }

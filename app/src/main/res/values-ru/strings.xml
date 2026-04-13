@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_name">HAdo Задачи</string>
+    <string name="widget_description">Виджет списков задач Home Assistant</string>
+
+    <!-- Login -->
+    <string name="app_subtitle">Виджет задач Home Assistant</string>
+    <string name="login_url_label">URL Home Assistant</string>
+    <string name="login_url_placeholder">https://homeassistant.local:8123</string>
+    <string name="login_connect_oauth">Подключить через OAuth</string>
+    <string name="login_or_token">Или используйте долгоживущий токен доступа</string>
+    <string name="login_token_label">Долгоживущий токен доступа</string>
+    <string name="login_token_placeholder">Вставьте токен из профиля HA</string>
+    <string name="login_save_token">Сохранить токен</string>
+    <string name="login_credentials_note">Ваши учётные данные хранятся безопасно на устройстве.\nДанные не передаются на внешние серверы.</string>
+    <string name="login_local_mode">Локальный режим</string>
+    <string name="login_local_mode_desc">Использовать как самостоятельное приложение задач — Home Assistant не требуется.</string>
+    <string name="login_auth_failed">Ошибка аутентификации</string>
+
+    <!-- Home -->
+    <string name="home_no_items">Пока нет элементов.\nНажмите +, чтобы добавить!</string>
+    <string name="home_no_lists_local">Пока нет списков.\nНажмите + вверху, чтобы создать!</string>
+    <string name="home_no_lists_ha">Списки задач не найдены.\nСоздайте список задач в Home Assistant.</string>
+    <string name="label_todo_list">Список задач</string>
+    <string name="dialog_delete_list_title">Удалить список</string>
+    <string name="dialog_delete_list_text">Удалить «%1$s» и все его элементы?</string>
+    <string name="dialog_add_item_title">Добавить элемент</string>
+    <string name="label_task">Задача</string>
+    <string name="dialog_new_list_title">Новый список</string>
+    <string name="label_list_name">Название списка</string>
+    <string name="label_emoji">Эмодзи</string>
+    <string name="emoji_placeholder">напр. 🛒 📋 ⭐</string>
+    <string name="emoji_error">Разрешены только эмодзи</string>
+
+    <!-- Actions -->
+    <string name="action_add">Добавить</string>
+    <string name="action_cancel">Отмена</string>
+    <string name="action_create">Создать</string>
+    <string name="action_delete">Удалить</string>
+    <string name="action_save">Сохранить</string>
+    <string name="action_ok">OK</string>
+    <string name="action_logout">Выйти</string>
+    <string name="action_choose_image">Выбрать изображение</string>
+    <string name="action_reset_default">Сбросить по умолчанию</string>
+    <string name="action_no_icon">Без значка</string>
+    <string name="action_skip_time">Без времени</string>
+    <string name="action_add_description">Добавить описание…</string>
+
+    <!-- Content descriptions -->
+    <string name="cd_new_list">Новый список</string>
+    <string name="cd_refresh">Обновить</string>
+    <string name="cd_settings">Настройки</string>
+    <string name="cd_add_item">Добавить элемент</string>
+    <string name="cd_delete_list">Удалить список</string>
+    <string name="cd_delete">Удалить</string>
+    <string name="cd_back">Назад</string>
+    <string name="cd_open_app">Открыть приложение</string>
+    <string name="cd_drag_reorder">Перетащите для сортировки</string>
+    <string name="cd_clear_due_date">Очистить срок выполнения</string>
+    <string name="cd_apply">Применить</string>
+    <string name="cd_save">Сохранить</string>
+    <string name="cd_cancel">Отмена</string>
+
+    <!-- Settings -->
+    <string name="title_settings">Настройки</string>
+    <string name="local_mode_banner">Локальный режим — списки хранятся на этом устройстве. Выйдите, чтобы подключить Home Assistant.</string>
+    <string name="section_account">Аккаунт</string>
+    <string name="section_about">О приложении</string>
+    <string name="label_version">Версия</string>
+    <string name="label_developer">Разработчик</string>
+    <string name="label_privacy_policy">Политика конфиденциальности</string>
+    <string name="label_source_code">Исходный код</string>
+    <string name="section_refresh_interval">Интервал обновления</string>
+    <string name="refresh_description">Как часто виджет получает новые данные из Home Assistant</string>
+    <string name="section_list_icons">Значки списков</string>
+    <string name="label_tap_to_change">Нажмите для изменения</string>
+    <string name="dialog_icon_title">Значок для %1$s</string>
+    <string name="label_ha_icon">Значок HA: %1$s</string>
+
+    <!-- Widget Settings -->
+    <string name="title_widget_settings">Настройки виджета</string>
+    <string name="settings_no_lists">Списки задач не найдены. Убедитесь, что вы вошли в систему.</string>
+    <string name="settings_all_lists">Все списки</string>
+    <string name="section_lists_to_show">Отображаемые списки</string>
+    <string name="section_completed_items">Выполненные элементы</string>
+    <string name="settings_show_completed">Показать выполненные</string>
+    <string name="section_interaction">Взаимодействие</string>
+    <string name="settings_checkbox_only">Только флажок</string>
+    <string name="settings_checkbox_only_desc">Только флажок переключает элемент</string>
+    <string name="section_appearance">Внешний вид</string>
+    <string name="settings_show_title">Показать заголовок виджета</string>
+    <string name="settings_show_title_desc">Отображать значок и заголовок HAdo</string>
+    <string name="section_font_size">Размер шрифта</string>
+    <string name="section_bg_opacity">Прозрачность фона</string>
+    <string name="section_layout">Макет</string>
+    <string name="settings_compact_mode">Компактный режим</string>
+    <string name="settings_compact_desc">Меньше отступов для малых виджетов</string>
+
+    <!-- List Editor -->
+    <string name="label_title_field">Заголовок</string>
+    <string name="label_description">Описание</string>
+    <string name="placeholder_description">Добавить описание (поддерживается markdown)</string>
+    <string name="label_preview">Предпросмотр</string>
+    <string name="label_due_date">Срок выполнения</string>
+    <string name="label_no_due_date">Без срока выполнения</string>
+    <string name="placeholder_list_item">Элемент списка</string>
+    <string name="completed_count">%1$d выполнено</string>
+    <string name="cd_collapse">Свернуть</string>
+    <string name="cd_expand">Развернуть</string>
+    <string name="dialog_set_time">Установить время</string>
+
+    <!-- Widget -->
+    <string name="widget_no_lists">Списки не выбраны</string>
+    <string name="widget_all_done">Всё готово! ✓</string>
+
+    <!-- Due dates -->
+    <string name="due_days_ago">%1$d дн. назад</string>
+    <string name="due_yesterday">Вчера</string>
+    <string name="due_today">Сегодня</string>
+    <string name="due_tomorrow">Завтра</string>
+    <string name="due_in_days">Через %1$d дн.</string>
+    <string name="due_today_time">Сегодня %1$s</string>
+    <string name="due_tomorrow_time">Завтра %1$s</string>
+
+    <!-- Font sizes -->
+    <string name="font_small">Маленький</string>
+    <string name="font_medium">Средний</string>
+    <string name="font_large">Большой</string>
+
+    <!-- Refresh intervals -->
+    <string name="refresh_15min">15 минут</string>
+    <string name="refresh_30min">30 минут</string>
+    <string name="refresh_1hour">1 час</string>
+    <string name="refresh_2hours">2 часа</string>
+    <string name="refresh_4hours">4 часа</string>
+</resources>

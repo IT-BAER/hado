@@ -126,7 +126,7 @@ class TodoWidget : GlanceAppWidget() {
                     )
                     Spacer(GlanceModifier.width(6.dp))
                     Text(
-                        text = "HAdo",
+                        text = LocalContext.current.getString(R.string.app_name),
                         style = TextStyle(
                             fontWeight = FontWeight.Bold,
                             fontSize = settings.fontSize.titleSp.sp,
@@ -136,7 +136,7 @@ class TodoWidget : GlanceAppWidget() {
                     )
                     Image(
                         provider = ImageProvider(R.drawable.ic_widget_refresh),
-                        contentDescription = "Refresh",
+                        contentDescription = LocalContext.current.getString(R.string.cd_refresh),
                         modifier = GlanceModifier
                             .size(22.dp)
                             .clickable(actionRunCallback<RefreshAction>()),
@@ -151,7 +151,7 @@ class TodoWidget : GlanceAppWidget() {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "No lists selected",
+                        text = LocalContext.current.getString(R.string.widget_no_lists),
                         style = TextStyle(
                             color = GlanceTheme.colors.onSurfaceVariant,
                             fontSize = settings.fontSize.itemSp.sp
@@ -323,7 +323,7 @@ class TodoWidget : GlanceAppWidget() {
                         modifier = GlanceModifier.defaultWeight()
                     )
                     if (item.due != null && !item.isCompleted) {
-                        val dueText = buildWidgetDueText(item)
+                        val dueText = buildWidgetDueText(LocalContext.current, item)
                         Spacer(GlanceModifier.width(6.dp))
                         Text(
                             text = dueText,
@@ -350,7 +350,7 @@ class TodoWidget : GlanceAppWidget() {
         }
     }
 
-    private fun buildWidgetDueText(item: TodoItem): String {
+    private fun buildWidgetDueText(context: Context, item: TodoItem): String {
         val now = java.time.LocalDate.now()
         val icon = if (item.isOverdue) "⚠ " else "📅 "
 
@@ -360,11 +360,11 @@ class TodoWidget : GlanceAppWidget() {
             val daysDiff = java.time.temporal.ChronoUnit.DAYS.between(now, dueDate)
             val timeStr = dt.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
             val relative = when {
-                daysDiff < -1L -> "${-daysDiff}d ago"
-                daysDiff == -1L -> "Yesterday"
-                daysDiff == 0L -> "Today $timeStr"
-                daysDiff == 1L -> "Tomorrow $timeStr"
-                daysDiff <= 7L -> "In ${daysDiff}d"
+                daysDiff < -1L -> context.getString(R.string.due_days_ago, -daysDiff)
+                daysDiff == -1L -> context.getString(R.string.due_yesterday)
+                daysDiff == 0L -> context.getString(R.string.due_today_time, timeStr)
+                daysDiff == 1L -> context.getString(R.string.due_tomorrow_time, timeStr)
+                daysDiff <= 7L -> context.getString(R.string.due_in_days, daysDiff)
                 else -> dt.format(java.time.format.DateTimeFormatter.ofPattern("MMM d"))
             }
             return icon + relative
@@ -374,11 +374,11 @@ class TodoWidget : GlanceAppWidget() {
         if (d != null) {
             val daysDiff = java.time.temporal.ChronoUnit.DAYS.between(now, d)
             val relative = when {
-                daysDiff < -1L -> "${-daysDiff}d ago"
-                daysDiff == -1L -> "Yesterday"
-                daysDiff == 0L -> "Today"
-                daysDiff == 1L -> "Tomorrow"
-                daysDiff <= 7L -> "In ${daysDiff}d"
+                daysDiff < -1L -> context.getString(R.string.due_days_ago, -daysDiff)
+                daysDiff == -1L -> context.getString(R.string.due_yesterday)
+                daysDiff == 0L -> context.getString(R.string.due_today)
+                daysDiff == 1L -> context.getString(R.string.due_tomorrow)
+                daysDiff <= 7L -> context.getString(R.string.due_in_days, daysDiff)
                 else -> d.format(java.time.format.DateTimeFormatter.ofPattern("MMM d"))
             }
             return icon + relative
@@ -390,7 +390,7 @@ class TodoWidget : GlanceAppWidget() {
     @Composable
     private fun EmptyHintRow(settings: WidgetSettings) {
         Text(
-            text = "All done! ✓",
+            text = LocalContext.current.getString(R.string.widget_all_done),
             style = TextStyle(
                 fontSize = (settings.fontSize.itemSp - 2).sp,
                 color = GlanceTheme.colors.outline

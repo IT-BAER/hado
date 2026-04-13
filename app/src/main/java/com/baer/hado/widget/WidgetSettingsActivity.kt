@@ -31,10 +31,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.baer.hado.R
 import com.baer.hado.data.local.LocalTodoStore
 import com.baer.hado.data.local.TokenManager
 import com.baer.hado.data.model.SimpleState
@@ -132,15 +134,15 @@ private fun WidgetSettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Widget Settings") },
+                title = { Text(stringResource(R.string.title_widget_settings)) },
                 navigationIcon = {
                     IconButton(onClick = onCancel) {
-                        Icon(Icons.Default.Close, contentDescription = "Cancel")
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_cancel))
                     }
                 },
                 actions = {
                     IconButton(onClick = { onSave(currentSettings()) }) {
-                        Icon(Icons.Default.Check, contentDescription = "Save")
+                        Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_save))
                     }
                 }
             )
@@ -155,7 +157,7 @@ private fun WidgetSettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // --- Lists selection ---
-            SettingsSection(title = "Lists to Show") {
+            SettingsSection(title = stringResource(R.string.section_lists_to_show)) {
                 if (isLoading) {
                     Box(
                         modifier = Modifier
@@ -167,7 +169,7 @@ private fun WidgetSettingsScreen(
                     }
                 } else if (availableLists.isEmpty()) {
                     Text(
-                        text = "No to-do lists found. Make sure you're logged in.",
+                        text = stringResource(R.string.settings_no_lists),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(8.dp)
@@ -188,7 +190,7 @@ private fun WidgetSettingsScreen(
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            text = "All lists",
+                            text = stringResource(R.string.settings_all_lists),
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = if (selectedListIds.isEmpty()) FontWeight.Medium else FontWeight.Normal
                         )
@@ -237,7 +239,7 @@ private fun WidgetSettingsScreen(
             }
 
             // --- Show completed ---
-            SettingsSection(title = "Completed Items") {
+            SettingsSection(title = stringResource(R.string.section_completed_items)) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -247,7 +249,7 @@ private fun WidgetSettingsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Show completed items",
+                        text = stringResource(R.string.settings_show_completed),
                         style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.weight(1f)
                     )
@@ -259,7 +261,7 @@ private fun WidgetSettingsScreen(
             }
 
             // --- Checkbox only toggle ---
-            SettingsSection(title = "Interaction") {
+            SettingsSection(title = stringResource(R.string.section_interaction)) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -270,11 +272,11 @@ private fun WidgetSettingsScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Checkbox only",
+                            text = stringResource(R.string.settings_checkbox_only),
                             style = MaterialTheme.typography.bodyLarge
                         )
                         Text(
-                            text = "Only the checkbox toggles the item",
+                            text = stringResource(R.string.settings_checkbox_only_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -287,7 +289,7 @@ private fun WidgetSettingsScreen(
             }
 
             // --- Show title ---
-            SettingsSection(title = "Appearance") {
+            SettingsSection(title = stringResource(R.string.section_appearance)) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -298,11 +300,11 @@ private fun WidgetSettingsScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Show widget title",
+                            text = stringResource(R.string.settings_show_title),
                             style = MaterialTheme.typography.bodyLarge
                         )
                         Text(
-                            text = "Display the HAdo icon and title bar",
+                            text = stringResource(R.string.settings_show_title_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -315,7 +317,7 @@ private fun WidgetSettingsScreen(
             }
 
             // --- Font size ---
-            SettingsSection(title = "Font Size") {
+            SettingsSection(title = stringResource(R.string.section_font_size)) {
                 SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                     WidgetSettings.FontSize.entries.forEachIndexed { index, size ->
                         SegmentedButton(
@@ -326,14 +328,14 @@ private fun WidgetSettingsScreen(
                                 count = WidgetSettings.FontSize.entries.size
                             )
                         ) {
-                            Text(size.label)
+                            Text(stringResource(size.labelResId))
                         }
                     }
                 }
             }
 
             // --- Background opacity ---
-            SettingsSection(title = "Background Opacity") {
+            SettingsSection(title = stringResource(R.string.section_bg_opacity)) {
                 Column(modifier = Modifier.padding(horizontal = 8.dp)) {
                     Slider(
                         value = backgroundOpacity,
@@ -350,7 +352,7 @@ private fun WidgetSettingsScreen(
             }
 
             // --- Compact mode ---
-            SettingsSection(title = "Layout") {
+            SettingsSection(title = stringResource(R.string.section_layout)) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -361,11 +363,11 @@ private fun WidgetSettingsScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Compact mode",
+                            text = stringResource(R.string.settings_compact_mode),
                             style = MaterialTheme.typography.bodyLarge
                         )
                         Text(
-                            text = "Reduce padding for smaller widgets",
+                            text = stringResource(R.string.settings_compact_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -378,7 +380,7 @@ private fun WidgetSettingsScreen(
             }
 
             // --- Refresh interval (global) ---
-            SettingsSection(title = "Refresh Interval") {
+            SettingsSection(title = stringResource(R.string.section_refresh_interval)) {
                 var refreshInterval by remember {
                     mutableStateOf(WidgetSettingsManager.loadRefreshInterval(context))
                 }
@@ -405,7 +407,7 @@ private fun WidgetSettingsScreen(
                                 }
                             )
                             Text(
-                                text = interval.label,
+                                text = stringResource(interval.labelResId),
                                 style = MaterialTheme.typography.bodyLarge,
                                 modifier = Modifier.padding(start = 8.dp)
                             )
@@ -415,7 +417,7 @@ private fun WidgetSettingsScreen(
                         }
                     }
                     Text(
-                        text = "How often the widget fetches new data from Home Assistant",
+                        text = stringResource(R.string.refresh_description),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -513,7 +515,7 @@ private fun ListIconsSection(
                     modifier = Modifier.weight(1f)
                 )
                 Text(
-                    text = "Tap to change",
+                    text = stringResource(R.string.label_tap_to_change),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -584,12 +586,12 @@ private fun IconPickerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Icon for $listName") },
+        title = { Text(stringResource(R.string.dialog_icon_title, listName)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 if (haIcon != null) {
                     Text(
-                        text = "HA icon: $haIcon",
+                        text = stringResource(R.string.label_ha_icon, haIcon),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -602,12 +604,12 @@ private fun IconPickerDialog(
                         // Filter out ASCII letters on input
                         emojiInput = input.filter { it !in 'a'..'z' && it !in 'A'..'Z' }
                     },
-                    label = { Text("Emoji") },
-                    placeholder = { Text("e.g. 🛒 📋 ⭐") },
+                    label = { Text(stringResource(R.string.label_emoji)) },
+                    placeholder = { Text(stringResource(R.string.emoji_placeholder)) },
                     singleLine = true,
                     isError = emojiInput.isNotBlank() && !isValidEmoji,
                     supportingText = if (emojiInput.isNotBlank() && !isValidEmoji) {
-                        { Text("Only emoji allowed") }
+                        { Text(stringResource(R.string.emoji_error)) }
                     } else null,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(
@@ -619,7 +621,7 @@ private fun IconPickerDialog(
                     trailingIcon = {
                         if (isValidEmoji) {
                             IconButton(onClick = { onEmojiPicked(emojiInput.trim()) }) {
-                                Icon(Icons.Default.Check, contentDescription = "Apply")
+                                Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_apply))
                             }
                         }
                     }
@@ -632,7 +634,7 @@ private fun IconPickerDialog(
                 ) {
                     Text("📷")
                     Spacer(Modifier.width(8.dp))
-                    Text("Choose image")
+                    Text(stringResource(R.string.action_choose_image))
                 }
 
                 // Clear button — reset to default (📋)
@@ -642,7 +644,7 @@ private fun IconPickerDialog(
                 ) {
                     Icon(Icons.Default.Refresh, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text("Reset to default")
+                    Text(stringResource(R.string.action_reset_default))
                 }
 
                 // Disable icon button
@@ -655,13 +657,13 @@ private fun IconPickerDialog(
                 ) {
                     Icon(Icons.Default.Delete, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text("No icon")
+                    Text(stringResource(R.string.action_no_icon))
                 }
             }
         },
         confirmButton = {},
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
         }
     )
 }

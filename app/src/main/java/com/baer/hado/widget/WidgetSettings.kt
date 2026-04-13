@@ -1,6 +1,8 @@
 package com.baer.hado.widget
 
 import android.content.Context
+import androidx.annotation.StringRes
+import com.baer.hado.R
 
 /**
  * Per-widget-instance settings stored in SharedPreferences.
@@ -15,18 +17,18 @@ data class WidgetSettings(
     val checkboxOnly: Boolean = false,  // true = only checkbox toggles, false = entire row toggles
     val showTitle: Boolean = true  // show HAdo icon + title bar
 ) {
-    enum class FontSize(val label: String, val titleSp: Float, val itemSp: Float, val headerSp: Float) {
-        SMALL("Small", 15f, 14f, 12f),
-        MEDIUM("Medium", 18f, 16f, 13f),
-        LARGE("Large", 20f, 18f, 15f)
+    enum class FontSize(@StringRes val labelResId: Int, val titleSp: Float, val itemSp: Float, val headerSp: Float) {
+        SMALL(R.string.font_small, 15f, 14f, 12f),
+        MEDIUM(R.string.font_medium, 18f, 16f, 13f),
+        LARGE(R.string.font_large, 20f, 18f, 15f)
     }
 
-    enum class RefreshInterval(val label: String, val minutes: Long) {
-        MIN_15("15 minutes", 15),
-        MIN_30("30 minutes", 30),
-        HOUR_1("1 hour", 60),
-        HOUR_2("2 hours", 120),
-        HOUR_4("4 hours", 240)
+    enum class RefreshInterval(@StringRes val labelResId: Int, val minutes: Long) {
+        MIN_15(R.string.refresh_15min, 15),
+        MIN_30(R.string.refresh_30min, 30),
+        HOUR_1(R.string.refresh_1hour, 60),
+        HOUR_2(R.string.refresh_2hours, 120),
+        HOUR_4(R.string.refresh_4hours, 240)
     }
 }
 

@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_name">HAdo Tareas</string>
+    <string name="widget_description">Widget de listas de tareas de Home Assistant</string>
+
+    <!-- Login -->
+    <string name="app_subtitle">Widget de tareas de Home Assistant</string>
+    <string name="login_url_label">URL de Home Assistant</string>
+    <string name="login_url_placeholder">https://homeassistant.local:8123</string>
+    <string name="login_connect_oauth">Conectar con OAuth</string>
+    <string name="login_or_token">O usa un token de acceso de larga duración</string>
+    <string name="login_token_label">Token de acceso de larga duración</string>
+    <string name="login_token_placeholder">Pega el token desde el perfil de HA</string>
+    <string name="login_save_token">Guardar token</string>
+    <string name="login_credentials_note">Tus credenciales se almacenan de forma segura en el dispositivo.\nNo se envían datos a servidores externos.</string>
+    <string name="login_local_mode">Modo local</string>
+    <string name="login_local_mode_desc">Usar como app de tareas independiente — no requiere Home Assistant.</string>
+    <string name="login_auth_failed">Error de autenticación</string>
+
+    <!-- Home -->
+    <string name="home_no_items">Aún no hay elementos.\n¡Toca + para agregar uno!</string>
+    <string name="home_no_lists_local">Aún no hay listas.\n¡Toca + en la barra superior para crear una!</string>
+    <string name="home_no_lists_ha">No se encontraron listas de tareas.\nCrea una lista de tareas en Home Assistant primero.</string>
+    <string name="label_todo_list">Lista de tareas</string>
+    <string name="dialog_delete_list_title">Eliminar lista</string>
+    <string name="dialog_delete_list_text">¿Eliminar \"%1$s\" y todos sus elementos?</string>
+    <string name="dialog_add_item_title">Agregar elemento</string>
+    <string name="label_task">Tarea</string>
+    <string name="dialog_new_list_title">Nueva lista</string>
+    <string name="label_list_name">Nombre de la lista</string>
+    <string name="label_emoji">Emoji</string>
+    <string name="emoji_placeholder">p. ej. 🛒 📋 ⭐</string>
+    <string name="emoji_error">Solo se permiten emojis</string>
+
+    <!-- Actions -->
+    <string name="action_add">Agregar</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_create">Crear</string>
+    <string name="action_delete">Eliminar</string>
+    <string name="action_save">Guardar</string>
+    <string name="action_ok">OK</string>
+    <string name="action_logout">Cerrar sesión</string>
+    <string name="action_choose_image">Elegir imagen</string>
+    <string name="action_reset_default">Restablecer predeterminado</string>
+    <string name="action_no_icon">Sin icono</string>
+    <string name="action_skip_time">Sin hora</string>
+    <string name="action_add_description">Agregar descripción…</string>
+
+    <!-- Content descriptions -->
+    <string name="cd_new_list">Nueva lista</string>
+    <string name="cd_refresh">Actualizar</string>
+    <string name="cd_settings">Ajustes</string>
+    <string name="cd_add_item">Agregar elemento</string>
+    <string name="cd_delete_list">Eliminar lista</string>
+    <string name="cd_delete">Eliminar</string>
+    <string name="cd_back">Atrás</string>
+    <string name="cd_open_app">Abrir app</string>
+    <string name="cd_drag_reorder">Arrastrar para reordenar</string>
+    <string name="cd_clear_due_date">Borrar fecha de vencimiento</string>
+    <string name="cd_apply">Aplicar</string>
+    <string name="cd_save">Guardar</string>
+    <string name="cd_cancel">Cancelar</string>
+
+    <!-- Settings -->
+    <string name="title_settings">Ajustes</string>
+    <string name="local_mode_banner">Modo local — tus listas se guardan en este dispositivo. Cierra sesión para conectar con Home Assistant.</string>
+    <string name="section_account">Cuenta</string>
+    <string name="section_about">Acerca de</string>
+    <string name="label_version">Versión</string>
+    <string name="label_developer">Desarrollador</string>
+    <string name="label_privacy_policy">Política de privacidad</string>
+    <string name="label_source_code">Código fuente</string>
+    <string name="section_refresh_interval">Intervalo de actualización</string>
+    <string name="refresh_description">Con qué frecuencia el widget obtiene datos nuevos de Home Assistant</string>
+    <string name="section_list_icons">Iconos de listas</string>
+    <string name="label_tap_to_change">Toca para cambiar</string>
+    <string name="dialog_icon_title">Icono para %1$s</string>
+    <string name="label_ha_icon">Icono de HA: %1$s</string>
+
+    <!-- Widget Settings -->
+    <string name="title_widget_settings">Ajustes del widget</string>
+    <string name="settings_no_lists">No se encontraron listas de tareas. Asegúrate de haber iniciado sesión.</string>
+    <string name="settings_all_lists">Todas las listas</string>
+    <string name="section_lists_to_show">Listas a mostrar</string>
+    <string name="section_completed_items">Elementos completados</string>
+    <string name="settings_show_completed">Mostrar completados</string>
+    <string name="section_interaction">Interacción</string>
+    <string name="settings_checkbox_only">Solo casilla</string>
+    <string name="settings_checkbox_only_desc">Solo la casilla marca/desmarca el elemento</string>
+    <string name="section_appearance">Apariencia</string>
+    <string name="settings_show_title">Mostrar título del widget</string>
+    <string name="settings_show_title_desc">Mostrar el ícono y la barra de título de HAdo</string>
+    <string name="section_font_size">Tamaño de fuente</string>
+    <string name="section_bg_opacity">Opacidad del fondo</string>
+    <string name="section_layout">Diseño</string>
+    <string name="settings_compact_mode">Modo compacto</string>
+    <string name="settings_compact_desc">Menos relleno para widgets más pequeños</string>
+
+    <!-- List Editor -->
+    <string name="label_title_field">Título</string>
+    <string name="label_description">Descripción</string>
+    <string name="placeholder_description">Agregar descripción (compatible con markdown)</string>
+    <string name="label_preview">Vista previa</string>
+    <string name="label_due_date">Fecha de vencimiento</string>
+    <string name="label_no_due_date">Sin fecha de vencimiento</string>
+    <string name="placeholder_list_item">Elemento de la lista</string>
+    <string name="completed_count">%1$d completados</string>
+    <string name="cd_collapse">Contraer</string>
+    <string name="cd_expand">Expandir</string>
+    <string name="dialog_set_time">Establecer hora</string>
+
+    <!-- Widget -->
+    <string name="widget_no_lists">Sin listas seleccionadas</string>
+    <string name="widget_all_done">¡Todo listo! ✓</string>
+
+    <!-- Due dates -->
+    <string name="due_days_ago">Hace %1$d d</string>
+    <string name="due_yesterday">Ayer</string>
+    <string name="due_today">Hoy</string>
+    <string name="due_tomorrow">Mañana</string>
+    <string name="due_in_days">En %1$d d</string>
+    <string name="due_today_time">Hoy %1$s</string>
+    <string name="due_tomorrow_time">Mañana %1$s</string>
+
+    <!-- Font sizes -->
+    <string name="font_small">Pequeño</string>
+    <string name="font_medium">Mediano</string>
+    <string name="font_large">Grande</string>
+
+    <!-- Refresh intervals -->
+    <string name="refresh_15min">15 minutos</string>
+    <string name="refresh_30min">30 minutos</string>
+    <string name="refresh_1hour">1 hora</string>
+    <string name="refresh_2hours">2 horas</string>
+    <string name="refresh_4hours">4 horas</string>
+</resources>

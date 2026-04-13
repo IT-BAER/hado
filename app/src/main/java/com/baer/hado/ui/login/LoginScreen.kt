@@ -39,7 +39,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -57,6 +59,7 @@ fun LoginScreen(
     viewModel: LoginViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     var showWebView by remember { mutableStateOf(false) }
     var authUrl by remember { mutableStateOf("") }
@@ -86,7 +89,7 @@ fun LoginScreen(
                 },
                 onError = {
                     showWebView = false
-                    viewModel.setError("Authentication failed")
+                    viewModel.setError(context.getString(R.string.login_auth_failed))
                 },
                 modifier = Modifier
                     .fillMaxSize()
@@ -143,13 +146,13 @@ private fun LoginForm(
         Spacer(Modifier.height(16.dp))
 
         Text(
-            text = "HAdo",
+            text = stringResource(R.string.app_name),
             style = MaterialTheme.typography.headlineLarge,
             color = MaterialTheme.colorScheme.primary
         )
 
         Text(
-            text = "Home Assistant To-Do Widget",
+            text = stringResource(R.string.app_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -159,8 +162,8 @@ private fun LoginForm(
         OutlinedTextField(
             value = uiState.serverUrl,
             onValueChange = onServerUrlChanged,
-            label = { Text("Home Assistant URL") },
-            placeholder = { Text("https://homeassistant.local:8123") },
+            label = { Text(stringResource(R.string.login_url_label)) },
+            placeholder = { Text(stringResource(R.string.login_url_placeholder)) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(
@@ -185,7 +188,7 @@ private fun LoginForm(
                     color = MaterialTheme.colorScheme.onPrimary
                 )
             } else {
-                Text("Connect with OAuth")
+                Text(stringResource(R.string.login_connect_oauth))
             }
         }
 
@@ -196,7 +199,7 @@ private fun LoginForm(
         Spacer(Modifier.height(16.dp))
 
         Text(
-            text = "Or use a Long-Lived Access Token",
+            text = stringResource(R.string.login_or_token),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -206,8 +209,8 @@ private fun LoginForm(
         OutlinedTextField(
             value = uiState.token,
             onValueChange = onTokenChanged,
-            label = { Text("Long-Lived Access Token") },
-            placeholder = { Text("Paste token from HA profile") },
+            label = { Text(stringResource(R.string.login_token_label)) },
+            placeholder = { Text(stringResource(R.string.login_token_placeholder)) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
             visualTransformation = PasswordVisualTransformation(),
@@ -223,13 +226,13 @@ private fun LoginForm(
             modifier = Modifier.fillMaxWidth(),
             enabled = !uiState.isLoading && uiState.token.isNotBlank() && uiState.serverUrl.isNotBlank()
         ) {
-            Text("Save Token")
+            Text(stringResource(R.string.login_save_token))
         }
 
         Spacer(Modifier.height(24.dp))
 
         Text(
-            text = "Your credentials are stored securely on-device.\nNo data is sent to external servers.",
+            text = stringResource(R.string.login_credentials_note),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -245,11 +248,11 @@ private fun LoginForm(
             onClick = onTryDemo,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Local Mode")
+            Text(stringResource(R.string.login_local_mode))
         }
 
         Text(
-            text = "Use as a standalone to-do app — no Home Assistant required.",
+            text = stringResource(R.string.login_local_mode_desc),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
