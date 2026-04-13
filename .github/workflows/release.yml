@@ -49,14 +49,16 @@ jobs:
 
       - name: Extract version & pre-release flag
         id: version
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+          INPUT_PRERELEASE: ${{ github.event.inputs.is_prerelease }}
         run: |
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            TAG="${{ github.event.inputs.version }}"
-            IS_PRERELEASE="${{ github.event.inputs.is_prerelease }}"
+          if [ "$EVENT_NAME" == "workflow_dispatch" ]; then
+            TAG="$INPUT_VERSION"
+            IS_PRERELEASE="$INPUT_PRERELEASE"
           else
             TAG="${GITHUB_REF#refs/tags/v}"
-            # Tag-triggered builds are always pre-releases (internal testing phase).
-            # Use workflow_dispatch with is_prerelease=false for production releases.
             IS_PRERELEASE="true"
           fi
           echo "name=$TAG" >> $GITHUB_OUTPUT
