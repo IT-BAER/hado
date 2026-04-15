@@ -1,5 +1,7 @@
-HAdo 1.0.1
+HAdo 1.0.2
 
-Fixed
-• Release build stability — resolved R8 obfuscation breaking widget data
-• HTTP connections to local Home Assistant instances now work correctly
+Changed
+• Widget settings: back gesture/button now saves changes instead of discarding them
+
+Added
+• Full i18n support for 10 languages: English, German, Spanish, French, Portuguese (Brazil), Dutch, Russian, Japanese, Korean, Chinese (Simplified)

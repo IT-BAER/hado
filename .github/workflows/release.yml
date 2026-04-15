@@ -59,7 +59,7 @@ jobs:
             IS_PRERELEASE="$INPUT_PRERELEASE"
           else
             TAG="${GITHUB_REF#refs/tags/v}"
-            IS_PRERELEASE="true"
+            IS_PRERELEASE="false"
           fi
           echo "name=$TAG" >> $GITHUB_OUTPUT
           echo "is_prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
@@ -95,6 +95,14 @@ jobs:
           echo "body<<$EOF" >> "$GITHUB_OUTPUT"
           echo "$CHANGELOG_CONTENT" >> "$GITHUB_OUTPUT"
           echo "$EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Generate Play Store What's New
+        run: |
+          PLAY_NOTES=$(awk '/^## \[/ { if (count++) exit; next } { if (count) print }' CHANGELOG.md \
+            | sed '/^---/Q' | sed '/^$/d' \
+            | sed 's/^### //' | sed 's/^- /• /')
+          mkdir -p whatsnew
+          printf '%s\n' "$PLAY_NOTES" > whatsnew/whatsnew-en-US
 
       - name: Deploy to Google Play
         if: |
