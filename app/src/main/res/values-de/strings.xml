@@ -16,12 +16,23 @@
     <string name="login_local_mode">Lokaler Modus</string>
     <string name="login_local_mode_desc">Als eigenständige Aufgaben-App nutzen — kein Home Assistant erforderlich.</string>
     <string name="login_auth_failed">Authentifizierung fehlgeschlagen</string>
+    <string name="login_primary_hint">Schnellster Weg. Melde dich bei Home Assistant an und kehre dann mit sicherer lokaler Speicherung hierher zurück.</string>
+    <string name="login_token_supporting">Manueller Fallback für fortgeschrittene Setups.</string>
+    <string name="login_show_token_section">Stattdessen Zugriffstoken verwenden</string>
+    <string name="login_hide_token_section">Token-Anmeldung ausblenden</string>
 
     <!-- Home -->
     <string name="home_no_items">Noch keine Einträge.\nTippe auf +, um einen hinzuzufügen!</string>
     <string name="home_no_lists_local">Noch keine Listen.\nTippe auf + in der oberen Leiste!</string>
     <string name="home_no_lists_ha">Keine Aufgabenlisten gefunden.\nErstelle zuerst eine in Home Assistant.</string>
     <string name="label_todo_list">Aufgabenliste</string>
+    <string name="home_choose_list">Liste auswählen</string>
+    <string name="home_local_mode_support">Auf diesem Gerät gespeichert</string>
+    <string name="home_remote_mode_support">Mit Home Assistant synchronisiert</string>
+    <string name="home_open_count">%1$d offen</string>
+    <string name="home_overdue_count">%1$d überfällig</string>
+    <string name="home_section_open">Offen</string>
+    <string name="home_section_completed">Erledigt</string>
     <string name="dialog_delete_list_title">Liste löschen</string>
     <string name="dialog_delete_list_text">\"%1$s\" und alle Einträge löschen?</string>
     <string name="dialog_add_item_title">Eintrag hinzufügen</string>
@@ -66,6 +77,8 @@
     <string name="local_mode_banner">Lokaler Modus — deine Listen werden auf diesem Gerät gespeichert. Melde dich ab, um Home Assistant zu verbinden.</string>
     <string name="section_account">Konto</string>
     <string name="section_about">Über</string>
+    <string name="settings_logout_supporting">Tokens löschen und zur Anmeldung zurückkehren.</string>
+    <string name="settings_open_link">Öffnen</string>
     <string name="label_version">Version</string>
     <string name="label_developer">Entwickler</string>
     <string name="label_privacy_policy">Datenschutzerklärung</string>
@@ -91,6 +104,7 @@
     <string name="settings_show_title">Widget-Titel anzeigen</string>
     <string name="settings_show_title_desc">HAdo-Symbol und Titelleiste anzeigen</string>
     <string name="section_font_size">Schriftgröße</string>
+    <string name="section_item_height">Eintragshöhe</string>
     <string name="section_bg_opacity">Hintergrund-Deckkraft</string>
     <string name="section_layout">Layout</string>
     <string name="settings_compact_mode">Kompaktmodus</string>
@@ -111,6 +125,7 @@
 
     <!-- Widget -->
     <string name="widget_no_lists">Keine Listen ausgewählt</string>
+    <string name="widget_loading">Widget wird geladen...</string>
     <string name="widget_all_done">Alles erledigt! ✓</string>
 
     <!-- Due dates -->

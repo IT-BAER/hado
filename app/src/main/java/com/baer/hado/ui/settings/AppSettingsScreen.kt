@@ -35,11 +35,9 @@ import com.baer.hado.R
 import com.baer.hado.data.local.LocalTodoStore
 import com.baer.hado.data.local.TokenManager
 import com.baer.hado.data.model.SimpleState
+import com.baer.hado.ui.theme.AppSpacing
 import com.baer.hado.widget.ListIconManager
-import com.baer.hado.widget.TodoWidgetWorker
 import com.baer.hado.widget.WidgetHttpClient
-import com.baer.hado.widget.WidgetSettings
-import com.baer.hado.widget.WidgetSettingsManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
@@ -68,7 +66,16 @@ fun AppSettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.title_settings)) },
+                title = {
+                    Text(
+                        text = stringResource(R.string.title_settings),
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                ),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
@@ -82,68 +89,62 @@ fun AppSettingsScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(padding)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(horizontal = AppSpacing.screenHorizontal),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionGap)
         ) {
             Spacer(Modifier.height(4.dp))
 
-            // --- Demo mode banner ---
             if (TokenManager(context).isDemoMode) {
                 Card(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.tertiaryContainer
                     ),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Text(
                         text = stringResource(R.string.local_mode_banner),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onTertiaryContainer,
-                        modifier = Modifier.padding(16.dp)
+                        modifier = Modifier.padding(20.dp)
                     )
                 }
             }
 
-            // --- Refresh interval ---
-            RefreshIntervalSection()
-
-            // --- List icons ---
             if (isLoading) {
-                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                SettingsSection(title = stringResource(R.string.section_list_icons)) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    }
                 }
             } else if (availableLists.isNotEmpty()) {
                 AppListIconsSection(availableLists = availableLists)
             }
 
-            // --- Logout ---
             SettingsSection(title = stringResource(R.string.section_account)) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable {
+                SettingsItem(
+                    headline = stringResource(R.string.action_logout),
+                    headlineColor = MaterialTheme.colorScheme.error,
+                    supporting = stringResource(R.string.settings_logout_supporting),
+                    onClick = {
                         TokenManager(context).clearAll()
                         onLogout()
+                    },
+                    leadingContent = {
+                        Icon(
+                            Icons.AutoMirrored.Filled.Logout,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error
+                        )
                     }
-                        .padding(horizontal = 8.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.Logout,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.error
-                    )
-                    Spacer(Modifier.width(12.dp))
-                    Text(
-                        text = stringResource(R.string.action_logout),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
+                )
             }
 
-            // --- About ---
             AboutSection()
 
             Spacer(Modifier.height(32.dp))
@@ -156,155 +157,45 @@ private fun AboutSection() {
     val context = LocalContext.current
 
     SettingsSection(title = stringResource(R.string.section_about)) {
-        Column {
-            // Version
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.label_version),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.weight(1f)
+        SettingsItem(
+            headline = stringResource(R.string.label_version),
+            trailingText = BuildConfig.VERSION_NAME
+        )
+
+        HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
+
+        SettingsItem(
+            headline = stringResource(R.string.label_developer),
+            trailingText = "IT-BAER"
+        )
+
+        HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
+
+        SettingsItem(
+            headline = stringResource(R.string.label_privacy_policy),
+            trailingText = stringResource(R.string.settings_open_link),
+            onClick = {
+                val intent = Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse("https://github.com/IT-BAER/hado/blob/master/PRIVACY.md")
                 )
-                Text(
-                    text = BuildConfig.VERSION_NAME,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                context.startActivity(intent)
             }
+        )
 
-            HorizontalDivider()
+        HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
 
-            // Developer
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.label_developer),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.weight(1f)
+        SettingsItem(
+            headline = stringResource(R.string.label_source_code),
+            trailingText = stringResource(R.string.settings_open_link),
+            onClick = {
+                val intent = Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse("https://github.com/IT-BAER/hado")
                 )
-                Text(
-                    text = "IT-BAER",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                context.startActivity(intent)
             }
-
-            HorizontalDivider()
-
-            // Privacy Policy
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable {
-                        val intent = Intent(
-                            Intent.ACTION_VIEW,
-                            Uri.parse("https://github.com/IT-BAER/hado/blob/master/PRIVACY.md")
-                        )
-                        context.startActivity(intent)
-                    }
-                    .padding(horizontal = 8.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.label_privacy_policy),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.weight(1f)
-                )
-                Text(
-                    text = "→",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            HorizontalDivider()
-
-            // Source Code
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable {
-                        val intent = Intent(
-                            Intent.ACTION_VIEW,
-                            Uri.parse("https://github.com/IT-BAER/hado")
-                        )
-                        context.startActivity(intent)
-                    }
-                    .padding(horizontal = 8.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.label_source_code),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.weight(1f)
-                )
-                Text(
-                    text = "→",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun RefreshIntervalSection() {
-    val context = LocalContext.current
-    var refreshInterval by remember {
-        mutableStateOf(WidgetSettingsManager.loadRefreshInterval(context))
-    }
-
-    SettingsSection(title = stringResource(R.string.section_refresh_interval)) {
-        Column {
-            WidgetSettings.RefreshInterval.entries.forEachIndexed { index, interval ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable {
-                            refreshInterval = interval
-                            WidgetSettingsManager.saveRefreshInterval(context, interval)
-                            TodoWidgetWorker.enqueuePeriodic(context)
-                        }
-                        .padding(horizontal = 8.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(
-                        selected = refreshInterval == interval,
-                        onClick = {
-                            refreshInterval = interval
-                            WidgetSettingsManager.saveRefreshInterval(context, interval)
-                            TodoWidgetWorker.enqueuePeriodic(context)
-                        }
-                    )
-                    Text(
-                        text = stringResource(interval.labelResId),
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
-                }
-                if (index < WidgetSettings.RefreshInterval.entries.size - 1) {
-                    HorizontalDivider()
-                }
-            }
-            Text(
-                text = stringResource(R.string.refresh_description),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-            )
-        }
+        )
     }
 }
 
@@ -337,55 +228,47 @@ private fun AppListIconsSection(
                 ListIconManager.resolveIcon(context, entityId, haIcon)
             }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable {
+            SettingsItem(
+                headline = name,
+                supporting = stringResource(R.string.label_tap_to_change),
+                onClick = {
                         iconDialogEntityId = entityId
                         iconDialogListName = name
                         iconDialogHaIcon = haIcon
-                    }
-                    .padding(horizontal = 8.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                when (resolved?.type) {
-                    ListIconManager.IconType.EMOJI -> {
-                        Text(
-                            text = resolved.value,
-                            fontSize = 24.sp,
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
-                    ListIconManager.IconType.IMAGE -> {
-                        val bitmap = remember(resolved.value, iconVersion) {
-                            ListIconManager.loadBitmap(resolved.value)
-                        }
-                        if (bitmap != null) {
-                            androidx.compose.foundation.Image(
-                                bitmap = bitmap.asImageBitmap(),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(32.dp)
-                                    .clip(CircleShape)
+                    },
+                leadingContent = {
+                    when (resolved?.type) {
+                        ListIconManager.IconType.EMOJI -> {
+                            Text(
+                                text = resolved.value,
+                                fontSize = 24.sp,
+                                modifier = Modifier.size(32.dp)
                             )
-                        } else {
-                            NoIconPlaceholder()
                         }
+                        ListIconManager.IconType.IMAGE -> {
+                            val bitmap = remember(resolved.value, iconVersion) {
+                                ListIconManager.loadBitmap(resolved.value)
+                            }
+                            if (bitmap != null) {
+                                androidx.compose.foundation.Image(
+                                    bitmap = bitmap.asImageBitmap(),
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .clip(CircleShape)
+                                )
+                            } else {
+                                NoIconPlaceholder()
+                            }
+                        }
+                        null -> NoIconPlaceholder()
                     }
-                    null -> NoIconPlaceholder()
-                }
-                Spacer(Modifier.width(12.dp))
-                Text(
-                    text = name,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.weight(1f)
-                )
-                Text(
-                    text = stringResource(R.string.label_tap_to_change),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                },
+                trailingText = stringResource(R.string.label_tap_to_change)
+            )
+
+            if (entityId != availableLists.last().first) {
+                HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
             }
         }
     }
@@ -541,18 +424,78 @@ private fun SettingsSection(
     ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(bottom = 8.dp)
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(bottom = 10.dp)
         )
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            tonalElevation = 1.dp
+            shape = RoundedCornerShape(24.dp),
+            tonalElevation = 2.dp,
+            color = MaterialTheme.colorScheme.surface
         ) {
             Column(
                 modifier = Modifier.padding(8.dp),
                 content = content
+            )
+        }
+    }
+}
+
+@Composable
+private fun SettingsItem(
+    headline: String,
+    modifier: Modifier = Modifier,
+    supporting: String? = null,
+    trailingText: String? = null,
+    headlineColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface,
+    onClick: (() -> Unit)? = null,
+    leadingContent: (@Composable () -> Unit)? = null
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .let {
+                if (onClick != null) {
+                    it.clickable(onClick = onClick)
+                } else {
+                    it
+                }
+            }
+            .padding(horizontal = 12.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier.size(32.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            leadingContent?.invoke()
+        }
+
+        Spacer(Modifier.width(12.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = headline,
+                style = MaterialTheme.typography.bodyLarge,
+                color = headlineColor
+            )
+            if (supporting != null) {
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = supporting,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        if (trailingText != null) {
+            Text(
+                text = trailingText,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -29,13 +30,13 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -44,6 +45,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
@@ -52,6 +54,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -59,6 +62,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.baer.hado.R
@@ -84,6 +88,7 @@ class AddItemActivity : ComponentActivity() {
         val listName = intent.getStringExtra("list_name") ?: "To-Do"
         val supportedFeatures = intent.getIntExtra("supported_features", 0)
         val detailItemUid = intent.getStringExtra("detail_item_uid")
+        val launchedFromApp = intent.getBooleanExtra("launched_from_app", false)
         val tokenManager = TokenManager(this)
         val isLocalMode = tokenManager.isDemoMode
 
@@ -94,13 +99,14 @@ class AddItemActivity : ComponentActivity() {
 
         setContent {
             HadoTheme {
-                ListEditorScreen(
+                TodoListEditor(
                     context = this,
                     entityId = entityId,
                     listName = listName,
                     supportedFeatures = supportedFeatures,
                     httpClient = WidgetHttpClient(this),
                     isLocalMode = isLocalMode,
+                    showOpenAppAction = !launchedFromApp,
                     onBack = { finish() },
                     onChanged = { TodoWidgetWorker.enqueueOneTime(this) },
                     autoDetailItemUid = detailItemUid
@@ -132,16 +138,24 @@ private object ItemsCache {
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-private fun ListEditorScreen(
+fun TodoListEditor(
     context: Context,
     entityId: String,
     listName: String,
     supportedFeatures: Int,
     httpClient: WidgetHttpClient,
     isLocalMode: Boolean = false,
+    showOpenAppAction: Boolean = true,
     onBack: () -> Unit,
     onChanged: () -> Unit,
-    autoDetailItemUid: String? = null
+    autoDetailItemUid: String? = null,
+    modifier: Modifier = Modifier,
+    showTopBar: Boolean = true,
+    showListHeader: Boolean = true,
+    contentBottomPadding: Dp = 80.dp,
+    initialItems: List<TodoItem> = emptyList(),
+    onItemsChanged: (List<TodoItem>) -> Unit = {},
+    onAddInputFocusChanged: (Boolean) -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
     val gson = remember { Gson() }
@@ -150,35 +164,38 @@ private fun ListEditorScreen(
     val supportsDueDate = TodoListFeature.hasFeature(supportedFeatures, TodoListFeature.SET_DUE_DATE_ON_ITEM)
     val supportsDueDatetime = TodoListFeature.hasFeature(supportedFeatures, TodoListFeature.SET_DUE_DATETIME_ON_ITEM)
     // Load cached items instantly, then refresh from HA
-    val cachedItems = remember {
+    val cachedItems = remember(entityId) {
         val cached = ItemsCache.load(context, entityId)
         Log.d("HAdo", "Cache for $entityId: ${cached?.size ?: "null"} items")
         cached
     }
-    var items by remember { mutableStateOf(cachedItems ?: emptyList()) }
-    var isLoading by remember { mutableStateOf(cachedItems == null) }
-    var newItemText by remember { mutableStateOf("") }
+    var items by remember(entityId) { mutableStateOf(cachedItems ?: initialItems) }
+    var isLoading by remember(entityId) { mutableStateOf(cachedItems == null && initialItems.isEmpty()) }
+    var newItemText by remember(entityId) { mutableStateOf("") }
     val addFocusRequester = remember { FocusRequester() }
-    var refocusTrigger by remember { mutableIntStateOf(0) }
-    var initialLoadComplete by remember { mutableStateOf(false) }
-    var completedExpanded by remember { mutableStateOf(true) }
-    var pendingDeletes by remember { mutableStateOf(emptySet<String>()) }
-    var draggedItemUid by remember { mutableStateOf<String?>(null) }
-    var detailItem by remember { mutableStateOf<TodoItem?>(null) }
-    var dragOffsetY by remember { mutableFloatStateOf(0f) }
+    var refocusTrigger by remember(entityId) { mutableIntStateOf(0) }
+    var initialLoadComplete by remember(entityId) { mutableStateOf(false) }
+    var completedExpanded by remember(entityId) { mutableStateOf(true) }
+    var pendingDeletes by remember(entityId) { mutableStateOf(emptySet<String>()) }
+    var draggedItemUid by remember(entityId) { mutableStateOf<String?>(null) }
+    var detailItem by remember(entityId) { mutableStateOf<TodoItem?>(null) }
+    var dragOffsetY by remember(entityId) { mutableFloatStateOf(0f) }
+    var isAddInputFocused by remember(entityId) { mutableStateOf(false) }
     val itemHeightPx = with(LocalDensity.current) { 48.dp.toPx() }
     val haptic = LocalHapticFeedback.current
     val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
     val listState = rememberLazyListState()
+    val imeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     // Always-current items ref for gesture callbacks (avoids stale closures)
     val currentItemsState by rememberUpdatedState(items)
+
+    fun addRowIndex(): Int = items.count { !it.isCompleted } + if (showListHeader) 1 else 0
 
     // Re-focus input field after adding an item (deferred to next frame)
     LaunchedEffect(refocusTrigger) {
         if (refocusTrigger > 0) {
-            // Scroll to add-item row: title(1) + uncompleted items
-            val addRowIndex = 1 + items.count { !it.isCompleted }
-            listState.animateScrollToItem(addRowIndex)
+            listState.animateScrollToItem(addRowIndex())
             addFocusRequester.requestFocus()
             keyboardController?.show()
         }
@@ -187,6 +204,36 @@ private fun ListEditorScreen(
     // Mark initial load complete after first items render
     LaunchedEffect(isLoading) {
         if (!isLoading) initialLoadComplete = true
+    }
+
+    LaunchedEffect(entityId, initialItems) {
+        if (initialItems.isNotEmpty()) {
+            items = initialItems
+            isLoading = false
+        }
+    }
+
+    LaunchedEffect(entityId, items) {
+        ItemsCache.save(context, entityId, items)
+        onItemsChanged(items)
+    }
+
+    LaunchedEffect(isAddInputFocused, imeVisible, items.count { !it.isCompleted }, showListHeader) {
+        onAddInputFocusChanged(isAddInputFocused)
+        if (isAddInputFocused) {
+            listState.animateScrollToItem(addRowIndex())
+        }
+    }
+
+    BackHandler(enabled = isAddInputFocused && !imeVisible) {
+        clearAddInputFocus(
+            focusManager = focusManager,
+            keyboardController = keyboardController,
+            onFocusChanged = {
+                isAddInputFocused = false
+                onAddInputFocusChanged(false)
+            }
+        )
     }
 
     // Fetch items on launch (background refresh)
@@ -220,7 +267,7 @@ private fun ListEditorScreen(
     }
 
     // Auto-open detail dialog when launched from widget item tap
-    var autoDetailHandled by remember { mutableStateOf(false) }
+    var autoDetailHandled by remember(entityId, autoDetailItemUid) { mutableStateOf(false) }
     LaunchedEffect(items, autoDetailHandled) {
         if (autoDetailItemUid != null && !autoDetailHandled && items.isNotEmpty()) {
             val target = items.find { it.uid == autoDetailItemUid }
@@ -349,38 +396,43 @@ private fun ListEditorScreen(
     }
 
     Scaffold(
+        modifier = modifier,
         topBar = {
-            TopAppBar(
-                title = {},
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.cd_back)
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = {
-                        val intent = context.packageManager
-                            .getLaunchIntentForPackage(context.packageName)
-                        if (intent != null) {
-                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            context.startActivity(intent)
+            if (showTopBar) {
+                TopAppBar(
+                    title = {},
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.cd_back)
+                            )
                         }
-                    }) {
-                        Icon(
-                            Icons.Default.Settings,
-                            contentDescription = stringResource(R.string.cd_open_app),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
+                    },
+                    actions = {
+                        if (showOpenAppAction) {
+                            IconButton(onClick = {
+                                val intent = context.packageManager
+                                    .getLaunchIntentForPackage(context.packageName)
+                                if (intent != null) {
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    context.startActivity(intent)
+                                }
+                            }) {
+                                Icon(
+                                    Icons.Default.Settings,
+                                    contentDescription = stringResource(R.string.cd_open_app),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onSurface
+                    )
                 )
-            )
+            }
         },
         containerColor = MaterialTheme.colorScheme.surface
     ) { padding ->
@@ -390,52 +442,54 @@ private fun ListEditorScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .imePadding(),
-                contentPadding = PaddingValues(bottom = 80.dp)
+                contentPadding = PaddingValues(bottom = contentBottomPadding)
             ) {
                 // List title with icon (Keep: 24sp, paddingTop 12dp)
-                item {
-                    val resolvedIcon = remember {
-                        ListIconManager.resolveIcon(context, entityId)
-                    }
-                    Row(
-                        modifier = Modifier.padding(
-                            start = 20.dp,
-                            end = 20.dp,
-                            top = 12.dp,
-                            bottom = 16.dp
-                        ),
-                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-                    ) {
-                        if (resolvedIcon != null) {
-                            when (resolvedIcon.type) {
-                                ListIconManager.IconType.EMOJI -> {
-                                    Text(
-                                        text = resolvedIcon.value,
-                                        fontSize = 24.sp,
-                                        modifier = Modifier.padding(end = 8.dp)
-                                    )
-                                }
-                                ListIconManager.IconType.IMAGE -> {
-                                    val bitmap = remember { ListIconManager.loadBitmap(resolvedIcon.value) }
-                                    if (bitmap != null) {
-                                        androidx.compose.foundation.Image(
-                                            bitmap = bitmap.asImageBitmap(),
-                                            contentDescription = null,
-                                            modifier = Modifier
-                                                .size(28.dp)
-                                                .clip(CircleShape)
-                                                .padding(end = 8.dp)
+                if (showListHeader) {
+                    item {
+                        val resolvedIcon = remember(entityId) {
+                            ListIconManager.resolveIcon(context, entityId)
+                        }
+                        Row(
+                            modifier = Modifier.padding(
+                                start = 20.dp,
+                                end = 20.dp,
+                                top = 12.dp,
+                                bottom = 16.dp
+                            ),
+                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                        ) {
+                            if (resolvedIcon != null) {
+                                when (resolvedIcon.type) {
+                                    ListIconManager.IconType.EMOJI -> {
+                                        Text(
+                                            text = resolvedIcon.value,
+                                            fontSize = 24.sp,
+                                            modifier = Modifier.padding(end = 8.dp)
                                         )
+                                    }
+                                    ListIconManager.IconType.IMAGE -> {
+                                        val bitmap = remember(resolvedIcon.value) { ListIconManager.loadBitmap(resolvedIcon.value) }
+                                        if (bitmap != null) {
+                                            androidx.compose.foundation.Image(
+                                                bitmap = bitmap.asImageBitmap(),
+                                                contentDescription = null,
+                                                modifier = Modifier
+                                                    .size(28.dp)
+                                                    .clip(CircleShape)
+                                                    .padding(end = 8.dp)
+                                            )
+                                        }
                                     }
                                 }
                             }
+                            Text(
+                                text = listName,
+                                style = MaterialTheme.typography.headlineMedium.copy(fontSize = 24.sp),
+                                fontWeight = FontWeight.Normal,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
                         }
-                        Text(
-                            text = listName,
-                            style = MaterialTheme.typography.headlineMedium.copy(fontSize = 24.sp),
-                            fontWeight = FontWeight.Normal,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
                     }
                 }
 
@@ -546,7 +600,10 @@ private fun ListEditorScreen(
                         text = newItemText,
                         onTextChange = { newItemText = it },
                         onAdd = { addItem(newItemText) },
-                        focusRequester = addFocusRequester
+                        focusRequester = addFocusRequester,
+                        onFocusChanged = { isFocused ->
+                            isAddInputFocused = isFocused
+                        }
                     )
                 }
 
@@ -736,7 +793,7 @@ private fun TodoItemRow(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(vertical = 4.dp)
+                .padding(vertical = 2.dp)
         ) {
             Text(
                 text = item.summary,
@@ -817,7 +874,8 @@ private fun AddItemRow(
     text: String,
     onTextChange: (String) -> Unit,
     onAdd: () -> Unit,
-    focusRequester: FocusRequester
+    focusRequester: FocusRequester,
+    onFocusChanged: (Boolean) -> Unit = {}
 ) {
     Row(
         modifier = Modifier
@@ -843,7 +901,10 @@ private fun AddItemRow(
             },
             modifier = Modifier
                 .weight(1f)
-                .focusRequester(focusRequester),
+                .focusRequester(focusRequester)
+                .onFocusChanged { focusState ->
+                    onFocusChanged(focusState.isFocused)
+                },
             singleLine = true,
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color.Transparent,
@@ -866,7 +927,7 @@ private fun AddItemRow(
                 onAdd()
             }) {
                 Icon(
-                    Icons.Default.Send,
+                    Icons.AutoMirrored.Filled.Send,
                     contentDescription = stringResource(R.string.cd_add_item),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(22.dp)
@@ -874,6 +935,16 @@ private fun AddItemRow(
             }
         }
     }
+}
+
+private fun clearAddInputFocus(
+    focusManager: FocusManager,
+    keyboardController: androidx.compose.ui.platform.SoftwareKeyboardController?,
+    onFocusChanged: () -> Unit
+) {
+    keyboardController?.hide()
+    focusManager.clearFocus(force = true)
+    onFocusChanged()
 }
 
 private fun parseItemsFromResponse(

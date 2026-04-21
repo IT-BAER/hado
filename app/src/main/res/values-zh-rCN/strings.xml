@@ -16,12 +16,23 @@
     <string name="login_local_mode">本地模式</string>
     <string name="login_local_mode_desc">作为独立待办应用使用——无需 Home Assistant。</string>
     <string name="login_auth_failed">认证失败</string>
+    <string name="login_primary_hint">最快方式。使用 Home Assistant 登录，然后返回这里，数据会安全保存在设备上。</string>
+    <string name="login_token_supporting">面向高级配置的手动备用方式。</string>
+    <string name="login_show_token_section">改用访问令牌</string>
+    <string name="login_hide_token_section">隐藏令牌登录</string>
 
     <!-- Home -->
     <string name="home_no_items">还没有项目。\n点击 + 添加一个！</string>
     <string name="home_no_lists_local">还没有列表。\n点击顶部栏的 + 创建一个！</string>
     <string name="home_no_lists_ha">未找到待办列表。\n请先在 Home Assistant 中创建待办列表。</string>
     <string name="label_todo_list">待办列表</string>
+    <string name="home_choose_list">选择列表</string>
+    <string name="home_local_mode_support">存储在此设备上</string>
+    <string name="home_remote_mode_support">与 Home Assistant 同步</string>
+    <string name="home_open_count">%1$d 个待处理</string>
+    <string name="home_overdue_count">%1$d 个逾期</string>
+    <string name="home_section_open">待处理</string>
+    <string name="home_section_completed">已完成</string>
     <string name="dialog_delete_list_title">删除列表</string>
     <string name="dialog_delete_list_text">删除"%1$s"及其所有项目？</string>
     <string name="dialog_add_item_title">添加项目</string>
@@ -66,6 +77,8 @@
     <string name="local_mode_banner">本地模式——您的列表存储在此设备上。退出以连接 Home Assistant。</string>
     <string name="section_account">账户</string>
     <string name="section_about">关于</string>
+    <string name="settings_logout_supporting">清除令牌并返回登录界面。</string>
+    <string name="settings_open_link">打开</string>
     <string name="label_version">版本</string>
     <string name="label_developer">开发者</string>
     <string name="label_privacy_policy">隐私政策</string>
@@ -91,6 +104,7 @@
     <string name="settings_show_title">显示小组件标题</string>
     <string name="settings_show_title_desc">显示 HAdo 图标和标题栏</string>
     <string name="section_font_size">字体大小</string>
+    <string name="section_item_height">项目高度</string>
     <string name="section_bg_opacity">背景不透明度</string>
     <string name="section_layout">布局</string>
     <string name="settings_compact_mode">紧凑模式</string>
@@ -111,6 +125,7 @@
 
     <!-- Widget -->
     <string name="widget_no_lists">未选择列表</string>
+    <string name="widget_loading">正在加载小组件...</string>
     <string name="widget_all_done">全部完成！ ✓</string>
 
     <!-- Due dates -->

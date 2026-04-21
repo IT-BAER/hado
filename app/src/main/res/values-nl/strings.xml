@@ -16,12 +16,23 @@
     <string name="login_local_mode">Lokale modus</string>
     <string name="login_local_mode_desc">Gebruik als zelfstandige taken-app — geen Home Assistant vereist.</string>
     <string name="login_auth_failed">Authenticatie mislukt</string>
+    <string name="login_primary_hint">Snelste route. Meld je aan bij Home Assistant en keer hier terug met veilige opslag op het apparaat.</string>
+    <string name="login_token_supporting">Handmatige terugval voor geavanceerde configuraties.</string>
+    <string name="login_show_token_section">Gebruik in plaats daarvan een toegangstoken</string>
+    <string name="login_hide_token_section">Verberg tokenaanmelding</string>
 
     <!-- Home -->
     <string name="home_no_items">Nog geen items.\nTik op + om er een toe te voegen!</string>
     <string name="home_no_lists_local">Nog geen lijsten.\nTik op + in de bovenste balk om er een aan te maken!</string>
     <string name="home_no_lists_ha">Geen takenlijsten gevonden.\nMaak eerst een takenlijst aan in Home Assistant.</string>
     <string name="label_todo_list">Takenlijst</string>
+    <string name="home_choose_list">Kies een lijst</string>
+    <string name="home_local_mode_support">Op dit apparaat opgeslagen</string>
+    <string name="home_remote_mode_support">Gesynchroniseerd met Home Assistant</string>
+    <string name="home_open_count">%1$d open</string>
+    <string name="home_overdue_count">%1$d achterstallig</string>
+    <string name="home_section_open">Open</string>
+    <string name="home_section_completed">Voltooid</string>
     <string name="dialog_delete_list_title">Lijst verwijderen</string>
     <string name="dialog_delete_list_text">\"%1$s\" en alle items verwijderen?</string>
     <string name="dialog_add_item_title">Item toevoegen</string>
@@ -66,6 +77,8 @@
     <string name="local_mode_banner">Lokale modus — je lijsten worden op dit apparaat opgeslagen. Log uit om met Home Assistant te verbinden.</string>
     <string name="section_account">Account</string>
     <string name="section_about">Over</string>
+    <string name="settings_logout_supporting">Wis tokens en ga terug naar aanmelden.</string>
+    <string name="settings_open_link">Openen</string>
     <string name="label_version">Versie</string>
     <string name="label_developer">Ontwikkelaar</string>
     <string name="label_privacy_policy">Privacybeleid</string>
@@ -91,6 +104,7 @@
     <string name="settings_show_title">Widgettitel tonen</string>
     <string name="settings_show_title_desc">HAdo-pictogram en titelbalk weergeven</string>
     <string name="section_font_size">Lettergrootte</string>
+    <string name="section_item_height">Itemhoogte</string>
     <string name="section_bg_opacity">Achtergronddekking</string>
     <string name="section_layout">Indeling</string>
     <string name="settings_compact_mode">Compacte modus</string>
@@ -111,6 +125,7 @@
 
     <!-- Widget -->
     <string name="widget_no_lists">Geen lijsten geselecteerd</string>
+    <string name="widget_loading">Widget wordt geladen...</string>
     <string name="widget_all_done">Alles klaar! ✓</string>
 
     <!-- Due dates -->

@@ -16,12 +16,23 @@
     <string name="login_local_mode">ローカルモード</string>
     <string name="login_local_mode_desc">スタンドアロンのToDoアプリとして使用 — Home Assistant不要。</string>
     <string name="login_auth_failed">認証に失敗しました</string>
+    <string name="login_primary_hint">最短ルートです。Home Assistantでサインインし、安全な端末内保存のままここへ戻ります。</string>
+    <string name="login_token_supporting">上級者向け構成のための手動フォールバックです。</string>
+    <string name="login_show_token_section">代わりにアクセストークンを使う</string>
+    <string name="login_hide_token_section">トークンログインを隠す</string>
 
     <!-- Home -->
     <string name="home_no_items">まだアイテムがありません。\n+をタップして追加！</string>
     <string name="home_no_lists_local">まだリストがありません。\n上部バーの+をタップして作成！</string>
     <string name="home_no_lists_ha">ToDoリストが見つかりません。\nまずHome AssistantでToDoリストを作成してください。</string>
     <string name="label_todo_list">ToDoリスト</string>
+    <string name="home_choose_list">リストを選択</string>
+    <string name="home_local_mode_support">このデバイスに保存</string>
+    <string name="home_remote_mode_support">Home Assistant と同期</string>
+    <string name="home_open_count">%1$d 件が未完了</string>
+    <string name="home_overdue_count">%1$d 件が期限切れ</string>
+    <string name="home_section_open">未完了</string>
+    <string name="home_section_completed">完了済み</string>
     <string name="dialog_delete_list_title">リストを削除</string>
     <string name="dialog_delete_list_text">「%1$s」とすべてのアイテムを削除しますか？</string>
     <string name="dialog_add_item_title">アイテムを追加</string>
@@ -66,6 +77,8 @@
     <string name="local_mode_banner">ローカルモード — リストはこのデバイスに保存されます。ログアウトしてHome Assistantに接続できます。</string>
     <string name="section_account">アカウント</string>
     <string name="section_about">このアプリについて</string>
+    <string name="settings_logout_supporting">トークンを消去してサインイン画面に戻ります。</string>
+    <string name="settings_open_link">開く</string>
     <string name="label_version">バージョン</string>
     <string name="label_developer">開発者</string>
     <string name="label_privacy_policy">プライバシーポリシー</string>
@@ -91,6 +104,7 @@
     <string name="settings_show_title">ウィジェットタイトルを表示</string>
     <string name="settings_show_title_desc">HADoアイコンとタイトルバーを表示</string>
     <string name="section_font_size">フォントサイズ</string>
+    <string name="section_item_height">項目の高さ</string>
     <string name="section_bg_opacity">背景の不透明度</string>
     <string name="section_layout">レイアウト</string>
     <string name="settings_compact_mode">コンパクトモード</string>
@@ -111,6 +125,7 @@
 
     <!-- Widget -->
     <string name="widget_no_lists">リスト未選択</string>
+    <string name="widget_loading">ウィジェットを読み込み中...</string>
     <string name="widget_all_done">すべて完了！ ✓</string>
 
     <!-- Due dates -->

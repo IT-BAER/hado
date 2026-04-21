@@ -16,12 +16,23 @@
     <string name="login_local_mode">Локальный режим</string>
     <string name="login_local_mode_desc">Использовать как самостоятельное приложение задач — Home Assistant не требуется.</string>
     <string name="login_auth_failed">Ошибка аутентификации</string>
+    <string name="login_primary_hint">Самый быстрый путь. Войдите через Home Assistant и вернитесь сюда, данные будут безопасно храниться на устройстве.</string>
+    <string name="login_token_supporting">Ручной запасной вариант для продвинутых сценариев.</string>
+    <string name="login_show_token_section">Использовать токен доступа</string>
+    <string name="login_hide_token_section">Скрыть вход по токену</string>
 
     <!-- Home -->
     <string name="home_no_items">Пока нет элементов.\nНажмите +, чтобы добавить!</string>
     <string name="home_no_lists_local">Пока нет списков.\nНажмите + вверху, чтобы создать!</string>
     <string name="home_no_lists_ha">Списки задач не найдены.\nСоздайте список задач в Home Assistant.</string>
     <string name="label_todo_list">Список задач</string>
+    <string name="home_choose_list">Выберите список</string>
+    <string name="home_local_mode_support">Хранится на этом устройстве</string>
+    <string name="home_remote_mode_support">Синхронизируется с Home Assistant</string>
+    <string name="home_open_count">%1$d активных</string>
+    <string name="home_overdue_count">%1$d просрочено</string>
+    <string name="home_section_open">Активные</string>
+    <string name="home_section_completed">Завершённые</string>
     <string name="dialog_delete_list_title">Удалить список</string>
     <string name="dialog_delete_list_text">Удалить «%1$s» и все его элементы?</string>
     <string name="dialog_add_item_title">Добавить элемент</string>
@@ -66,6 +77,8 @@
     <string name="local_mode_banner">Локальный режим — списки хранятся на этом устройстве. Выйдите, чтобы подключить Home Assistant.</string>
     <string name="section_account">Аккаунт</string>
     <string name="section_about">О приложении</string>
+    <string name="settings_logout_supporting">Удалить токены и вернуться ко входу.</string>
+    <string name="settings_open_link">Открыть</string>
     <string name="label_version">Версия</string>
     <string name="label_developer">Разработчик</string>
     <string name="label_privacy_policy">Политика конфиденциальности</string>
@@ -91,6 +104,7 @@
     <string name="settings_show_title">Показать заголовок виджета</string>
     <string name="settings_show_title_desc">Отображать значок и заголовок HAdo</string>
     <string name="section_font_size">Размер шрифта</string>
+    <string name="section_item_height">Высота элементов</string>
     <string name="section_bg_opacity">Прозрачность фона</string>
     <string name="section_layout">Макет</string>
     <string name="settings_compact_mode">Компактный режим</string>
@@ -111,6 +125,7 @@
 
     <!-- Widget -->
     <string name="widget_no_lists">Списки не выбраны</string>
+    <string name="widget_loading">Загрузка виджета...</string>
     <string name="widget_all_done">Всё готово! ✓</string>
 
     <!-- Due dates -->

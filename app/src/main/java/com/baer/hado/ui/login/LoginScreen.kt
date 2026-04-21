@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -17,19 +18,19 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -52,6 +53,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.baer.hado.R
 import com.baer.hado.data.api.TokenRefreshInterceptor.Companion.AUTH_CLIENT_ID
 import com.baer.hado.data.api.TokenRefreshInterceptor.Companion.AUTH_REDIRECT_URI
+import com.baer.hado.ui.theme.AppSpacing
 
 @Composable
 fun LoginScreen(
@@ -127,138 +129,215 @@ private fun LoginForm(
     onTryDemo: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showTokenSection by remember { mutableStateOf(uiState.token.isNotBlank()) }
+
     Column(
         modifier = modifier
-            .padding(horizontal = 32.dp)
-            .verticalScroll(rememberScrollState()),
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = AppSpacing.screenHorizontal, vertical = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.spacedBy(AppSpacing.sectionGap)
     ) {
-        Spacer(Modifier.height(48.dp))
-
-        Icon(
-            painter = painterResource(id = R.mipmap.ic_launcher_monochrome),
-            contentDescription = null,
-            modifier = Modifier.size(120.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
-
-        Spacer(Modifier.height(16.dp))
-
-        Text(
-            text = stringResource(R.string.app_name),
-            style = MaterialTheme.typography.headlineLarge,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        Text(
-            text = stringResource(R.string.app_subtitle),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Spacer(Modifier.height(48.dp))
-
-        OutlinedTextField(
-            value = uiState.serverUrl,
-            onValueChange = onServerUrlChanged,
-            label = { Text(stringResource(R.string.login_url_label)) },
-            placeholder = { Text(stringResource(R.string.login_url_placeholder)) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Uri,
-                imeAction = ImeAction.Go
-            ),
-            keyboardActions = KeyboardActions(onGo = { onConnectOAuth() }),
-            enabled = !uiState.isLoading
-        )
-
-        Spacer(Modifier.height(24.dp))
-
-        Button(
-            onClick = onConnectOAuth,
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !uiState.isLoading
+        Surface(
+            color = MaterialTheme.colorScheme.primaryContainer,
+            shape = MaterialTheme.shapes.large
         ) {
-            if (uiState.isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    strokeWidth = 2.dp,
-                    color = MaterialTheme.colorScheme.onPrimary
+            androidx.compose.material3.Icon(
+                painter = painterResource(id = R.mipmap.ic_launcher_monochrome),
+                contentDescription = null,
+                modifier = Modifier
+                    .padding(20.dp)
+                    .size(72.dp),
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.app_name),
+                style = MaterialTheme.typography.displaySmall,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+
+            Text(
+                text = stringResource(R.string.app_subtitle),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+
+            Text(
+                text = stringResource(R.string.login_primary_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(0.9f)
+            )
+        }
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.login_connect_oauth),
+                    style = MaterialTheme.typography.titleLarge
                 )
-            } else {
-                Text(stringResource(R.string.login_connect_oauth))
+
+                OutlinedTextField(
+                    value = uiState.serverUrl,
+                    onValueChange = onServerUrlChanged,
+                    label = { Text(stringResource(R.string.login_url_label)) },
+                    placeholder = { Text(stringResource(R.string.login_url_placeholder)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Uri,
+                        imeAction = ImeAction.Go
+                    ),
+                    keyboardActions = KeyboardActions(onGo = { onConnectOAuth() }),
+                    enabled = !uiState.isLoading
+                )
+
+                Button(
+                    onClick = onConnectOAuth,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !uiState.isLoading
+                ) {
+                    if (uiState.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    } else {
+                        Text(stringResource(R.string.login_connect_oauth))
+                    }
+                }
             }
         }
 
-        Spacer(Modifier.height(24.dp))
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .animateContentSize(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Column {
+                    Text(
+                        text = stringResource(R.string.login_or_token),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = stringResource(R.string.login_token_supporting),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
 
-        HorizontalDivider()
+                TextButton(
+                    onClick = { showTokenSection = !showTokenSection },
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text(
+                        if (showTokenSection) {
+                            stringResource(R.string.login_hide_token_section)
+                        } else {
+                            stringResource(R.string.login_show_token_section)
+                        }
+                    )
+                }
 
-        Spacer(Modifier.height(16.dp))
+                if (showTokenSection) {
+                    OutlinedTextField(
+                        value = uiState.token,
+                        onValueChange = onTokenChanged,
+                        label = { Text(stringResource(R.string.login_token_label)) },
+                        placeholder = { Text(stringResource(R.string.login_token_placeholder)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = { onSaveToken() }),
+                        enabled = !uiState.isLoading
+                    )
 
-        Text(
-            text = stringResource(R.string.login_or_token),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+                    OutlinedButton(
+                        onClick = onSaveToken,
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !uiState.isLoading && uiState.token.isNotBlank() && uiState.serverUrl.isNotBlank()
+                    ) {
+                        Text(stringResource(R.string.login_save_token))
+                    }
+                }
+            }
+        }
+
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.secondaryContainer,
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Text(
+                text = stringResource(R.string.login_credentials_note),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
+            )
+        }
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.login_local_mode),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+
+                Text(
+                    text = stringResource(R.string.login_local_mode_desc),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+
+                OutlinedButton(
+                    onClick = onTryDemo,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.login_local_mode))
+                }
+            }
+        }
 
         Spacer(Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = uiState.token,
-            onValueChange = onTokenChanged,
-            label = { Text(stringResource(R.string.login_token_label)) },
-            placeholder = { Text(stringResource(R.string.login_token_placeholder)) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { onSaveToken() }),
-            enabled = !uiState.isLoading
-        )
-
-        Spacer(Modifier.height(16.dp))
-
-        OutlinedButton(
-            onClick = onSaveToken,
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !uiState.isLoading && uiState.token.isNotBlank() && uiState.serverUrl.isNotBlank()
-        ) {
-            Text(stringResource(R.string.login_save_token))
-        }
-
-        Spacer(Modifier.height(24.dp))
-
-        Text(
-            text = stringResource(R.string.login_credentials_note),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(Modifier.height(32.dp))
-
-        HorizontalDivider()
-
-        Spacer(Modifier.height(16.dp))
-
-        OutlinedButton(
-            onClick = onTryDemo,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(stringResource(R.string.login_local_mode))
-        }
-
-        Text(
-            text = stringResource(R.string.login_local_mode_desc),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(Modifier.height(48.dp))
     }
 }
 

@@ -16,12 +16,23 @@
     <string name="login_local_mode">Modo local</string>
     <string name="login_local_mode_desc">Usar como app de tareas independiente — no requiere Home Assistant.</string>
     <string name="login_auth_failed">Error de autenticación</string>
+    <string name="login_primary_hint">La vía más rápida. Inicia sesión con Home Assistant y vuelve aquí con almacenamiento seguro en el dispositivo.</string>
+    <string name="login_token_supporting">Alternativa manual para configuraciones avanzadas.</string>
+    <string name="login_show_token_section">Usar token de acceso en su lugar</string>
+    <string name="login_hide_token_section">Ocultar acceso con token</string>
 
     <!-- Home -->
     <string name="home_no_items">Aún no hay elementos.\n¡Toca + para agregar uno!</string>
     <string name="home_no_lists_local">Aún no hay listas.\n¡Toca + en la barra superior para crear una!</string>
     <string name="home_no_lists_ha">No se encontraron listas de tareas.\nCrea una lista de tareas en Home Assistant primero.</string>
     <string name="label_todo_list">Lista de tareas</string>
+    <string name="home_choose_list">Elige una lista</string>
+    <string name="home_local_mode_support">Guardado en este dispositivo</string>
+    <string name="home_remote_mode_support">Sincronizado con Home Assistant</string>
+    <string name="home_open_count">%1$d pendientes</string>
+    <string name="home_overdue_count">%1$d vencidas</string>
+    <string name="home_section_open">Pendientes</string>
+    <string name="home_section_completed">Completadas</string>
     <string name="dialog_delete_list_title">Eliminar lista</string>
     <string name="dialog_delete_list_text">¿Eliminar \"%1$s\" y todos sus elementos?</string>
     <string name="dialog_add_item_title">Agregar elemento</string>
@@ -66,6 +77,8 @@
     <string name="local_mode_banner">Modo local — tus listas se guardan en este dispositivo. Cierra sesión para conectar con Home Assistant.</string>
     <string name="section_account">Cuenta</string>
     <string name="section_about">Acerca de</string>
+    <string name="settings_logout_supporting">Borra los tokens y vuelve al inicio de sesión.</string>
+    <string name="settings_open_link">Abrir</string>
     <string name="label_version">Versión</string>
     <string name="label_developer">Desarrollador</string>
     <string name="label_privacy_policy">Política de privacidad</string>
@@ -91,6 +104,7 @@
     <string name="settings_show_title">Mostrar título del widget</string>
     <string name="settings_show_title_desc">Mostrar el ícono y la barra de título de HAdo</string>
     <string name="section_font_size">Tamaño de fuente</string>
+    <string name="section_item_height">Altura de los elementos</string>
     <string name="section_bg_opacity">Opacidad del fondo</string>
     <string name="section_layout">Diseño</string>
     <string name="settings_compact_mode">Modo compacto</string>
@@ -111,6 +125,7 @@
 
     <!-- Widget -->
     <string name="widget_no_lists">Sin listas seleccionadas</string>
+    <string name="widget_loading">Cargando widget...</string>
     <string name="widget_all_done">¡Todo listo! ✓</string>
 
     <!-- Due dates -->

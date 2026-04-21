@@ -16,12 +16,23 @@
     <string name="login_local_mode">Mode local</string>
     <string name="login_local_mode_desc">Utiliser comme application de tâches autonome — Home Assistant non requis.</string>
     <string name="login_auth_failed">Échec de l\'authentification</string>
+    <string name="login_primary_hint">Voie la plus rapide. Connectez-vous à Home Assistant, puis revenez ici avec stockage sécurisé sur l\'appareil.</string>
+    <string name="login_token_supporting">Solution de secours manuelle pour configurations avancées.</string>
+    <string name="login_show_token_section">Utiliser un jeton d\'accès à la place</string>
+    <string name="login_hide_token_section">Masquer la connexion par jeton</string>
 
     <!-- Home -->
     <string name="home_no_items">Aucun élément pour le moment.\nAppuyez sur + pour en ajouter un !</string>
     <string name="home_no_lists_local">Aucune liste pour le moment.\nAppuyez sur + dans la barre supérieure pour en créer une !</string>
     <string name="home_no_lists_ha">Aucune liste de tâches trouvée.\nCréez d\'abord une liste de tâches dans Home Assistant.</string>
     <string name="label_todo_list">Liste de tâches</string>
+    <string name="home_choose_list">Choisir une liste</string>
+    <string name="home_local_mode_support">Stocké sur cet appareil</string>
+    <string name="home_remote_mode_support">Synchronisé avec Home Assistant</string>
+    <string name="home_open_count">%1$d en cours</string>
+    <string name="home_overdue_count">%1$d en retard</string>
+    <string name="home_section_open">En cours</string>
+    <string name="home_section_completed">Terminés</string>
     <string name="dialog_delete_list_title">Supprimer la liste</string>
     <string name="dialog_delete_list_text">Supprimer « %1$s » et tous ses éléments ?</string>
     <string name="dialog_add_item_title">Ajouter un élément</string>
@@ -66,6 +77,8 @@
     <string name="local_mode_banner">Mode local — vos listes sont stockées sur cet appareil. Déconnectez-vous pour connecter Home Assistant.</string>
     <string name="section_account">Compte</string>
     <string name="section_about">À propos</string>
+    <string name="settings_logout_supporting">Effacer les jetons et revenir à la connexion.</string>
+    <string name="settings_open_link">Ouvrir</string>
     <string name="label_version">Version</string>
     <string name="label_developer">Développeur</string>
     <string name="label_privacy_policy">Politique de confidentialité</string>
@@ -91,6 +104,7 @@
     <string name="settings_show_title">Afficher le titre du widget</string>
     <string name="settings_show_title_desc">Afficher l\'icône et la barre de titre HAdo</string>
     <string name="section_font_size">Taille de police</string>
+    <string name="section_item_height">Hauteur des éléments</string>
     <string name="section_bg_opacity">Opacité du fond</string>
     <string name="section_layout">Disposition</string>
     <string name="settings_compact_mode">Mode compact</string>
@@ -111,6 +125,7 @@
 
     <!-- Widget -->
     <string name="widget_no_lists">Aucune liste sélectionnée</string>
+    <string name="widget_loading">Chargement du widget...</string>
     <string name="widget_all_done">Tout est fait ! ✓</string>
 
     <!-- Due dates -->

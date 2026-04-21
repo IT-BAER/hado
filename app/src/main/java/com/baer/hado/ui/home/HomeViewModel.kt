@@ -64,7 +64,10 @@ class HomeViewModel @Inject constructor(
     }
 
     fun selectList(entityId: String) {
-        _uiState.value = _uiState.value.copy(selectedListId = entityId)
+        _uiState.value = _uiState.value.copy(
+            selectedListId = entityId,
+            items = emptyList()
+        )
         loadItems(entityId)
     }
 

@@ -16,12 +16,23 @@
     <string name="login_local_mode">로컬 모드</string>
     <string name="login_local_mode_desc">독립형 할 일 앱으로 사용 — Home Assistant 불필요.</string>
     <string name="login_auth_failed">인증 실패</string>
+    <string name="login_primary_hint">가장 빠른 방법입니다. Home Assistant로 로그인한 뒤 기기 내 안전한 저장 상태로 여기로 돌아옵니다.</string>
+    <string name="login_token_supporting">고급 환경을 위한 수동 대체 방식입니다.</string>
+    <string name="login_show_token_section">대신 액세스 토큰 사용</string>
+    <string name="login_hide_token_section">토큰 로그인 숨기기</string>
 
     <!-- Home -->
     <string name="home_no_items">아직 항목이 없습니다.\n+를 눌러 추가하세요!</string>
     <string name="home_no_lists_local">아직 목록이 없습니다.\n상단 바의 +를 눌러 만드세요!</string>
     <string name="home_no_lists_ha">할 일 목록을 찾을 수 없습니다.\nHome Assistant에서 먼저 할 일 목록을 만드세요.</string>
     <string name="label_todo_list">할 일 목록</string>
+    <string name="home_choose_list">목록 선택</string>
+    <string name="home_local_mode_support">이 기기에 저장됨</string>
+    <string name="home_remote_mode_support">Home Assistant와 동기화됨</string>
+    <string name="home_open_count">%1$d개 진행 중</string>
+    <string name="home_overdue_count">%1$d개 기한 지남</string>
+    <string name="home_section_open">진행 중</string>
+    <string name="home_section_completed">완료됨</string>
     <string name="dialog_delete_list_title">목록 삭제</string>
     <string name="dialog_delete_list_text">"%1$s" 및 모든 항목을 삭제하시겠습니까?</string>
     <string name="dialog_add_item_title">항목 추가</string>
@@ -66,6 +77,8 @@
     <string name="local_mode_banner">로컬 모드 — 목록이 이 기기에 저장됩니다. Home Assistant에 연결하려면 로그아웃하세요.</string>
     <string name="section_account">계정</string>
     <string name="section_about">정보</string>
+    <string name="settings_logout_supporting">토큰을 지우고 로그인 화면으로 돌아갑니다.</string>
+    <string name="settings_open_link">열기</string>
     <string name="label_version">버전</string>
     <string name="label_developer">개발자</string>
     <string name="label_privacy_policy">개인정보 처리방침</string>
@@ -91,6 +104,7 @@
     <string name="settings_show_title">위젯 제목 표시</string>
     <string name="settings_show_title_desc">HAdo 아이콘 및 제목 표시줄 표시</string>
     <string name="section_font_size">글꼴 크기</string>
+    <string name="section_item_height">항목 높이</string>
     <string name="section_bg_opacity">배경 불투명도</string>
     <string name="section_layout">레이아웃</string>
     <string name="settings_compact_mode">컴팩트 모드</string>
@@ -111,6 +125,7 @@
 
     <!-- Widget -->
     <string name="widget_no_lists">선택된 목록 없음</string>
+    <string name="widget_loading">위젯 불러오는 중...</string>
     <string name="widget_all_done">모두 완료! ✓</string>
 
     <!-- Due dates -->
