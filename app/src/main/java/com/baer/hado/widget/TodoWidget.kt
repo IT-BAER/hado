@@ -68,6 +68,7 @@ class TodoWidget : GlanceAppWidget() {
     private fun WidgetContent() {
         val prefs = currentState<Preferences>()
         val listsJson = prefs[TodoWidgetKeys.ALL_LISTS_KEY] ?: "[]"
+        val pendingToggleJson = prefs[TodoWidgetKeys.PENDING_TOGGLE_IDS_KEY] ?: "[]"
         val settingsJson = prefs[TodoWidgetKeys.SETTINGS_JSON_KEY]
         val appWidgetId = prefs[TodoWidgetKeys.APP_WIDGET_ID_KEY] ?: ""
 
@@ -83,6 +84,13 @@ class TodoWidget : GlanceAppWidget() {
             else WidgetSettings()
         } catch (_: Exception) {
             WidgetSettings()
+        }
+
+        val pendingToggleIds = try {
+            val type = object : TypeToken<List<String>>() {}.type
+            Gson().fromJson<List<String>>(pendingToggleJson, type).toSet()
+        } catch (_: Exception) {
+            emptySet()
         }
 
         // Apply display filters
@@ -118,22 +126,28 @@ class TodoWidget : GlanceAppWidget() {
                         .padding(bottom = headerBottomPad, start = outerPadding, end = outerPadding),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Image(
-                        provider = ImageProvider(R.mipmap.ic_launcher_monochrome),
-                        contentDescription = null,
-                        modifier = GlanceModifier.size(48.dp),
-                        colorFilter = ColorFilter.tint(GlanceTheme.colors.primary)
-                    )
-                    Spacer(GlanceModifier.width(6.dp))
-                    Text(
-                        text = LocalContext.current.getString(R.string.app_name),
-                        style = TextStyle(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = settings.fontSize.titleSp.sp,
-                            color = GlanceTheme.colors.onSurface
-                        ),
-                        modifier = GlanceModifier.defaultWeight()
-                    )
+                    Row(
+                        modifier = GlanceModifier
+                            .defaultWeight()
+                            .clickable(actionRunCallback<OpenAppAction>()),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Image(
+                            provider = ImageProvider(R.mipmap.ic_launcher_monochrome),
+                            contentDescription = null,
+                            modifier = GlanceModifier.size(48.dp),
+                            colorFilter = ColorFilter.tint(GlanceTheme.colors.primary)
+                        )
+                        Spacer(GlanceModifier.width(6.dp))
+                        Text(
+                            text = LocalContext.current.getString(R.string.app_name),
+                            style = TextStyle(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = settings.fontSize.titleSp.sp,
+                                color = GlanceTheme.colors.onSurface
+                            )
+                        )
+                    }
                     Image(
                         provider = ImageProvider(R.drawable.ic_widget_refresh),
                         contentDescription = LocalContext.current.getString(R.string.cd_refresh),
@@ -161,8 +175,8 @@ class TodoWidget : GlanceAppWidget() {
             } else {
                 val rows = mutableListOf<WidgetRow>()
                 val anyListHasIcon = lists.any { it.iconType != null && it.iconValue != null }
-                for (list in lists) {
-                    rows.add(WidgetRow.Header(list.entityId, list.name, list.iconType, list.iconValue, list.supportedFeatures))
+                lists.forEachIndexed { index, list ->
+                    rows.add(WidgetRow.Header(list.entityId, list.name, list.iconType, list.iconValue, list.supportedFeatures, isFirstHeader = index == 0))
                     val activeItems = list.items.filter { !it.isCompleted }
                     val completedItems = list.items.filter { it.isCompleted }
                     if (activeItems.isEmpty() && completedItems.isEmpty()) {
@@ -179,8 +193,8 @@ class TodoWidget : GlanceAppWidget() {
                 LazyColumn(modifier = GlanceModifier.fillMaxSize()) {
                     items(rows, itemId = { it.stableId }) { row ->
                         when (row) {
-                            is WidgetRow.Header -> ListHeader(row.entityId, row.name, row.iconType, row.iconValue, row.supportedFeatures, settings, anyListHasIcon)
-                            is WidgetRow.Item -> TodoItemRow(row.item, row.entityId, row.listName, row.supportedFeatures, settings)
+                            is WidgetRow.Header -> ListHeader(row.entityId, row.name, row.iconType, row.iconValue, row.supportedFeatures, row.isFirstHeader, settings, anyListHasIcon)
+                            is WidgetRow.Item -> TodoItemRow(row.item, row.entityId, row.listName, row.supportedFeatures, settings, pendingToggleIds.contains(pendingToggleKey(row.entityId, row.item.uid)))
                             is WidgetRow.EmptyHint -> EmptyHintRow(settings)
                         }
                     }
@@ -190,9 +204,14 @@ class TodoWidget : GlanceAppWidget() {
     }
 
     @Composable
-    private fun ListHeader(entityId: String, name: String, iconType: String?, iconValue: String?, supportedFeatures: Int?, settings: WidgetSettings, anyListHasIcon: Boolean) {
-        val topPad = if (settings.compactMode) 8.dp else 14.dp
-        val bottomPad = if (settings.compactMode) 4.dp else 6.dp
+    private fun ListHeader(entityId: String, name: String, iconType: String?, iconValue: String?, supportedFeatures: Int?, isFirstHeader: Boolean, settings: WidgetSettings, anyListHasIcon: Boolean) {
+        val topPad = when {
+            settings.compactMode && isFirstHeader -> 10.dp
+            settings.compactMode -> 6.dp
+            isFirstHeader -> 16.dp
+            else -> 10.dp
+        }
+        val bottomPad = if (settings.compactMode) 6.dp else 8.dp
         val iconSize = (settings.fontSize.titleSp * 1.4f).dp
 
         val hzPad = if (settings.compactMode) 6.dp else 12.dp
@@ -200,7 +219,6 @@ class TodoWidget : GlanceAppWidget() {
         Row(
             modifier = GlanceModifier
                 .fillMaxWidth()
-                .padding(top = topPad, bottom = bottomPad, start = hzPad, end = hzPad)
                 .clickable(
                     actionRunCallback<AddItemAction>(
                         actionParametersOf(
@@ -209,7 +227,8 @@ class TodoWidget : GlanceAppWidget() {
                             AddItemAction.PARAM_SUPPORTED_FEATURES to (supportedFeatures ?: 0).toString()
                         )
                     )
-                ),
+                )
+                .padding(top = topPad, bottom = bottomPad, start = hzPad, end = hzPad),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Icon: emoji as text, image as bitmap, or placeholder for alignment
@@ -249,8 +268,8 @@ class TodoWidget : GlanceAppWidget() {
     }
 
     @Composable
-    private fun TodoItemRow(item: TodoItem, entityId: String, listName: String, supportedFeatures: Int?, settings: WidgetSettings) {
-        val vertPad = if (settings.compactMode) 4.dp else 10.dp
+    private fun TodoItemRow(item: TodoItem, entityId: String, listName: String, supportedFeatures: Int?, settings: WidgetSettings, isPending: Boolean) {
+        val vertPad = settings.itemHeight.rowVerticalPaddingDp.dp
         val hzPad = if (settings.compactMode) 6.dp else 12.dp
         val overdueModifier = if (item.isOverdue) {
             GlanceModifier.background(color = Color(0x18D32F2F))
@@ -278,7 +297,7 @@ class TodoWidget : GlanceAppWidget() {
             .fillMaxWidth()
             .then(overdueModifier)
             .padding(start = startPad, top = vertPad, end = hzPad, bottom = vertPad)
-            .let { if (!settings.checkboxOnly) it.clickable(toggleAction) else it }
+            .let { if (!settings.checkboxOnly && !isPending) it.clickable(toggleAction) else it }
 
         Row(
             modifier = rowModifier,
@@ -287,24 +306,30 @@ class TodoWidget : GlanceAppWidget() {
             Box(
                 modifier = GlanceModifier
                     .size(40.dp)
-                    .let { if (settings.checkboxOnly) it.clickable(toggleAction) else it },
+                    .let { if (settings.checkboxOnly && !isPending) it.clickable(toggleAction) else it },
                 contentAlignment = Alignment.Center
             ) {
                 Image(
                     provider = ImageProvider(
-                        if (item.isCompleted) R.drawable.ic_widget_checked
-                        else R.drawable.ic_widget_unchecked
+                        when {
+                            isPending -> R.drawable.ic_widget_refresh
+                            item.isCompleted -> R.drawable.ic_widget_checked
+                            else -> R.drawable.ic_widget_unchecked
+                        }
                     ),
                     contentDescription = null,
-                    modifier = GlanceModifier.size(20.dp),
+                    modifier = GlanceModifier.size(if (isPending) 18.dp else 20.dp),
                     colorFilter = ColorFilter.tint(
-                        if (item.isCompleted) GlanceTheme.colors.outline
-                        else GlanceTheme.colors.primary
+                        when {
+                            isPending -> GlanceTheme.colors.onSurfaceVariant
+                            item.isCompleted -> GlanceTheme.colors.outline
+                            else -> GlanceTheme.colors.primary
+                        }
                     )
                 )
             }
             Column(modifier = GlanceModifier.defaultWeight()
-                .let { if (settings.checkboxOnly) it.clickable(viewAction) else it }
+                .let { if (settings.checkboxOnly && !isPending) it.clickable(viewAction) else it }
             ) {
                 Row(
                     modifier = GlanceModifier.fillMaxWidth(),
@@ -403,7 +428,7 @@ class TodoWidget : GlanceAppWidget() {
 sealed class WidgetRow {
     abstract val stableId: Long
 
-    data class Header(val entityId: String, val name: String, val iconType: String?, val iconValue: String?, val supportedFeatures: Int?) : WidgetRow() {
+    data class Header(val entityId: String, val name: String, val iconType: String?, val iconValue: String?, val supportedFeatures: Int?, val isFirstHeader: Boolean) : WidgetRow() {
         override val stableId: Long get() = entityId.hashCode().toLong()
     }
 
@@ -418,6 +443,9 @@ sealed class WidgetRow {
 
 object TodoWidgetKeys {
     val ALL_LISTS_KEY = stringPreferencesKey("widget_all_lists")
+    val PENDING_TOGGLE_IDS_KEY = stringPreferencesKey("widget_pending_toggle_ids")
     val SETTINGS_JSON_KEY = stringPreferencesKey("widget_settings_json")
     val APP_WIDGET_ID_KEY = stringPreferencesKey("widget_app_widget_id")
 }
+
+fun pendingToggleKey(entityId: String, itemUid: String): String = "$entityId|$itemUid"

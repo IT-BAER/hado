@@ -7,13 +7,16 @@ import android.util.Log
 import androidx.glance.GlanceId
 import androidx.glance.action.ActionParameters
 import androidx.glance.appwidget.action.ActionCallback
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.updateAppWidgetState
 import com.baer.hado.data.local.LocalTodoStore
+import com.baer.hado.data.model.TodoItem
 import com.baer.hado.data.local.TokenManager
 import com.baer.hado.data.model.TodoItemStatus
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 class OpenSettingsAction : ActionCallback {
@@ -34,6 +37,20 @@ class OpenSettingsAction : ActionCallback {
 
     companion object {
         val PARAM_WIDGET_ID = ActionParameters.Key<String>("settings_widget_id")
+    }
+}
+
+class OpenAppAction : ActionCallback {
+    override suspend fun onAction(
+        context: Context,
+        glanceId: GlanceId,
+        parameters: ActionParameters
+    ) {
+        val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+            ?: return
+
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
     }
 }
 
@@ -82,9 +99,15 @@ class ToggleItemAction : ActionCallback {
         val entityId = parameters[PARAM_ENTITY_ID] ?: return
         val itemUid = parameters[PARAM_ITEM_UID] ?: return
         val wasCompleted = parameters[PARAM_COMPLETED]?.toBooleanStrictOrNull() ?: return
+        val actionStartedAt = System.currentTimeMillis()
 
         val newStatus = if (wasCompleted) "needs_action" else "completed"
         val tokenManager = TokenManager(context)
+        val newItemStatus = if (wasCompleted) TodoItemStatus.NEEDS_ACTION else TodoItemStatus.COMPLETED
+        val previousItemStatus = if (wasCompleted) TodoItemStatus.COMPLETED else TodoItemStatus.NEEDS_ACTION
+
+        // Apply state immediately and lock the item while HA sync is in flight.
+        updateItemUiInWidgets(context, entityId, itemUid, status = newItemStatus, pending = true)
 
         withContext(Dispatchers.IO) {
             try {
@@ -97,39 +120,80 @@ class ToggleItemAction : ActionCallback {
                         "status" to newStatus
                     ))
                     val httpClient = WidgetHttpClient(context)
-                    httpClient.post("api/services/todo/update_item", payload)?.close()
-                }
-
-                // Optimistic UI update
-                updateAppWidgetState(context, glanceId) { prefs ->
-                    val listsJson = prefs[TodoWidgetKeys.ALL_LISTS_KEY] ?: "[]"
-                    val type = object : TypeToken<List<WidgetListData>>() {}.type
-                    val lists: List<WidgetListData> = Gson().fromJson(listsJson, type)
-                    val updated = lists.map { list ->
-                        if (list.entityId == entityId) {
-                            list.copy(items = list.items.map { item ->
-                                if (item.uid == itemUid) item.copy(
-                                    status = if (wasCompleted) TodoItemStatus.NEEDS_ACTION
-                                    else TodoItemStatus.COMPLETED
-                                ) else item
-                            })
-                        } else list
+                    val response = httpClient.post("api/services/todo/update_item", payload)
+                    val wasSuccessful = response?.use { it.isSuccessful } ?: false
+                    if (!wasSuccessful) {
+                        throw IllegalStateException("Widget toggle sync failed")
                     }
-                    prefs[TodoWidgetKeys.ALL_LISTS_KEY] = Gson().toJson(updated)
                 }
 
-                TodoWidget().update(context, glanceId)
-            } catch (_: Exception) {
-                // Silently fail; next refresh will sync state
+                waitForMinimumToggleLock(actionStartedAt)
+                updateItemUiInWidgets(context, entityId, itemUid, pending = false)
+                TodoWidgetWorker.enqueueOneTime(context)
+            } catch (e: Exception) {
+                Log.w("HAdo", "Widget toggle sync failed, reverting optimistic state", e)
+                waitForMinimumToggleLock(actionStartedAt)
+                updateItemUiInWidgets(context, entityId, itemUid, status = previousItemStatus, pending = false)
             }
         }
     }
 
+    private suspend fun waitForMinimumToggleLock(startedAt: Long) {
+        val elapsed = System.currentTimeMillis() - startedAt
+        val remaining = MIN_TOGGLE_LOCK_MS - elapsed
+        if (remaining > 0) {
+            delay(remaining)
+        }
+    }
+
+    private suspend fun updateItemUiInWidgets(
+        context: Context,
+        entityId: String,
+        itemUid: String,
+        status: TodoItemStatus? = null,
+        pending: Boolean? = null
+    ) {
+        val gson = Gson()
+        val listType = object : TypeToken<List<WidgetListData>>() {}.type
+        val pendingType = object : TypeToken<List<String>>() {}.type
+        val widgetManager = GlanceAppWidgetManager(context)
+        val pendingKey = pendingToggleKey(entityId, itemUid)
+
+        widgetManager.getGlanceIds(TodoWidget::class.java).forEach { widgetId ->
+            updateAppWidgetState(context, widgetId) { prefs ->
+                val listsJson = prefs[TodoWidgetKeys.ALL_LISTS_KEY] ?: "[]"
+                if (status != null) {
+                    val lists: List<WidgetListData> = gson.fromJson(listsJson, listType)
+                    val updated = lists.map { list ->
+                        if (list.entityId == entityId) {
+                            list.copy(items = list.items.map { item -> item.withStatus(itemUid, status) })
+                        } else list
+                    }
+                    prefs[TodoWidgetKeys.ALL_LISTS_KEY] = gson.toJson(updated)
+                }
+
+                if (pending != null) {
+                    val pendingJson = prefs[TodoWidgetKeys.PENDING_TOGGLE_IDS_KEY] ?: "[]"
+                    val pendingIds = gson.fromJson<List<String>>(pendingJson, pendingType).toMutableSet()
+                    if (pending) pendingIds += pendingKey else pendingIds -= pendingKey
+                    prefs[TodoWidgetKeys.PENDING_TOGGLE_IDS_KEY] = gson.toJson(pendingIds.toList())
+                }
+            }
+
+            TodoWidget().update(context, widgetId)
+        }
+    }
+
     companion object {
+        private const val MIN_TOGGLE_LOCK_MS = 750L
         val PARAM_ENTITY_ID = ActionParameters.Key<String>("entity_id")
         val PARAM_ITEM_UID = ActionParameters.Key<String>("item_uid")
         val PARAM_COMPLETED = ActionParameters.Key<String>("completed")
     }
+}
+
+private fun TodoItem.withStatus(itemUid: String, status: TodoItemStatus): TodoItem {
+    return if (uid == itemUid) copy(status = status) else this
 }
 
 class RefreshAction : ActionCallback {

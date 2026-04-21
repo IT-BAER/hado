@@ -71,7 +71,8 @@ class WidgetSettingsActivity : ComponentActivity() {
                     appWidgetId = appWidgetId,
                     onSave = { settings ->
                         WidgetSettingsManager.save(this, appWidgetId, settings)
-                        TodoWidgetWorker.enqueueOneTime(this)
+                        TodoWidgetWorker.enqueuePeriodic(this, appWidgetId)
+                        TodoWidgetWorker.enqueueOneTime(this, appWidgetId)
 
                         val resultIntent = Intent().putExtra(
                             AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId
@@ -101,7 +102,9 @@ private fun WidgetSettingsScreen(
 
     var selectedListIds by remember { mutableStateOf(existingSettings.selectedListIds) }
     var showCompleted by remember { mutableStateOf(existingSettings.showCompleted) }
+    var refreshInterval by remember { mutableStateOf(existingSettings.refreshInterval) }
     var fontSize by remember { mutableStateOf(existingSettings.fontSize) }
+    var itemHeight by remember { mutableStateOf(existingSettings.itemHeight) }
     var backgroundOpacity by remember { mutableFloatStateOf(existingSettings.backgroundOpacity) }
     var compactMode by remember { mutableStateOf(existingSettings.compactMode) }
     var checkboxOnly by remember { mutableStateOf(existingSettings.checkboxOnly) }
@@ -110,7 +113,9 @@ private fun WidgetSettingsScreen(
     fun currentSettings() = WidgetSettings(
         selectedListIds = selectedListIds,
         showCompleted = showCompleted,
+        refreshInterval = refreshInterval,
         fontSize = fontSize,
+        itemHeight = itemHeight,
         backgroundOpacity = backgroundOpacity,
         compactMode = compactMode,
         checkboxOnly = checkboxOnly,
@@ -334,6 +339,24 @@ private fun WidgetSettingsScreen(
                 }
             }
 
+            // --- Item height ---
+            SettingsSection(title = stringResource(R.string.section_item_height)) {
+                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                    WidgetSettings.ItemHeight.entries.forEachIndexed { index, height ->
+                        SegmentedButton(
+                            selected = itemHeight == height,
+                            onClick = { itemHeight = height },
+                            shape = SegmentedButtonDefaults.itemShape(
+                                index = index,
+                                count = WidgetSettings.ItemHeight.entries.size
+                            )
+                        ) {
+                            Text(stringResource(height.labelResId))
+                        }
+                    }
+                }
+            }
+
             // --- Background opacity ---
             SettingsSection(title = stringResource(R.string.section_bg_opacity)) {
                 Column(modifier = Modifier.padding(horizontal = 8.dp)) {
@@ -381,9 +404,6 @@ private fun WidgetSettingsScreen(
 
             // --- Refresh interval (global) ---
             SettingsSection(title = stringResource(R.string.section_refresh_interval)) {
-                var refreshInterval by remember {
-                    mutableStateOf(WidgetSettingsManager.loadRefreshInterval(context))
-                }
                 Column {
                     WidgetSettings.RefreshInterval.entries.forEachIndexed { index, interval ->
                         Row(
@@ -392,8 +412,6 @@ private fun WidgetSettingsScreen(
                                 .clip(RoundedCornerShape(8.dp))
                                 .clickable {
                                     refreshInterval = interval
-                                    WidgetSettingsManager.saveRefreshInterval(context, interval)
-                                    TodoWidgetWorker.enqueuePeriodic(context)
                                 }
                                 .padding(horizontal = 8.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -402,8 +420,6 @@ private fun WidgetSettingsScreen(
                                 selected = refreshInterval == interval,
                                 onClick = {
                                     refreshInterval = interval
-                                    WidgetSettingsManager.saveRefreshInterval(context, interval)
-                                    TodoWidgetWorker.enqueuePeriodic(context)
                                 }
                             )
                             Text(

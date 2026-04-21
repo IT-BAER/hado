@@ -13,6 +13,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import androidx.work.workDataOf
 import com.baer.hado.data.local.LocalTodoStore
 import com.baer.hado.data.local.TokenManager
 import com.baer.hado.data.model.SimpleState
@@ -34,6 +35,9 @@ class TodoWidgetWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         if (!tokenManager.isLoggedIn) return Result.failure()
+        val targetAppWidgetId = inputData
+            .getInt(KEY_INPUT_APP_WIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
+            .takeIf { it != AppWidgetManager.INVALID_APPWIDGET_ID }
 
         val allLists = if (tokenManager.isDemoMode) {
             fetchLocalModeLists()
@@ -47,15 +51,15 @@ class TodoWidgetWorker @AssistedInject constructor(
         val appWidgetIds = AppWidgetManager.getInstance(context)
             .getAppWidgetIds(ComponentName(context, TodoWidgetReceiver::class.java))
         val glanceToWidgetId = glanceIds.zip(appWidgetIds.toList()).toMap()
+        val targetWidgets = if (targetAppWidgetId != null) {
+            glanceToWidgetId.filterValues { it == targetAppWidgetId }
+        } else {
+            glanceToWidgetId
+        }
 
         // Update each widget instance with per-widget filtered data
-        for (glanceId in glanceIds) {
-            val appWidgetId = glanceToWidgetId[glanceId]
-            val settings = if (appWidgetId != null) {
-                WidgetSettingsManager.load(context, appWidgetId)
-            } else {
-                WidgetSettings()
-            }
+        for ((glanceId, appWidgetId) in targetWidgets) {
+            val settings = WidgetSettingsManager.load(context, appWidgetId)
 
             // Filter lists based on widget settings
             val filteredLists = if (settings.selectedListIds.isNotEmpty()) {
@@ -67,9 +71,7 @@ class TodoWidgetWorker @AssistedInject constructor(
             updateAppWidgetState(context, glanceId) { prefs ->
                 prefs[TodoWidgetKeys.ALL_LISTS_KEY] = gson.toJson(filteredLists)
                 prefs[TodoWidgetKeys.SETTINGS_JSON_KEY] = gson.toJson(settings)
-                if (appWidgetId != null) {
-                    prefs[TodoWidgetKeys.APP_WIDGET_ID_KEY] = appWidgetId.toString()
-                }
+                prefs[TodoWidgetKeys.APP_WIDGET_ID_KEY] = appWidgetId.toString()
             }
             TodoWidget().update(context, glanceId)
         }
@@ -158,29 +160,58 @@ class TodoWidgetWorker @AssistedInject constructor(
     }
 
     companion object {
-        private const val WORK_NAME_PERIODIC = "todo_widget_sync"
+        private const val LEGACY_WORK_NAME_PERIODIC = "todo_widget_sync"
+        private const val WORK_NAME_PERIODIC_PREFIX = "todo_widget_sync_"
         private const val WORK_NAME_ONETIME = "todo_widget_refresh"
+        private const val WORK_NAME_ONETIME_PREFIX = "todo_widget_refresh_"
+        private const val KEY_INPUT_APP_WIDGET_ID = "input_app_widget_id"
 
-        fun enqueuePeriodic(context: Context) {
-            val interval = WidgetSettingsManager.loadRefreshInterval(context)
+        fun enqueuePeriodic(context: Context, appWidgetId: Int) {
+            cancelLegacyPeriodic(context)
+            val interval = WidgetSettingsManager.load(context, appWidgetId).refreshInterval
             val request = PeriodicWorkRequestBuilder<TodoWidgetWorker>(
                 interval.minutes, TimeUnit.MINUTES
+            ).setInputData(
+                workDataOf(KEY_INPUT_APP_WIDGET_ID to appWidgetId)
             ).build()
 
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-                WORK_NAME_PERIODIC,
+                periodicWorkName(appWidgetId),
                 ExistingPeriodicWorkPolicy.UPDATE,
                 request
             )
         }
 
-        fun enqueueOneTime(context: Context) {
-            val request = OneTimeWorkRequestBuilder<TodoWidgetWorker>().build()
+        fun enqueuePeriodic(context: Context, appWidgetIds: IntArray) {
+            cancelLegacyPeriodic(context)
+            appWidgetIds.forEach { enqueuePeriodic(context, it) }
+        }
+
+        fun cancelPeriodic(context: Context, appWidgetId: Int) {
+            WorkManager.getInstance(context).cancelUniqueWork(periodicWorkName(appWidgetId))
+        }
+
+        fun enqueueOneTime(context: Context, appWidgetId: Int? = null) {
+            val builder = OneTimeWorkRequestBuilder<TodoWidgetWorker>()
+            if (appWidgetId != null) {
+                builder.setInputData(workDataOf(KEY_INPUT_APP_WIDGET_ID to appWidgetId))
+            }
+            val request = builder.build()
             WorkManager.getInstance(context).enqueueUniqueWork(
-                WORK_NAME_ONETIME,
+                oneTimeWorkName(appWidgetId),
                 ExistingWorkPolicy.REPLACE,
                 request
             )
+        }
+
+        private fun periodicWorkName(appWidgetId: Int): String = "$WORK_NAME_PERIODIC_PREFIX$appWidgetId"
+
+        private fun oneTimeWorkName(appWidgetId: Int?): String {
+            return if (appWidgetId != null) "$WORK_NAME_ONETIME_PREFIX$appWidgetId" else WORK_NAME_ONETIME
+        }
+
+        private fun cancelLegacyPeriodic(context: Context) {
+            WorkManager.getInstance(context).cancelUniqueWork(LEGACY_WORK_NAME_PERIODIC)
         }
     }
 }
