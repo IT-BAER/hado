@@ -98,33 +98,24 @@ jobs:
 
       - name: Generate Play Store What's New
         run: |
-          PLAY_NOTES=$(awk '
-            /^## \[/ { if (seen) exit; seen=1; next }
-            seen && /^- / { sub(/^- /, "• "); print }
-          ' CHANGELOG.md | head -n 4)
+          TRIMMED_NOTES=$(awk '
+            /^## \[/ { if (section++) exit; next }
+            section && /^- / {
+              sub(/^- /, "• ")
+              candidate = out ? out "\n" $0 : $0
+              if (length(candidate) <= 500 && count < 4) {
+                out = candidate
+                count++
+              }
+            }
+            END { print out }
+          ' CHANGELOG.md)
 
-          TRIMMED_NOTES=""
-          while IFS= read -r line; do
-            candidate="$line"
-            if [ -n "$TRIMMED_NOTES" ]; then
-              candidate="$TRIMMED_NOTES
-$line"
-            fi
-
-            if [ ${#candidate} -le 500 ]; then
-              TRIMMED_NOTES="$candidate"
-            else
-              break
-            fi
-          done <<EOF
-$PLAY_NOTES
-EOF
-
+          mkdir -p whatsnew
           if [ -z "$TRIMMED_NOTES" ]; then
             TRIMMED_NOTES=$(cat whatsnew/whatsnew-en-US)
           fi
 
-          mkdir -p whatsnew
           printf '%s\n' "$TRIMMED_NOTES" > whatsnew/whatsnew-en-US
 
       - name: Deploy to Google Play
