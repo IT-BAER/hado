@@ -5,6 +5,24 @@ All notable changes to HAdo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2026-04-21
+
+### Added
+- Inline home list editing with drag-to-reorder, long-press item details, shared editor behavior, and horizontal swiping between lists
+- Home overview now shows resolved list icons, and the editor reclaims vertical space while typing by hiding the overview strip
+- Per-widget item height control and a dedicated widget loading placeholder during startup
+- Extended translations for the new app and widget UI copy across all supported locales
+
+### Changed
+- Refreshed the app UI across login, home, settings, and Material 3 theme tokens, shapes, and spacing
+- Widget refresh interval is now configured per widget instance instead of globally, and widget schedules are created and cancelled per widget
+- Widget title area now opens the app directly while the refresh action stays refresh-only
+
+### Fixed
+- While adding items inline, the active field stays visible after Enter and a second Back after closing the keyboard restores the full layout instead of exiting the app
+- Widget toggles are now optimistic across widget instances, show a pending state while syncing, and revert cleanly if Home Assistant update fails
+- Build support and warning cleanup for `compileSdk 35`, including AGP 8.7.3, Gradle 8.9, deprecated UI API cleanup, and preserved debug symbols for `libdatastore_shared_counter.so`
+
 ## [1.0.2] - 2026-04-15
 
 ### Changed
