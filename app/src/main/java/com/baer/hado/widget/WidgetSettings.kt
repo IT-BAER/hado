@@ -17,7 +17,8 @@ data class WidgetSettings(
     val backgroundOpacity: Float = 1.0f,
     val compactMode: Boolean = false,
     val checkboxOnly: Boolean = false,  // true = only checkbox toggles, false = entire row toggles
-    val showTitle: Boolean = true  // show HAdo icon + title bar
+    val showTitle: Boolean = true,  // show HAdo icon + title bar
+    val showListIcons: Boolean = true
 ) {
     enum class FontSize(@StringRes val labelResId: Int, val titleSp: Float, val itemSp: Float, val headerSp: Float) {
         SMALL(R.string.font_small, 15f, 14f, 12f),
@@ -52,6 +53,7 @@ object WidgetSettingsManager {
     private const val KEY_COMPACT_MODE = "compact_mode_"
     private const val KEY_CHECKBOX_ONLY = "checkbox_only_"
     private const val KEY_SHOW_TITLE = "show_title_"
+    private const val KEY_SHOW_LIST_ICONS = "show_list_icons_"
     private const val LEGACY_GLOBAL_REFRESH_INTERVAL = "refresh_interval"
 
     private fun prefs(context: Context) =
@@ -88,7 +90,8 @@ object WidgetSettingsManager {
             backgroundOpacity = p.getFloat("$KEY_BG_OPACITY$appWidgetId", 1.0f),
             compactMode = p.getBoolean("$KEY_COMPACT_MODE$appWidgetId", false),
             checkboxOnly = p.getBoolean("$KEY_CHECKBOX_ONLY$appWidgetId", false),
-            showTitle = p.getBoolean("$KEY_SHOW_TITLE$appWidgetId", true)
+            showTitle = p.getBoolean("$KEY_SHOW_TITLE$appWidgetId", true),
+            showListIcons = p.getBoolean("$KEY_SHOW_LIST_ICONS$appWidgetId", true)
         )
     }
 
@@ -103,6 +106,7 @@ object WidgetSettingsManager {
             putBoolean("$KEY_COMPACT_MODE$appWidgetId", settings.compactMode)
             putBoolean("$KEY_CHECKBOX_ONLY$appWidgetId", settings.checkboxOnly)
             putBoolean("$KEY_SHOW_TITLE$appWidgetId", settings.showTitle)
+            putBoolean("$KEY_SHOW_LIST_ICONS$appWidgetId", settings.showListIcons)
             apply()
         }
     }
@@ -118,6 +122,7 @@ object WidgetSettingsManager {
             remove("$KEY_COMPACT_MODE$appWidgetId")
             remove("$KEY_CHECKBOX_ONLY$appWidgetId")
             remove("$KEY_SHOW_TITLE$appWidgetId")
+            remove("$KEY_SHOW_LIST_ICONS$appWidgetId")
             apply()
         }
     }

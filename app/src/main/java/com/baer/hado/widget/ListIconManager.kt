@@ -8,7 +8,7 @@ import java.io.File
 
 /**
  * Manages per-list icon overrides. Each entity can have an emoji or a compressed image.
- * Priority chain: client-side override > MDI emoji mapping > no icon.
+ * Priority chain: client-side override > MDI emoji mapping > default fallback.
  */
 object ListIconManager {
 
@@ -56,14 +56,24 @@ object ListIconManager {
 
         // 2. Client-side override
         if (type != null && value != null) {
-            return when (type) {
+            val resolvedOverride = when (type) {
                 "emoji" -> ResolvedIcon(IconType.EMOJI, value)
                 "image" -> {
                     val file = imageFile(context, entityId)
-                    if (file.exists()) ResolvedIcon(IconType.IMAGE, file.absolutePath) else null
+                    if (file.exists()) {
+                        ResolvedIcon(IconType.IMAGE, file.absolutePath)
+                    } else {
+                        prefs(context).edit().apply {
+                            remove("$KEY_TYPE_PREFIX$entityId")
+                            remove("$KEY_VALUE_PREFIX$entityId")
+                            apply()
+                        }
+                        null
+                    }
                 }
                 else -> null
             }
+            if (resolvedOverride != null) return resolvedOverride
         }
 
         // 3. MDI mapping

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="widget_loading_surface">#11161D</color>
+    <color name="widget_loading_outline">#414955</color>
+    <color name="widget_loading_primary">#ADC7FF</color>
+    <color name="widget_loading_on_surface">#E7ECF4</color>
+    <color name="widget_loading_on_surface_variant">#C1C7D2</color>
+</resources>

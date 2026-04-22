@@ -1,6 +1,6 @@
-HAdo 1.0.3
+HAdo 1.0.4
 
-• Inline home list editing with reorder, item details, and swipe-between-lists navigation
-• Header hides while typing so the add field and new items stay visible
-• Widget refresh is now per-widget, with item height control and improved toggle feedback
-• Refreshed app UI and extended translations for the new interface text
+• Widget settings now apply much faster, without waiting on a full refresh round-trip
+• Added a global widget setting to show or hide list title icons
+• Fixed widget loading screen styling so it matches the widget card and centers correctly
+• Widget list headers now fall back to the default icon if custom icon data is missing

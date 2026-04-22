@@ -92,12 +92,20 @@ class TodoWidget : GlanceAppWidget() {
         } catch (_: Exception) {
             emptySet()
         }
+        val context = LocalContext.current
 
         // Apply display filters
         val lists = allLists.let { raw ->
+            val selectedLists = if (settings.selectedListIds.isNotEmpty()) {
+                raw.filter { it.entityId in settings.selectedListIds }
+            } else {
+                raw
+            }
             if (!settings.showCompleted) {
-                raw.map { list -> list.copy(items = list.items.filter { !it.isCompleted }) }
-            } else raw
+                selectedLists.map { list -> list.copy(items = list.items.filter { !it.isCompleted }) }
+            } else {
+                selectedLists
+            }
         }
 
         val outerPadding = if (settings.compactMode) 6.dp else 12.dp
@@ -174,7 +182,10 @@ class TodoWidget : GlanceAppWidget() {
                 }
             } else {
                 val rows = mutableListOf<WidgetRow>()
-                val anyListHasIcon = lists.any { it.iconType != null && it.iconValue != null }
+                val anyListHasIcon = settings.showListIcons && lists.any { list ->
+                    (list.iconType != null && list.iconValue != null) ||
+                        ListIconManager.resolveIcon(context, list.entityId) != null
+                }
                 lists.forEachIndexed { index, list ->
                     rows.add(WidgetRow.Header(list.entityId, list.name, list.iconType, list.iconValue, list.supportedFeatures, isFirstHeader = index == 0))
                     val activeItems = list.items.filter { !it.isCompleted }
@@ -213,6 +224,14 @@ class TodoWidget : GlanceAppWidget() {
         }
         val bottomPad = if (settings.compactMode) 6.dp else 8.dp
         val iconSize = (settings.fontSize.titleSp * 1.4f).dp
+        val context = LocalContext.current
+        val fallbackIcon = if (settings.showListIcons && (iconType == null || iconValue == null)) {
+            ListIconManager.resolveIcon(context, entityId)
+        } else {
+            null
+        }
+        val effectiveIconType = fallbackIcon?.type?.name?.lowercase() ?: iconType
+        val effectiveIconValue = fallbackIcon?.value ?: iconValue
 
         val hzPad = if (settings.compactMode) 6.dp else 12.dp
 
@@ -232,28 +251,42 @@ class TodoWidget : GlanceAppWidget() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Icon: emoji as text, image as bitmap, or placeholder for alignment
-            if (iconType == "emoji" && iconValue != null) {
-                Text(
-                    text = iconValue,
-                    style = TextStyle(fontSize = settings.fontSize.titleSp.sp),
-                    maxLines = 1
-                )
-                Spacer(GlanceModifier.width(6.dp))
-            } else if (iconType == "image" && iconValue != null) {
-                val bitmap = BitmapFactory.decodeFile(iconValue)
-                if (bitmap != null) {
-                    Image(
-                        provider = ImageProvider(bitmap),
-                        contentDescription = null,
-                        modifier = GlanceModifier
-                            .size(iconSize)
-                            .cornerRadius(iconSize / 2)
+            if (settings.showListIcons) {
+                if (effectiveIconType == "emoji" && effectiveIconValue != null) {
+                    Text(
+                        text = effectiveIconValue,
+                        style = TextStyle(fontSize = settings.fontSize.titleSp.sp),
+                        maxLines = 1
                     )
                     Spacer(GlanceModifier.width(6.dp))
+                } else if (effectiveIconType == "image" && effectiveIconValue != null) {
+                    val bitmap = BitmapFactory.decodeFile(effectiveIconValue)
+                    if (bitmap != null) {
+                        Image(
+                            provider = ImageProvider(bitmap),
+                            contentDescription = null,
+                            modifier = GlanceModifier
+                                .size(iconSize)
+                                .cornerRadius(iconSize / 2)
+                        )
+                        Spacer(GlanceModifier.width(6.dp))
+                    } else {
+                        val defaultIcon = ListIconManager.resolveIcon(context, entityId)
+                        if (defaultIcon?.type == ListIconManager.IconType.EMOJI) {
+                            Text(
+                                text = defaultIcon.value,
+                                style = TextStyle(fontSize = settings.fontSize.titleSp.sp),
+                                maxLines = 1
+                            )
+                            Spacer(GlanceModifier.width(6.dp))
+                        } else if (anyListHasIcon) {
+                            Spacer(GlanceModifier.width(iconSize + 6.dp))
+                        }
+                    }
+                } else if (anyListHasIcon) {
+                    // Placeholder spacer to align with lists that have icons
+                    Spacer(GlanceModifier.width(iconSize + 6.dp))
                 }
-            } else if (anyListHasIcon) {
-                // Placeholder spacer to align with lists that have icons
-                Spacer(GlanceModifier.width(iconSize + 6.dp))
             }
             Text(
                 text = name,

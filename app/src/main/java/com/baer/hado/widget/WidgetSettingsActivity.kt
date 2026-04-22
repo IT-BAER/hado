@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.lifecycleScope
 import com.baer.hado.R
 import com.baer.hado.data.local.LocalTodoStore
 import com.baer.hado.data.local.TokenManager
@@ -70,15 +71,18 @@ class WidgetSettingsActivity : ComponentActivity() {
                 WidgetSettingsScreen(
                     appWidgetId = appWidgetId,
                     onSave = { settings ->
-                        WidgetSettingsManager.save(this, appWidgetId, settings)
-                        TodoWidgetWorker.enqueuePeriodic(this, appWidgetId)
-                        TodoWidgetWorker.enqueueOneTime(this, appWidgetId)
+                        lifecycleScope.launch {
+                            WidgetSettingsManager.save(this@WidgetSettingsActivity, appWidgetId, settings)
+                            TodoWidgetWorker.applySettingsImmediately(this@WidgetSettingsActivity, appWidgetId, settings)
+                            TodoWidgetWorker.enqueuePeriodic(this@WidgetSettingsActivity, appWidgetId)
+                            TodoWidgetWorker.enqueueOneTime(this@WidgetSettingsActivity, appWidgetId)
 
-                        val resultIntent = Intent().putExtra(
-                            AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId
-                        )
-                        setResult(Activity.RESULT_OK, resultIntent)
-                        finish()
+                            val resultIntent = Intent().putExtra(
+                                AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId
+                            )
+                            setResult(Activity.RESULT_OK, resultIntent)
+                            finish()
+                        }
                     },
                     onCancel = { finish() }
                 )
@@ -109,6 +113,7 @@ private fun WidgetSettingsScreen(
     var compactMode by remember { mutableStateOf(existingSettings.compactMode) }
     var checkboxOnly by remember { mutableStateOf(existingSettings.checkboxOnly) }
     var showTitle by remember { mutableStateOf(existingSettings.showTitle) }
+    var showListIcons by remember { mutableStateOf(existingSettings.showListIcons) }
 
     fun currentSettings() = WidgetSettings(
         selectedListIds = selectedListIds,
@@ -119,7 +124,8 @@ private fun WidgetSettingsScreen(
         backgroundOpacity = backgroundOpacity,
         compactMode = compactMode,
         checkboxOnly = checkboxOnly,
-        showTitle = showTitle
+        showTitle = showTitle,
+        showListIcons = showListIcons
     )
 
     // Back gesture/button saves settings instead of discarding
@@ -319,6 +325,27 @@ private fun WidgetSettingsScreen(
                         onCheckedChange = { showTitle = it }
                     )
                 }
+
+                HorizontalDivider()
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { showListIcons = !showListIcons }
+                        .padding(horizontal = 8.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.section_list_icons),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Switch(
+                        checked = showListIcons,
+                        onCheckedChange = { showListIcons = it }
+                    )
+                }
             }
 
             // --- Font size ---
@@ -479,7 +506,7 @@ private fun ListIconsSection(
         availableLists.filter { it.first in selectedListIds }
     }
 
-    SettingsSection(title = "List Icons") {
+    SettingsSection(title = stringResource(R.string.section_list_icons)) {
         listsToShow.forEach { (entityId, name, haIcon) ->
             val resolved = remember(entityId, iconVersion) {
                 ListIconManager.resolveIcon(context, entityId, haIcon)

@@ -61,15 +61,8 @@ class TodoWidgetWorker @AssistedInject constructor(
         for ((glanceId, appWidgetId) in targetWidgets) {
             val settings = WidgetSettingsManager.load(context, appWidgetId)
 
-            // Filter lists based on widget settings
-            val filteredLists = if (settings.selectedListIds.isNotEmpty()) {
-                allLists.filter { it.entityId in settings.selectedListIds }
-            } else {
-                allLists
-            }
-
             updateAppWidgetState(context, glanceId) { prefs ->
-                prefs[TodoWidgetKeys.ALL_LISTS_KEY] = gson.toJson(filteredLists)
+                prefs[TodoWidgetKeys.ALL_LISTS_KEY] = gson.toJson(allLists)
                 prefs[TodoWidgetKeys.SETTINGS_JSON_KEY] = gson.toJson(settings)
                 prefs[TodoWidgetKeys.APP_WIDGET_ID_KEY] = appWidgetId.toString()
             }
@@ -202,6 +195,23 @@ class TodoWidgetWorker @AssistedInject constructor(
                 ExistingWorkPolicy.REPLACE,
                 request
             )
+        }
+
+        suspend fun applySettingsImmediately(context: Context, appWidgetId: Int, settings: WidgetSettings) {
+            val manager = GlanceAppWidgetManager(context)
+            val glanceIds = manager.getGlanceIds(TodoWidget::class.java)
+            val appWidgetIds = AppWidgetManager.getInstance(context)
+                .getAppWidgetIds(ComponentName(context, TodoWidgetReceiver::class.java))
+            val glanceId = glanceIds.zip(appWidgetIds.toList())
+                .firstOrNull { it.second == appWidgetId }
+                ?.first
+                ?: return
+
+            updateAppWidgetState(context, glanceId) { prefs ->
+                prefs[TodoWidgetKeys.SETTINGS_JSON_KEY] = Gson().toJson(settings)
+                prefs[TodoWidgetKeys.APP_WIDGET_ID_KEY] = appWidgetId.toString()
+            }
+            TodoWidget().update(context, glanceId)
         }
 
         private fun periodicWorkName(appWidgetId: Int): String = "$WORK_NAME_PERIODIC_PREFIX$appWidgetId"
