@@ -114,6 +114,7 @@ private fun WidgetSettingsScreen(
     var checkboxOnly by remember { mutableStateOf(existingSettings.checkboxOnly) }
     var showTitle by remember { mutableStateOf(existingSettings.showTitle) }
     var showListIcons by remember { mutableStateOf(existingSettings.showListIcons) }
+    var autoFocusOnOpen by remember { mutableStateOf(existingSettings.autoFocusOnOpen) }
 
     fun currentSettings() = WidgetSettings(
         selectedListIds = selectedListIds,
@@ -125,7 +126,8 @@ private fun WidgetSettingsScreen(
         compactMode = compactMode,
         checkboxOnly = checkboxOnly,
         showTitle = showTitle,
-        showListIcons = showListIcons
+        showListIcons = showListIcons,
+        autoFocusOnOpen = autoFocusOnOpen
     )
 
     // Back gesture/button saves settings instead of discarding
@@ -297,6 +299,33 @@ private fun WidgetSettingsScreen(
                         onCheckedChange = { checkboxOnly = it }
                     )
                 }
+
+                HorizontalDivider()
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { autoFocusOnOpen = !autoFocusOnOpen }
+                        .padding(horizontal = 8.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.settings_auto_focus_on_open),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            text = stringResource(R.string.settings_auto_focus_on_open_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = autoFocusOnOpen,
+                        onCheckedChange = { autoFocusOnOpen = it }
+                    )
+                }
             }
 
             // --- Show title ---
@@ -464,6 +493,73 @@ private fun WidgetSettingsScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
+            SettingsSection(title = "\uD83D\uDC9C ${stringResource(R.string.section_support)}") {
+                Text(
+                    text = stringResource(R.string.support_optional_donation),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp)
+                )
+
+                HorizontalDivider()
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable {
+                            context.startActivity(
+                                Intent(
+                                    Intent.ACTION_VIEW,
+                                    Uri.parse("https://www.buymeacoffee.com/itbaer")
+                                )
+                            )
+                        }
+                        .padding(horizontal = 8.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.label_buy_me_a_coffee),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = stringResource(R.string.settings_open_link),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                HorizontalDivider()
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable {
+                            context.startActivity(
+                                Intent(
+                                    Intent.ACTION_VIEW,
+                                    Uri.parse("https://www.paypal.com/donate/?hosted_button_id=5XXRC7THMTRRS")
+                                )
+                            )
+                        }
+                        .padding(horizontal = 8.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.label_donate_paypal),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = stringResource(R.string.settings_open_link),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }

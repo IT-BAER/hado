@@ -64,7 +64,8 @@ class AddItemAction : ActionCallback {
         val entityId = parameters[PARAM_ENTITY_ID]
         val listName = parameters[PARAM_LIST_NAME] ?: ""
         val supportedFeatures = parameters[PARAM_SUPPORTED_FEATURES]?.toIntOrNull() ?: 0
-        Log.d("HAdo", "AddItemAction entityId=$entityId listName=$listName features=$supportedFeatures")
+        val autoFocus = parameters[PARAM_AUTO_FOCUS]?.toBooleanStrictOrNull() ?: false
+        Log.d("HAdo", "AddItemAction entityId=$entityId listName=$listName features=$supportedFeatures autoFocus=$autoFocus")
 
         if (entityId == null) {
             Log.e("HAdo", "AddItemAction: entityId is null, aborting")
@@ -75,6 +76,7 @@ class AddItemAction : ActionCallback {
             putExtra("entity_id", entityId)
             putExtra("list_name", listName)
             putExtra("supported_features", supportedFeatures)
+            putExtra("auto_focus_input", autoFocus)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
         }
         // Brief delay so the list selector press state is visible before activity covers widget
@@ -86,6 +88,7 @@ class AddItemAction : ActionCallback {
         val PARAM_ENTITY_ID = ActionParameters.Key<String>("add_entity_id")
         val PARAM_LIST_NAME = ActionParameters.Key<String>("add_list_name")
         val PARAM_SUPPORTED_FEATURES = ActionParameters.Key<String>("add_supported_features")
+        val PARAM_AUTO_FOCUS = ActionParameters.Key<String>("add_auto_focus")
     }
 }
 

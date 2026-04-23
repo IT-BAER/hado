@@ -2,6 +2,8 @@
 
 package com.baer.hado.ui.home
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -24,14 +26,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
@@ -39,10 +44,12 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -57,7 +64,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -67,6 +73,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -77,6 +86,7 @@ import com.baer.hado.ui.theme.AppSpacing
 import com.baer.hado.widget.ListIconManager
 import com.baer.hado.widget.TodoListEditor
 import com.baer.hado.widget.WidgetHttpClient
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -87,24 +97,32 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val httpClient = remember(context) { WidgetHttpClient(context) }
     val snackbarHostState = remember { SnackbarHostState() }
     var showNewListDialog by remember { mutableStateOf(false) }
     var showDeleteListDialog by remember { mutableStateOf(false) }
+    var showSupportDialog by remember { mutableStateOf(false) }
     val selectedList = uiState.todoLists.find { it.entityId == uiState.selectedListId }
+    val selectedListIndex = uiState.todoLists.indexOfFirst { it.entityId == uiState.selectedListId }
+        .let { index -> if (index >= 0) index else 0 }
     val selectedListName = selectedList?.attributes?.friendlyName ?: uiState.selectedListId
-    val editorItemsByList = remember { mutableStateMapOf<String, List<TodoItem>>() }
     var isAddInputFocused by remember { mutableStateOf(false) }
-    val selectedItems = selectedList?.let { editorItemsByList[it.entityId] ?: uiState.items } ?: emptyList()
-
-    LaunchedEffect(uiState.selectedListId, uiState.items) {
-        uiState.selectedListId?.let { selectedId ->
-            editorItemsByList[selectedId] = uiState.items
-        }
-    }
+    val selectedItems = uiState.itemsFor(selectedList?.entityId)
+    val listSelectorState = rememberLazyListState()
 
     LaunchedEffect(selectedList?.entityId) {
         isAddInputFocused = false
+    }
+
+    LaunchedEffect(lifecycleOwner, uiState.selectedListId) {
+        val selectedId = uiState.selectedListId ?: return@LaunchedEffect
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            while (true) {
+                delay(5_000)
+                viewModel.loadItems(selectedId)
+            }
+        }
     }
 
     val activeCount = selectedItems.count { !it.isCompleted }
@@ -119,6 +137,12 @@ fun HomeScreen(
         uiState.error?.let {
             snackbarHostState.showSnackbar(it)
             viewModel.clearError()
+        }
+    }
+
+    LaunchedEffect(selectedListIndex, uiState.todoLists.size) {
+        if (uiState.todoLists.size > 1) {
+            listSelectorState.animateScrollToItem(selectedListIndex)
         }
     }
 
@@ -141,7 +165,14 @@ fun HomeScreen(
                             Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_new_list))
                         }
                     }
-                    IconButton(onClick = { viewModel.loadItems() }) {
+                    IconButton(onClick = { showSupportDialog = true }) {
+                        Icon(
+                            Icons.Default.Favorite,
+                            contentDescription = stringResource(R.string.section_support),
+                            tint = Color(0xFF9C27B0)
+                        )
+                    }
+                    IconButton(onClick = { viewModel.loadItems(force = true) }) {
                         Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.cd_refresh))
                     }
                     IconButton(onClick = onOpenSettings) {
@@ -189,6 +220,7 @@ fun HomeScreen(
                                 it.entityId to (it.attributes.friendlyName ?: it.entityId)
                             },
                             selectedId = uiState.selectedListId,
+                            listState = listSelectorState,
                             onSelect = viewModel::selectList,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -223,16 +255,14 @@ fun HomeScreen(
                     )
                 }
                 else -> {
-                    val selectedIndex = uiState.todoLists.indexOfFirst { it.entityId == selectedList.entityId }
-                        .let { index -> if (index >= 0) index else 0 }
                     val pagerState = rememberPagerState(
-                        initialPage = selectedIndex,
+                        initialPage = selectedListIndex,
                         pageCount = { uiState.todoLists.size }
                     )
 
-                    LaunchedEffect(selectedIndex, uiState.todoLists.size) {
-                        if (uiState.todoLists.isNotEmpty() && pagerState.currentPage != selectedIndex) {
-                            pagerState.animateScrollToPage(selectedIndex)
+                    LaunchedEffect(selectedListIndex, uiState.todoLists.size) {
+                        if (uiState.todoLists.isNotEmpty() && pagerState.currentPage != selectedListIndex) {
+                            pagerState.animateScrollToPage(selectedListIndex)
                         }
                     }
 
@@ -263,14 +293,15 @@ fun HomeScreen(
                             isLocalMode = uiState.isLocalMode,
                             showOpenAppAction = false,
                             onBack = {},
-                            onChanged = { viewModel.loadItems(pageList.entityId) },
+                            onChanged = { viewModel.loadItems(pageList.entityId, force = true) },
                             modifier = Modifier.fillMaxSize(),
                             showTopBar = false,
                             showListHeader = false,
                             contentBottomPadding = 24.dp,
-                            initialItems = editorItemsByList[pageList.entityId].orEmpty(),
+                            initialItems = uiState.itemsFor(pageList.entityId),
+                            refreshOnLaunch = false,
                             onItemsChanged = { items ->
-                                editorItemsByList[pageList.entityId] = items
+                                viewModel.updateCachedItems(pageList.entityId, items)
                             },
                             onAddInputFocusChanged = { isFocused ->
                                 if (pageList.entityId == uiState.selectedListId) {
@@ -290,6 +321,48 @@ fun HomeScreen(
             onCreate = { name ->
                 viewModel.createList(name)
                 showNewListDialog = false
+            }
+        )
+    }
+
+    if (showSupportDialog) {
+        AlertDialog(
+            onDismissRequest = { showSupportDialog = false },
+            title = { Text(stringResource(R.string.section_support)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        text = stringResource(R.string.support_optional_donation),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    FilledTonalButton(
+                        onClick = {
+                            openExternalUrl(context, "https://www.buymeacoffee.com/itbaer")
+                            showSupportDialog = false
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(R.string.label_buy_me_a_coffee))
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            openExternalUrl(context, "https://www.paypal.com/donate/?hosted_button_id=5XXRC7THMTRRS")
+                            showSupportDialog = false
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(R.string.label_donate_paypal))
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showSupportDialog = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
             }
         )
     }
@@ -318,10 +391,12 @@ fun HomeScreen(
 private fun ListSelector(
     lists: List<Pair<String, String>>,
     selectedId: String?,
+    listState: LazyListState,
     onSelect: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyRow(
+        state = listState,
         modifier = modifier,
         contentPadding = PaddingValues(horizontal = AppSpacing.screenHorizontal),
         horizontalArrangement = Arrangement.spacedBy(AppSpacing.compactGap)
@@ -511,6 +586,11 @@ private fun StatPill(
             overflow = TextOverflow.Ellipsis
         )
     }
+}
+
+private fun openExternalUrl(context: android.content.Context, url: String) {
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+    context.startActivity(intent)
 }
 
 @Composable

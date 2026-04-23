@@ -85,6 +85,10 @@
     <string name="label_developer">Developer</string>
     <string name="label_privacy_policy">Privacy Policy</string>
     <string name="label_source_code">Source Code</string>
+    <string name="section_support">Support</string>
+    <string name="support_optional_donation">Optional donation to support ongoing development. It does not unlock features or change the app.</string>
+    <string name="label_buy_me_a_coffee">Buy Me a Coffee</string>
+    <string name="label_donate_paypal">Donate via PayPal</string>
     <string name="section_refresh_interval">Refresh Interval</string>
     <string name="refresh_description">How often the widget fetches new data from Home Assistant</string>
     <string name="section_list_icons">List Icons</string>
@@ -102,6 +106,8 @@
     <string name="section_interaction">Interaction</string>
     <string name="settings_checkbox_only">Checkbox only</string>
     <string name="settings_checkbox_only_desc">Only the checkbox toggles the item</string>
+    <string name="settings_auto_focus_on_open">Focus add field on open</string>
+    <string name="settings_auto_focus_on_open_desc">Automatically focus the new item field when opening a list</string>
     <string name="section_appearance">Appearance</string>
     <string name="settings_show_title">Show widget title</string>
     <string name="settings_show_title_desc">Display the HAdo icon and title bar</string>

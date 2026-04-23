@@ -83,6 +83,10 @@
     <string name="label_developer">Développeur</string>
     <string name="label_privacy_policy">Politique de confidentialité</string>
     <string name="label_source_code">Code source</string>
+    <string name="section_support">Support</string>
+    <string name="support_optional_donation">Don facultatif pour soutenir le développement continu. Il ne débloque aucune fonctionnalité et ne change pas lʼapplication.</string>
+    <string name="label_buy_me_a_coffee">Buy Me a Coffee</string>
+    <string name="label_donate_paypal">Faire un don via PayPal</string>
     <string name="section_refresh_interval">Intervalle de rafraîchissement</string>
     <string name="refresh_description">Fréquence à laquelle le widget récupère de nouvelles données depuis Home Assistant</string>
     <string name="section_list_icons">Icônes des listes</string>
@@ -100,6 +104,8 @@
     <string name="section_interaction">Interaction</string>
     <string name="settings_checkbox_only">Case à cocher uniquement</string>
     <string name="settings_checkbox_only_desc">Seule la case à cocher bascule l\'élément</string>
+    <string name="settings_auto_focus_on_open">Cibler le champ à l\'ouverture</string>
+    <string name="settings_auto_focus_on_open_desc">Cibler automatiquement le champ de nouvel élément à l\'ouverture d\'une liste</string>
     <string name="section_appearance">Apparence</string>
     <string name="settings_show_title">Afficher le titre du widget</string>
     <string name="settings_show_title_desc">Afficher l\'icône et la barre de titre HAdo</string>

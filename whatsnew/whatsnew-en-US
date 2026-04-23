@@ -1,6 +1,5 @@
-HAdo 1.0.4
+HAdo 1.0.5
 
-• Widget settings now apply much faster, without waiting on a full refresh round-trip
-• Added a global widget setting to show or hide list title icons
-• Fixed widget loading screen styling so it matches the widget card and centers correctly
-• Widget list headers now fall back to the default icon if custom icon data is missing
+• Swiping between lists now keeps the selected list chip visible as the row follows the current page
+• New purple heart support button in the app header opens a quick optional support dialog
+• Widget settings now include a bottom "💜 Support" section with the same external support links

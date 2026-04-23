@@ -10,6 +10,10 @@ import com.baer.hado.data.model.TodoItemStatus
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
+import okhttp3.ResponseBody
+import retrofit2.Response
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -44,7 +48,7 @@ class TodoRepository @Inject constructor(
             val body = mapOf(
                 "entity_id" to entityId
             )
-            val response = apiService.getTodoItems(body)
+            val response = executeTodoItemsRequest(body)
 
             if (!response.isSuccessful) {
                 return Result.failure(Exception("API error: ${response.code()}"))
@@ -55,9 +59,28 @@ class TodoRepository @Inject constructor(
 
             val parsed = parseItemsResponse(responseBody, entityId)
             Result.success(parsed)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    private suspend fun executeTodoItemsRequest(body: Map<String, String>): Response<ResponseBody> {
+        val response = apiService.getTodoItems(body)
+        if (response.code() != 429) {
+            return response
+        }
+
+        val retryAfterSeconds = response.headers()["Retry-After"]?.trim()?.toLongOrNull()
+        if (retryAfterSeconds == null || retryAfterSeconds <= 0 || retryAfterSeconds > 5) {
+            return response
+        }
+
+        response.body()?.close()
+        response.errorBody()?.close()
+        delay(retryAfterSeconds * 1000)
+        return apiService.getTodoItems(body)
     }
 
     private fun parseItemsResponse(json: String, entityId: String): List<TodoItem> {

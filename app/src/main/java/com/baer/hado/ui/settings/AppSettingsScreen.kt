@@ -175,11 +175,10 @@ private fun AboutSection() {
             headline = stringResource(R.string.label_privacy_policy),
             trailingText = stringResource(R.string.settings_open_link),
             onClick = {
-                val intent = Intent(
-                    Intent.ACTION_VIEW,
-                    Uri.parse("https://github.com/IT-BAER/hado/blob/master/PRIVACY.md")
+                openExternalUrl(
+                    context = context,
+                    url = "https://github.com/IT-BAER/hado/blob/master/PRIVACY.md"
                 )
-                context.startActivity(intent)
             }
         )
 
@@ -189,14 +188,14 @@ private fun AboutSection() {
             headline = stringResource(R.string.label_source_code),
             trailingText = stringResource(R.string.settings_open_link),
             onClick = {
-                val intent = Intent(
-                    Intent.ACTION_VIEW,
-                    Uri.parse("https://github.com/IT-BAER/hado")
+                openExternalUrl(
+                    context = context,
+                    url = "https://github.com/IT-BAER/hado"
                 )
-                context.startActivity(intent)
             }
         )
     }
+
 }
 
 @Composable
@@ -499,6 +498,11 @@ private fun SettingsItem(
             )
         }
     }
+}
+
+private fun openExternalUrl(context: android.content.Context, url: String) {
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+    context.startActivity(intent)
 }
 
 private suspend fun fetchLists(context: android.content.Context): List<Triple<String, String, String?>> {

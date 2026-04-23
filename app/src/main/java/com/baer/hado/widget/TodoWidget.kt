@@ -243,7 +243,8 @@ class TodoWidget : GlanceAppWidget() {
                         actionParametersOf(
                             AddItemAction.PARAM_ENTITY_ID to entityId,
                             AddItemAction.PARAM_LIST_NAME to name,
-                            AddItemAction.PARAM_SUPPORTED_FEATURES to (supportedFeatures ?: 0).toString()
+                            AddItemAction.PARAM_SUPPORTED_FEATURES to (supportedFeatures ?: 0).toString(),
+                            AddItemAction.PARAM_AUTO_FOCUS to settings.autoFocusOnOpen.toString()
                         )
                     )
                 )

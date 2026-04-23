@@ -83,6 +83,10 @@
     <string name="label_developer">Entwickler</string>
     <string name="label_privacy_policy">Datenschutzerklärung</string>
     <string name="label_source_code">Quellcode</string>
+    <string name="section_support">Support</string>
+    <string name="support_optional_donation">Optionale Spende zur Unterstützung der laufenden Entwicklung. Sie schaltet keine Funktionen frei und verändert die App nicht.</string>
+    <string name="label_buy_me_a_coffee">Buy Me a Coffee</string>
+    <string name="label_donate_paypal">Über PayPal spenden</string>
     <string name="section_refresh_interval">Aktualisierungsintervall</string>
     <string name="refresh_description">Wie oft das Widget neue Daten von Home Assistant abruft</string>
     <string name="section_list_icons">Listensymbole</string>
@@ -100,6 +104,8 @@
     <string name="section_interaction">Interaktion</string>
     <string name="settings_checkbox_only">Nur Checkbox</string>
     <string name="settings_checkbox_only_desc">Nur die Checkbox schaltet den Eintrag um</string>
+    <string name="settings_auto_focus_on_open">Eingabefeld beim Öffnen fokussieren</string>
+    <string name="settings_auto_focus_on_open_desc">Neues-Eintrag-Feld beim Öffnen einer Liste automatisch fokussieren</string>
     <string name="section_appearance">Darstellung</string>
     <string name="settings_show_title">Widget-Titel anzeigen</string>
     <string name="settings_show_title_desc">HAdo-Symbol und Titelleiste anzeigen</string>

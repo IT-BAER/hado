@@ -83,6 +83,10 @@
     <string name="label_developer">개발자</string>
     <string name="label_privacy_policy">개인정보 처리방침</string>
     <string name="label_source_code">소스 코드</string>
+    <string name="section_support">Support</string>
+    <string name="support_optional_donation">지속적인 개발을 지원하는 선택적 후원입니다. 기능을 해제하거나 앱을 변경하지 않습니다.</string>
+    <string name="label_buy_me_a_coffee">Buy Me a Coffee</string>
+    <string name="label_donate_paypal">PayPal로 후원</string>
     <string name="section_refresh_interval">새로고침 간격</string>
     <string name="refresh_description">위젯이 Home Assistant에서 새 데이터를 가져오는 빈도</string>
     <string name="section_list_icons">목록 아이콘</string>
@@ -100,6 +104,8 @@
     <string name="section_interaction">상호작용</string>
     <string name="settings_checkbox_only">체크박스만</string>
     <string name="settings_checkbox_only_desc">체크박스만 항목을 전환합니다</string>
+    <string name="settings_auto_focus_on_open">열 때 입력 필드 포커스</string>
+    <string name="settings_auto_focus_on_open_desc">목록을 열 때 새 항목 입력 필드를 자동으로 포커스합니다</string>
     <string name="section_appearance">모양</string>
     <string name="settings_show_title">위젯 제목 표시</string>
     <string name="settings_show_title_desc">HAdo 아이콘 및 제목 표시줄 표시</string>

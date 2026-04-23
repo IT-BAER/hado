@@ -83,6 +83,10 @@
     <string name="label_developer">Разработчик</string>
     <string name="label_privacy_policy">Политика конфиденциальности</string>
     <string name="label_source_code">Исходный код</string>
+    <string name="section_support">Support</string>
+    <string name="support_optional_donation">Необязательное пожертвование для поддержки дальнейшей разработки. Оно не открывает функции и не меняет приложение.</string>
+    <string name="label_buy_me_a_coffee">Buy Me a Coffee</string>
+    <string name="label_donate_paypal">Пожертвовать через PayPal</string>
     <string name="section_refresh_interval">Интервал обновления</string>
     <string name="refresh_description">Как часто виджет получает новые данные из Home Assistant</string>
     <string name="section_list_icons">Значки списков</string>
@@ -100,6 +104,8 @@
     <string name="section_interaction">Взаимодействие</string>
     <string name="settings_checkbox_only">Только флажок</string>
     <string name="settings_checkbox_only_desc">Только флажок переключает элемент</string>
+    <string name="settings_auto_focus_on_open">Фокус на поле при открытии</string>
+    <string name="settings_auto_focus_on_open_desc">Автоматически фокусировать поле нового элемента при открытии списка</string>
     <string name="section_appearance">Внешний вид</string>
     <string name="settings_show_title">Показать заголовок виджета</string>
     <string name="settings_show_title_desc">Отображать значок и заголовок HAdo</string>

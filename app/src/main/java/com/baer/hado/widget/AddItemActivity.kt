@@ -89,6 +89,7 @@ class AddItemActivity : ComponentActivity() {
         val supportedFeatures = intent.getIntExtra("supported_features", 0)
         val detailItemUid = intent.getStringExtra("detail_item_uid")
         val launchedFromApp = intent.getBooleanExtra("launched_from_app", false)
+        val autoFocusInput = intent.getBooleanExtra("auto_focus_input", false)
         val tokenManager = TokenManager(this)
         val isLocalMode = tokenManager.isDemoMode
 
@@ -109,7 +110,8 @@ class AddItemActivity : ComponentActivity() {
                     showOpenAppAction = !launchedFromApp,
                     onBack = { finish() },
                     onChanged = { TodoWidgetWorker.enqueueOneTime(this) },
-                    autoDetailItemUid = detailItemUid
+                    autoDetailItemUid = detailItemUid,
+                    autoFocusInput = autoFocusInput
                 )
             }
         }
@@ -154,8 +156,10 @@ fun TodoListEditor(
     showListHeader: Boolean = true,
     contentBottomPadding: Dp = 80.dp,
     initialItems: List<TodoItem> = emptyList(),
+    refreshOnLaunch: Boolean = true,
     onItemsChanged: (List<TodoItem>) -> Unit = {},
-    onAddInputFocusChanged: (Boolean) -> Unit = {}
+    onAddInputFocusChanged: (Boolean) -> Unit = {},
+    autoFocusInput: Boolean = false
 ) {
     val scope = rememberCoroutineScope()
     val gson = remember { Gson() }
@@ -169,8 +173,10 @@ fun TodoListEditor(
         Log.d("HAdo", "Cache for $entityId: ${cached?.size ?: "null"} items")
         cached
     }
-    var items by remember(entityId) { mutableStateOf(cachedItems ?: initialItems) }
-    var isLoading by remember(entityId) { mutableStateOf(cachedItems == null && initialItems.isEmpty()) }
+    var items by remember(entityId) { mutableStateOf(initialItems.ifEmpty { cachedItems ?: emptyList() }) }
+    var isLoading by remember(entityId) {
+        mutableStateOf(refreshOnLaunch && cachedItems == null && initialItems.isEmpty())
+    }
     var newItemText by remember(entityId) { mutableStateOf("") }
     val addFocusRequester = remember { FocusRequester() }
     var refocusTrigger by remember(entityId) { mutableIntStateOf(0) }
@@ -238,6 +244,11 @@ fun TodoListEditor(
 
     // Fetch items on launch (background refresh)
     LaunchedEffect(entityId) {
+        if (!refreshOnLaunch) {
+            isLoading = false
+            return@LaunchedEffect
+        }
+
         if (isLocalMode) {
             items = localStore?.getItems(entityId) ?: emptyList()
             isLoading = false
@@ -263,6 +274,15 @@ fun TodoListEditor(
                 }
                 isLoading = false
             }
+        }
+    }
+
+    // Auto-focus add input on first load when requested (e.g. widget list header tap)
+    LaunchedEffect(Unit) {
+        if (autoFocusInput) {
+            // Delay to ensure window has gained input focus and layout is complete
+            delay(350)
+            refocusTrigger++
         }
     }
 

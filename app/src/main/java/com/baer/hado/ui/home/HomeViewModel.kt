@@ -8,22 +8,29 @@ import com.baer.hado.data.model.TodoItem
 import com.baer.hado.data.repository.AuthRepository
 import com.baer.hado.data.repository.TodoRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class HomeUiState(
     val todoLists: List<HaState> = emptyList(),
     val selectedListId: String? = null,
-    val items: List<TodoItem> = emptyList(),
+    val itemsByList: Map<String, List<TodoItem>> = emptyMap(),
+    val loadingListIds: Set<String> = emptySet(),
+    val lastLoadedAt: Map<String, Long> = emptyMap(),
     val isLoadingLists: Boolean = false,
-    val isLoadingItems: Boolean = false,
     val error: String? = null,
     val isLoggedOut: Boolean = false,
     val isLocalMode: Boolean = false
-)
+) {
+    fun itemsFor(entityId: String?): List<TodoItem> {
+        return entityId?.let { itemsByList[it] }.orEmpty()
+    }
+}
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -32,8 +39,17 @@ class HomeViewModel @Inject constructor(
     private val tokenManager: TokenManager
 ) : ViewModel() {
 
+    companion object {
+        private const val SELECTED_LIST_CACHE_TTL_MS = 5_000L
+        private const val BACKGROUND_LIST_CACHE_TTL_MS = 15_000L
+    }
+
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+
+    private var loadItemsJob: Job? = null
+    private var loadingEntityId: String? = null
+    private var activeLoadToken = 0L
 
     init {
         _uiState.value = _uiState.value.copy(isLocalMode = tokenManager.isDemoMode)
@@ -45,12 +61,16 @@ class HomeViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoadingLists = true, error = null)
             todoRepository.getTodoLists().fold(
                 onSuccess = { lists ->
-                    val selectedId = _uiState.value.selectedListId ?: lists.firstOrNull()?.entityId
+                    val selectedId = _uiState.value.selectedListId
+                        ?.takeIf { currentId -> lists.any { it.entityId == currentId } }
+                        ?: lists.firstOrNull()?.entityId
+
                     _uiState.value = _uiState.value.copy(
                         todoLists = lists,
                         selectedListId = selectedId,
                         isLoadingLists = false
                     )
+
                     selectedId?.let { loadItems(it) }
                 },
                 onFailure = { e ->
@@ -64,29 +84,87 @@ class HomeViewModel @Inject constructor(
     }
 
     fun selectList(entityId: String) {
-        _uiState.value = _uiState.value.copy(
-            selectedListId = entityId,
-            items = emptyList()
-        )
+        if (_uiState.value.selectedListId == entityId) return
+        _uiState.value = _uiState.value.copy(selectedListId = entityId, error = null)
         loadItems(entityId)
     }
 
-    fun loadItems(entityId: String? = _uiState.value.selectedListId) {
+    fun loadItems(entityId: String? = _uiState.value.selectedListId, force: Boolean = false) {
         val id = entityId ?: return
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoadingItems = true, error = null)
-            todoRepository.getTodoItems(id).fold(
-                onSuccess = { items ->
-                    _uiState.value = _uiState.value.copy(
-                        items = items,
-                        isLoadingItems = false
-                    )
-                },
-                onFailure = { e ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoadingItems = false,
-                        error = e.message ?: "Failed to load items"
-                    )
+        if (!shouldLoadItems(id, force)) return
+
+        val previousLoadingId = loadingEntityId
+        if (previousLoadingId != null) {
+            loadItemsJob?.cancel()
+            if (previousLoadingId != id) {
+                setLoading(previousLoadingId, false)
+            }
+        }
+
+        val loadToken = ++activeLoadToken
+        loadingEntityId = id
+        setLoading(id, true)
+        _uiState.update { it.copy(error = null) }
+
+        loadItemsJob = viewModelScope.launch {
+            try {
+                todoRepository.getTodoItems(id).fold(
+                    onSuccess = { items ->
+                        if (loadToken != activeLoadToken) return@fold
+                        _uiState.update { state ->
+                            state.copy(
+                                itemsByList = state.itemsByList + (id to items),
+                                lastLoadedAt = state.lastLoadedAt + (id to System.currentTimeMillis())
+                            )
+                        }
+                    },
+                    onFailure = { e ->
+                        if (loadToken != activeLoadToken) return@fold
+                        _uiState.update { state ->
+                            state.copy(error = e.message ?: "Failed to load items")
+                        }
+                    }
+                )
+            } finally {
+                if (loadToken == activeLoadToken) {
+                    loadingEntityId = null
+                    setLoading(id, false)
+                }
+            }
+        }
+    }
+
+    fun updateCachedItems(entityId: String, items: List<TodoItem>) {
+        _uiState.update { state ->
+            if (state.itemsByList[entityId] == items) {
+                state
+            } else {
+                state.copy(itemsByList = state.itemsByList + (entityId to items))
+            }
+        }
+    }
+
+    private fun shouldLoadItems(entityId: String, force: Boolean): Boolean {
+        val state = _uiState.value
+        if (force) return true
+        if (entityId in state.loadingListIds) return false
+
+        val lastLoadedAt = state.lastLoadedAt[entityId] ?: return true
+        val ttlMs = if (entityId == state.selectedListId) {
+            SELECTED_LIST_CACHE_TTL_MS
+        } else {
+            BACKGROUND_LIST_CACHE_TTL_MS
+        }
+        return System.currentTimeMillis() - lastLoadedAt >= ttlMs
+    }
+
+    private fun setLoading(entityId: String, isLoading: Boolean) {
+        _uiState.update { state ->
+            state.copy(
+                loadingListIds = if (isLoading) {
+                    state.loadingListIds + entityId
+                } else {
+                    state.loadingListIds - entityId
                 }
             )
         }
@@ -96,7 +174,7 @@ class HomeViewModel @Inject constructor(
         val entityId = _uiState.value.selectedListId ?: return
         viewModelScope.launch {
             todoRepository.addItem(entityId, summary).fold(
-                onSuccess = { loadItems(entityId) },
+                onSuccess = { loadItems(entityId, force = true) },
                 onFailure = { e ->
                     _uiState.value = _uiState.value.copy(error = e.message)
                 }
@@ -108,7 +186,7 @@ class HomeViewModel @Inject constructor(
         val entityId = _uiState.value.selectedListId ?: return
         viewModelScope.launch {
             todoRepository.updateItemStatus(entityId, item.uid, !item.isCompleted).fold(
-                onSuccess = { loadItems(entityId) },
+                onSuccess = { loadItems(entityId, force = true) },
                 onFailure = { e ->
                     _uiState.value = _uiState.value.copy(error = e.message)
                 }
@@ -120,7 +198,7 @@ class HomeViewModel @Inject constructor(
         val entityId = _uiState.value.selectedListId ?: return
         viewModelScope.launch {
             todoRepository.removeItem(entityId, item.uid).fold(
-                onSuccess = { loadItems(entityId) },
+                onSuccess = { loadItems(entityId, force = true) },
                 onFailure = { e ->
                     _uiState.value = _uiState.value.copy(error = e.message)
                 }

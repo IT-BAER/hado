@@ -83,6 +83,10 @@
     <string name="label_developer">开发者</string>
     <string name="label_privacy_policy">隐私政策</string>
     <string name="label_source_code">源代码</string>
+    <string name="section_support">Support</string>
+    <string name="support_optional_donation">用于支持持续开发的可选捐赠。不会解锁功能，也不会改变应用。</string>
+    <string name="label_buy_me_a_coffee">Buy Me a Coffee</string>
+    <string name="label_donate_paypal">通过 PayPal 捐赠</string>
     <string name="section_refresh_interval">刷新间隔</string>
     <string name="refresh_description">小组件从 Home Assistant 获取新数据的频率</string>
     <string name="section_list_icons">列表图标</string>
@@ -99,8 +103,8 @@
     <string name="settings_show_completed">显示已完成</string>
     <string name="section_interaction">交互</string>
     <string name="settings_checkbox_only">仅复选框</string>
-    <string name="settings_checkbox_only_desc">仅复选框切换项目状态</string>
-    <string name="section_appearance">外观</string>
+    <string name="settings_checkbox_only_desc">仅复选框切换项目状态</string>    <string name="settings_auto_focus_on_open">打开时聚焦输入框</string>
+    <string name="settings_auto_focus_on_open_desc">打开列表时自动聚焦新建项目输入框</string>    <string name="section_appearance">外观</string>
     <string name="settings_show_title">显示小组件标题</string>
     <string name="settings_show_title_desc">显示 HAdo 图标和标题栏</string>
     <string name="section_font_size">字体大小</string>

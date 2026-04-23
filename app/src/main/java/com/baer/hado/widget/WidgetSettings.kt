@@ -18,7 +18,8 @@ data class WidgetSettings(
     val compactMode: Boolean = false,
     val checkboxOnly: Boolean = false,  // true = only checkbox toggles, false = entire row toggles
     val showTitle: Boolean = true,  // show HAdo icon + title bar
-    val showListIcons: Boolean = true
+    val showListIcons: Boolean = true,
+    val autoFocusOnOpen: Boolean = false
 ) {
     enum class FontSize(@StringRes val labelResId: Int, val titleSp: Float, val itemSp: Float, val headerSp: Float) {
         SMALL(R.string.font_small, 15f, 14f, 12f),
@@ -54,6 +55,7 @@ object WidgetSettingsManager {
     private const val KEY_CHECKBOX_ONLY = "checkbox_only_"
     private const val KEY_SHOW_TITLE = "show_title_"
     private const val KEY_SHOW_LIST_ICONS = "show_list_icons_"
+    private const val KEY_AUTO_FOCUS_ON_OPEN = "auto_focus_on_open_"
     private const val LEGACY_GLOBAL_REFRESH_INTERVAL = "refresh_interval"
 
     private fun prefs(context: Context) =
@@ -91,7 +93,8 @@ object WidgetSettingsManager {
             compactMode = p.getBoolean("$KEY_COMPACT_MODE$appWidgetId", false),
             checkboxOnly = p.getBoolean("$KEY_CHECKBOX_ONLY$appWidgetId", false),
             showTitle = p.getBoolean("$KEY_SHOW_TITLE$appWidgetId", true),
-            showListIcons = p.getBoolean("$KEY_SHOW_LIST_ICONS$appWidgetId", true)
+            showListIcons = p.getBoolean("$KEY_SHOW_LIST_ICONS$appWidgetId", true),
+            autoFocusOnOpen = p.getBoolean("$KEY_AUTO_FOCUS_ON_OPEN$appWidgetId", false)
         )
     }
 
@@ -107,6 +110,7 @@ object WidgetSettingsManager {
             putBoolean("$KEY_CHECKBOX_ONLY$appWidgetId", settings.checkboxOnly)
             putBoolean("$KEY_SHOW_TITLE$appWidgetId", settings.showTitle)
             putBoolean("$KEY_SHOW_LIST_ICONS$appWidgetId", settings.showListIcons)
+            putBoolean("$KEY_AUTO_FOCUS_ON_OPEN$appWidgetId", settings.autoFocusOnOpen)
             apply()
         }
     }
@@ -123,6 +127,7 @@ object WidgetSettingsManager {
             remove("$KEY_CHECKBOX_ONLY$appWidgetId")
             remove("$KEY_SHOW_TITLE$appWidgetId")
             remove("$KEY_SHOW_LIST_ICONS$appWidgetId")
+            remove("$KEY_AUTO_FOCUS_ON_OPEN$appWidgetId")
             apply()
         }
     }

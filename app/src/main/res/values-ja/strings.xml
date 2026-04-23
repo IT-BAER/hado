@@ -83,6 +83,10 @@
     <string name="label_developer">開発者</string>
     <string name="label_privacy_policy">プライバシーポリシー</string>
     <string name="label_source_code">ソースコード</string>
+    <string name="section_support">Support</string>
+    <string name="support_optional_donation">継続的な開発を支援するための任意の寄付です。機能の解除やアプリの変更はありません。</string>
+    <string name="label_buy_me_a_coffee">Buy Me a Coffee</string>
+    <string name="label_donate_paypal">PayPal で寄付</string>
     <string name="section_refresh_interval">更新間隔</string>
     <string name="refresh_description">ウィジェットがHome Assistantから新しいデータを取得する頻度</string>
     <string name="section_list_icons">リストアイコン</string>
@@ -100,6 +104,8 @@
     <string name="section_interaction">操作</string>
     <string name="settings_checkbox_only">チェックボックスのみ</string>
     <string name="settings_checkbox_only_desc">チェックボックスのみでアイテムを切り替え</string>
+    <string name="settings_auto_focus_on_open">開いたとき入力欄にフォーカス</string>
+    <string name="settings_auto_focus_on_open_desc">リストを開いたとき新規アイテム入力欄を自動的にフォーカスする</string>
     <string name="section_appearance">外観</string>
     <string name="settings_show_title">ウィジェットタイトルを表示</string>
     <string name="settings_show_title_desc">HADoアイコンとタイトルバーを表示</string>

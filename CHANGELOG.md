@@ -5,6 +5,22 @@ All notable changes to HAdo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.5] - 2026-04-23
+
+### Added
+- The currently open list now refreshes in the background about every 5 seconds while the home screen is visible, so changes from other users show up much faster
+- New opt-in widget setting “Focus add field on open”: tapping a list title on the widget can now automatically focus the new-item input and open the keyboard
+- Main app header now includes a purple heart support action that opens an optional external support dialog for Buy Me a Coffee and PayPal
+- Widget settings now end with a `"💜 Support"` section that links to the same optional external support pages
+
+### Changed
+- Home list loading now uses a per-list cache and deduplicated item requests instead of letting each embedded page fetch on its own
+
+### Fixed
+- Swiping between lists no longer triggers duplicate `todo.get_items` bursts that could hit Home Assistant 429 rate limits
+- Short `Retry-After` rate-limit responses are now retried once while the existing cached list stays visible
+- Swiping between home lists now auto-scrolls the selected list chip into view so the active list stays visible
+
 ## [1.0.4] - 2026-04-22
 
 ### Added

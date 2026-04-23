@@ -83,6 +83,10 @@
     <string name="label_developer">Ontwikkelaar</string>
     <string name="label_privacy_policy">Privacybeleid</string>
     <string name="label_source_code">Broncode</string>
+    <string name="section_support">Support</string>
+    <string name="support_optional_donation">Optionele donatie om de verdere ontwikkeling te steunen. Dit ontgrendelt geen functies en verandert de app niet.</string>
+    <string name="label_buy_me_a_coffee">Buy Me a Coffee</string>
+    <string name="label_donate_paypal">Doneren via PayPal</string>
     <string name="section_refresh_interval">Vernieuwingsinterval</string>
     <string name="refresh_description">Hoe vaak de widget nieuwe gegevens ophaalt van Home Assistant</string>
     <string name="section_list_icons">Lijstpictogrammen</string>
@@ -99,8 +103,8 @@
     <string name="settings_show_completed">Voltooide tonen</string>
     <string name="section_interaction">Interactie</string>
     <string name="settings_checkbox_only">Alleen selectievakje</string>
-    <string name="settings_checkbox_only_desc">Alleen het selectievakje schakelt het item</string>
-    <string name="section_appearance">Uiterlijk</string>
+    <string name="settings_checkbox_only_desc">Alleen het selectievakje schakelt het item</string>    <string name="settings_auto_focus_on_open">Invoerveld focussen bij openen</string>
+    <string name="settings_auto_focus_on_open_desc">Automatisch het nieuwe-itemveld focussen bij het openen van een lijst</string>    <string name="section_appearance">Uiterlijk</string>
     <string name="settings_show_title">Widgettitel tonen</string>
     <string name="settings_show_title_desc">HAdo-pictogram en titelbalk weergeven</string>
     <string name="section_font_size">Lettergrootte</string>
