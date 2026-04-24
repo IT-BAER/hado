@@ -1,32 +1,37 @@
 package com.baer.hado.widget
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.net.Uri
+import com.mikepenz.iconics.IconicsDrawable
 import java.io.File
 
 /**
- * Manages per-list icon overrides. Each entity can have an emoji or a compressed image.
- * Priority chain: client-side override > MDI emoji mapping > default fallback.
+ * Manages per-list icon overrides. Each entity can have an emoji, MDI icon, or a compressed image.
+ * Priority chain: client-side override > HA MDI icon > default fallback.
  */
 object ListIconManager {
 
     private const val PREFS_NAME = "hado_list_icons"
-    private const val KEY_TYPE_PREFIX = "icon_type_"   // "emoji" or "image"
-    private const val KEY_VALUE_PREFIX = "icon_value_"  // emoji chars or file name
+    private const val KEY_TYPE_PREFIX = "icon_type_"   // "emoji", "mdi", or "image"
+    private const val KEY_VALUE_PREFIX = "icon_value_"  // emoji chars, mdi:* string, or file name
     private const val ICONS_DIR = "list_icons"
     private const val ICON_SIZE = 48 // px — small enough for widget, big enough for clarity
 
-    enum class IconType { EMOJI, IMAGE }
+    enum class IconType { EMOJI, IMAGE, MDI }
 
     data class ResolvedIcon(
         val type: IconType,
-        val value: String // emoji chars or absolute file path
+        val value: String,
+        val fallbackEmoji: String? = null
     )
 
-    /** Default icon when nothing is set (mdi:clipboard-list → 📋) */
+    /** Default icon when nothing is set (mdi:clipboard-list) */
     private const val DEFAULT_EMOJI = "📋"
+    private const val DEFAULT_HA_ICON = "mdi:clipboard-list"
     /** Special value stored when user explicitly disables the icon */
     private const val DISABLED_VALUE = "__disabled__"
 
@@ -42,9 +47,9 @@ object ListIconManager {
     /**
      * Resolve the icon for an entity using the priority chain:
      * 1. Client-side disabled → null
-     * 2. Client-side override (emoji or image)
-     * 3. MDI icon from HA mapped to emoji
-     * 4. Default fallback (📋)
+    * 2. Client-side override (emoji, mdi, or image)
+    * 3. MDI icon from HA
+    * 4. Default fallback (mdi:clipboard-list)
      */
     fun resolveIcon(context: Context, entityId: String, haIcon: String? = null): ResolvedIcon? {
         val p = prefs(context)
@@ -58,6 +63,13 @@ object ListIconManager {
         if (type != null && value != null) {
             val resolvedOverride = when (type) {
                 "emoji" -> ResolvedIcon(IconType.EMOJI, value)
+                "mdi" -> normalizeMdiIcon(value)?.let { mdiIcon ->
+                    ResolvedIcon(
+                        type = IconType.MDI,
+                        value = mdiIcon,
+                        fallbackEmoji = mapMdiToEmoji(mdiIcon) ?: DEFAULT_EMOJI
+                    )
+                }
                 "image" -> {
                     val file = imageFile(context, entityId)
                     if (file.exists()) {
@@ -77,13 +89,20 @@ object ListIconManager {
         }
 
         // 3. MDI mapping
-        if (haIcon != null) {
-            val emoji = MDI_TO_EMOJI[haIcon]
-            if (emoji != null) return ResolvedIcon(IconType.EMOJI, emoji)
+        normalizeMdiIcon(haIcon)?.let { mdiIcon ->
+            return ResolvedIcon(
+                type = IconType.MDI,
+                value = mdiIcon,
+                fallbackEmoji = mapMdiToEmoji(mdiIcon) ?: DEFAULT_EMOJI
+            )
         }
 
         // 4. Default fallback
-        return ResolvedIcon(IconType.EMOJI, DEFAULT_EMOJI)
+        return ResolvedIcon(
+            type = IconType.MDI,
+            value = DEFAULT_HA_ICON,
+            fallbackEmoji = DEFAULT_EMOJI
+        )
     }
 
     /** Check if icon is explicitly disabled for an entity */
@@ -111,6 +130,16 @@ object ListIconManager {
         }
     }
 
+    fun setMdi(context: Context, entityId: String, mdiIcon: String) {
+        val normalized = normalizeMdiIcon(mdiIcon) ?: return
+        imageFile(context, entityId).delete()
+        prefs(context).edit().apply {
+            putString("$KEY_TYPE_PREFIX$entityId", "mdi")
+            putString("$KEY_VALUE_PREFIX$entityId", normalized)
+            apply()
+        }
+    }
+
     /**
      * Compress and save image from Uri. Returns true on success.
      */
@@ -121,9 +150,18 @@ object ListIconManager {
             inputStream.close()
             if (original == null) return false
 
-            // Scale to ICON_SIZE x ICON_SIZE
-            val scaled = Bitmap.createScaledBitmap(original, ICON_SIZE, ICON_SIZE, true)
-            original.recycle()
+            val cropSize = minOf(original.width, original.height)
+            val cropX = (original.width - cropSize) / 2
+            val cropY = (original.height - cropSize) / 2
+            val cropped = Bitmap.createBitmap(original, cropX, cropY, cropSize, cropSize)
+            if (cropped != original) {
+                original.recycle()
+            }
+
+            val scaled = Bitmap.createScaledBitmap(cropped, ICON_SIZE, ICON_SIZE, true)
+            if (scaled != cropped) {
+                cropped.recycle()
+            }
 
             // Save as JPEG
             val file = imageFile(context, entityId)
@@ -158,6 +196,76 @@ object ListIconManager {
         } catch (_: Exception) {
             null
         }
+    }
+
+    fun renderMdiBitmap(context: Context, mdiIcon: String, sizePx: Int, tintColor: Int): Bitmap? {
+        val normalized = normalizeMdiIcon(mdiIcon) ?: return null
+        val iconicsKey = normalized.replace("mdi:", "cmd-")
+        val targetSizePx = sizePx.coerceAtLeast(1)
+
+        return try {
+            val drawable = IconicsDrawable(context, iconicsKey).apply {
+                sizeXPx = targetSizePx
+                sizeYPx = targetSizePx
+                setTintList(ColorStateList.valueOf(tintColor))
+            }
+
+            Bitmap.createBitmap(targetSizePx, targetSizePx, Bitmap.Config.ARGB_8888).also { bitmap ->
+                val canvas = Canvas(bitmap)
+                drawable.setBounds(0, 0, targetSizePx, targetSizePx)
+                drawable.draw(canvas)
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    fun normalizeMdiIcon(value: String?): String? {
+        val normalized = value
+            ?.trim()
+            ?.lowercase()
+            ?.takeIf { it.isNotBlank() }
+            ?: return null
+
+        return if (normalized.startsWith("mdi:")) normalized else "mdi:$normalized"
+    }
+
+    fun mapMdiToEmoji(mdiIcon: String): String? {
+        return MDI_TO_EMOJI[normalizeMdiIcon(mdiIcon)]
+    }
+
+    fun searchSupportedMdiIcons(query: String, limit: Int = 10): List<String> {
+        val normalizedQuery = normalizeMdiIcon(query)
+        val searchToken = normalizedQuery?.removePrefix("mdi:").orEmpty()
+
+        return SUPPORTED_MDI_ICONS
+            .filter { mdiIcon ->
+                if (searchToken.isBlank()) return@filter true
+                val iconName = mdiIcon.removePrefix("mdi:")
+                iconName.contains(searchToken) || mdiIcon.contains(normalizedQuery.orEmpty())
+            }
+            .sortedWith(
+                compareBy<String> { !it.removePrefix("mdi:").startsWith(searchToken) }
+                    .thenBy { it }
+            )
+            .take(limit)
+    }
+
+    fun canRenderMdiIcon(context: Context, mdiIcon: String): Boolean {
+        return renderMdiBitmap(
+            context = context,
+            mdiIcon = mdiIcon,
+            sizePx = 24,
+            tintColor = 0xFF000000.toInt()
+        ) != null
+    }
+
+    fun mapEmojiToHaIcon(emoji: String): String {
+        return EMOJI_TO_MDI[normalizeEmojiKey(emoji)] ?: DEFAULT_HA_ICON
+    }
+
+    private fun normalizeEmojiKey(value: String): String {
+        return value.trim().replace("\uFE0F", "")
     }
 
     /**
@@ -298,4 +406,15 @@ object ListIconManager {
         "mdi:file-document" to "📄",
         "mdi:file-document-outline" to "📄"
     )
+
+    private val EMOJI_TO_MDI = LinkedHashMap<String, String>().apply {
+        MDI_TO_EMOJI.forEach { (mdi, emoji) ->
+            val normalizedEmoji = normalizeEmojiKey(emoji)
+            if (normalizedEmoji !in this) {
+                this[normalizedEmoji] = mdi
+            }
+        }
+    }
+
+    private val SUPPORTED_MDI_ICONS = MDI_TO_EMOJI.keys.sorted()
 }

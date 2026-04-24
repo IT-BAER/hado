@@ -42,8 +42,12 @@
     <string name="dialog_new_list_title">New List</string>
     <string name="label_list_name">List name</string>
     <string name="label_emoji">Emoji</string>
+    <string name="label_mdi_icon">MDI icon</string>
     <string name="emoji_placeholder">e.g. 🛒 📋 ⭐</string>
     <string name="emoji_error">Only emoji allowed</string>
+    <string name="mdi_icon_placeholder">mdi:home</string>
+    <string name="mdi_icon_supporting">Type an MDI icon or search supported Home Assistant icons.</string>
+    <string name="mdi_icon_no_match">No matching supported icons. Try a name like mdi:home.</string>
 
     <!-- Actions -->
     <string name="action_add">Add</string>
@@ -95,6 +99,7 @@
     <string name="label_tap_to_change">Tap to change</string>
     <string name="dialog_icon_title">Icon for %1$s</string>
     <string name="label_ha_icon">HA icon: %1$s</string>
+    <string name="list_icon_sync_requires_admin">Home Assistant icon sync requires an admin account. Custom icons still work locally.</string>
 
     <!-- Widget Settings -->
     <string name="title_widget_settings">Widget Settings</string>

@@ -5,6 +5,33 @@ All notable changes to HAdo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-04-24
+
+### Added
+- New list icon picker with direct typed `mdi:*` search, live preview, inline suggestions, and native MDI defaults; compatible emoji and MDI choices can sync upstream while custom images remain local-only
+- Pull-to-refresh on every list editor: swipe down to force a fresh fetch from Home Assistant (or local store in local mode)
+- Scroll animation fix: items no longer appear to reorder or shuffle when scrolling fast through a list — enter animations now only play for truly new items
+
+### Changed
+- The inline add row now stays above active items, and newly added items are inserted at the top in both the app editor and widget editor
+- Newly added Home Assistant items are now moved to the top immediately after creation, so the refreshed persisted order matches the optimistic UI order
+- Rapid check/uncheck taps on the same item are now debounced (350 ms) and coalesced — only the settled state is sent to Home Assistant, eliminating out-of-order API races
+- Toggling an item now reverts its optimistic state if the Home Assistant API call fails, instead of leaving the item in a wrong state
+- The widget editor now shows the list icon and list name directly in the top app bar, freeing more vertical space for items and the add row
+- List icons now use a shared fixed-size preview across the editor, home overview, app settings, and widget settings so emoji and custom image icons stay visually aligned
+
+### Fixed
+- Expired or revoked Home Assistant sessions now clear saved auth state and return cleanly to the login screen instead of bouncing between screens in a 401 loop
+- Tapping a list chip in the home editor now moves the horizontal pager to that list again; chip taps and swipes stay in sync
+- Newly added items now animate existing rows downward instead of snapping when the optimistic temporary row is replaced by the confirmed item
+- The Local Mode button on the login screen now uses a readable high-contrast style instead of a barely visible outline treatment
+- Custom list images are now center-cropped before being stored and render as proper circular icons instead of malformed stretched thumbnails
+- Non-admin Home Assistant accounts now fall back cleanly to local-only custom icons and show a note instead of attempting admin-only entity icon updates
+- Reopening the list icon picker now shows the active MDI or emoji selection again, inline icon suggestions no longer dismiss the keyboard, and restoring the default icon now returns to the native `mdi:clipboard-list` list icon
+
+### Security
+- Updated Glance widget library from 1.1.0 to 1.1.1 to address CVE-2024-7254 (protobuf vulnerability in transitive dependencies `glance-appwidget-proto` and `glance-appwidget-external-protobuf`)
+
 ## [1.0.5] - 2026-04-23
 
 ### Added

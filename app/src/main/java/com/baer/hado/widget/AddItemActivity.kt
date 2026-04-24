@@ -1,5 +1,6 @@
 package com.baer.hado.widget
 
+import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -8,12 +9,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -53,6 +57,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -74,8 +79,13 @@ import com.baer.hado.data.model.TodoListFeature
 import com.baer.hado.ui.theme.HadoTheme
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -90,6 +100,8 @@ class AddItemActivity : ComponentActivity() {
         val detailItemUid = intent.getStringExtra("detail_item_uid")
         val launchedFromApp = intent.getBooleanExtra("launched_from_app", false)
         val autoFocusInput = intent.getBooleanExtra("auto_focus_input", false)
+        val targetAppWidgetId = intent.getIntExtra("app_widget_id", AppWidgetManager.INVALID_APPWIDGET_ID)
+            .takeIf { it != AppWidgetManager.INVALID_APPWIDGET_ID }
         val tokenManager = TokenManager(this)
         val isLocalMode = tokenManager.isDemoMode
 
@@ -109,8 +121,12 @@ class AddItemActivity : ComponentActivity() {
                     isLocalMode = isLocalMode,
                     showOpenAppAction = !launchedFromApp,
                     onBack = { finish() },
-                    onChanged = { TodoWidgetWorker.enqueueOneTime(this) },
+                    onChanged = {
+                        targetAppWidgetId?.let { TodoWidgetWorker.enqueueOneTime(this, it) }
+                            ?: TodoWidgetWorker.enqueueOneTime(this)
+                    },
                     autoDetailItemUid = detailItemUid,
+                    widgetAppWidgetId = targetAppWidgetId,
                     autoFocusInput = autoFocusInput
                 )
             }
@@ -159,6 +175,7 @@ fun TodoListEditor(
     refreshOnLaunch: Boolean = true,
     onItemsChanged: (List<TodoItem>) -> Unit = {},
     onAddInputFocusChanged: (Boolean) -> Unit = {},
+    widgetAppWidgetId: Int? = null,
     autoFocusInput: Boolean = false
 ) {
     val scope = rememberCoroutineScope()
@@ -180,9 +197,10 @@ fun TodoListEditor(
     var newItemText by remember(entityId) { mutableStateOf("") }
     val addFocusRequester = remember { FocusRequester() }
     var refocusTrigger by remember(entityId) { mutableIntStateOf(0) }
-    var initialLoadComplete by remember(entityId) { mutableStateOf(false) }
     var completedExpanded by remember(entityId) { mutableStateOf(true) }
     var pendingDeletes by remember(entityId) { mutableStateOf(emptySet<String>()) }
+    val pendingToggleJobs = remember(entityId) { mutableMapOf<String, Job>() }
+    var newlyAddedUids by remember(entityId) { mutableStateOf(setOf<String>()) }
     var draggedItemUid by remember(entityId) { mutableStateOf<String?>(null) }
     var detailItem by remember(entityId) { mutableStateOf<TodoItem?>(null) }
     var dragOffsetY by remember(entityId) { mutableFloatStateOf(0f) }
@@ -193,10 +211,13 @@ fun TodoListEditor(
     val focusManager = LocalFocusManager.current
     val listState = rememberLazyListState()
     val imeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+    val resolvedIcon = remember(entityId) {
+        ListIconManager.resolveIcon(context, entityId)
+    }
     // Always-current items ref for gesture callbacks (avoids stale closures)
     val currentItemsState by rememberUpdatedState(items)
 
-    fun addRowIndex(): Int = items.count { !it.isCompleted } + if (showListHeader) 1 else 0
+    fun addRowIndex(): Int = if (showListHeader) 1 else 0
 
     // Re-focus input field after adding an item (deferred to next frame)
     LaunchedEffect(refocusTrigger) {
@@ -205,11 +226,6 @@ fun TodoListEditor(
             addFocusRequester.requestFocus()
             keyboardController?.show()
         }
-    }
-
-    // Mark initial load complete after first items render
-    LaunchedEffect(isLoading) {
-        if (!isLoading) initialLoadComplete = true
     }
 
     LaunchedEffect(entityId, initialItems) {
@@ -302,6 +318,7 @@ fun TodoListEditor(
         Log.d("HAdo", "addItem called with text='$text'")
         if (text.isBlank()) return
         val trimmed = text.trim()
+        val knownItemUids = items.map { it.uid }.toSet()
         newItemText = ""
 
         // Trigger re-focus on next frame for rapid multi-add
@@ -310,7 +327,13 @@ fun TodoListEditor(
         if (isLocalMode) {
             val newItem = localStore?.addItem(entityId, trimmed)
             if (newItem != null) {
-                items = items + newItem
+                newlyAddedUids += newItem.uid
+                items = listOf(newItem) + items
+                widgetAppWidgetId?.let { targetWidgetId ->
+                    scope.launch {
+                        WidgetStateMutator.prependItem(context, entityId, newItem, targetWidgetId)
+                    }
+                }
             }
             onChanged()
             return
@@ -322,7 +345,8 @@ fun TodoListEditor(
             summary = trimmed,
             status = TodoItemStatus.NEEDS_ACTION
         )
-        items = items + tempItem
+        newlyAddedUids += tempItem.uid
+        items = listOf(tempItem) + items
 
         scope.launch(Dispatchers.IO) {
             try {
@@ -331,11 +355,35 @@ fun TodoListEditor(
                 response?.use { resp ->
                     if (resp.isSuccessful) {
                         Log.d("HAdo", "addItem succeeded: ${resp.code}")
+                        val addedItem = moveAddedItemToTop(
+                            httpClient = httpClient,
+                            gson = gson,
+                            entityId = entityId,
+                            knownItemUids = knownItemUids,
+                            expectedSummary = trimmed
+                        )
+                        if (addedItem != null) {
+                            withContext(NonCancellable) {
+                                widgetAppWidgetId?.let { targetWidgetId ->
+                                    WidgetStateMutator.prependItem(context, entityId, addedItem, targetWidgetId)
+                                }
+                            }
+                            if (currentCoroutineContext().isActive) {
+                                withContext(Dispatchers.Main) {
+                                    newlyAddedUids = (newlyAddedUids - tempItem.uid) + addedItem.uid
+                                    items = items.map { item ->
+                                        if (item.uid == tempItem.uid) addedItem else item
+                                    }
+                                }
+                            }
+                        }
                     } else {
                         Log.e("HAdo", "addItem failed: ${resp.code} ${resp.body?.string()}")
                     }
                 }
-                onChanged()
+                withContext(NonCancellable) {
+                    onChanged()
+                }
             } catch (e: Exception) {
                 Log.e("HAdo", "addItem failed", e)
             }
@@ -344,7 +392,7 @@ fun TodoListEditor(
 
     fun toggleItem(item: TodoItem) {
         val newStatus = if (item.isCompleted) "needs_action" else "completed"
-        // Optimistic update
+        // Optimistic update immediately
         items = items.map {
             if (it.uid == item.uid) it.copy(
                 status = if (item.isCompleted) TodoItemStatus.NEEDS_ACTION
@@ -358,8 +406,12 @@ fun TodoListEditor(
             return
         }
 
-        scope.launch(Dispatchers.IO) {
+        // Cancel any in-flight toggle for this item so rapid re-taps coalesce into one API call
+        pendingToggleJobs[item.uid]?.cancel()
+        var job: Job? = null
+        job = scope.launch(Dispatchers.IO) {
             try {
+                delay(350) // debounce: wait for user to settle before sending to HA
                 val payload = gson.toJson(mapOf(
                     "entity_id" to entityId,
                     "item" to item.uid,
@@ -371,13 +423,24 @@ fun TodoListEditor(
                         Log.d("HAdo", "toggleItem succeeded: ${resp.code}")
                     } else {
                         Log.e("HAdo", "toggleItem failed: ${resp.code} ${resp.body?.string()}")
+                        withContext(Dispatchers.Main) {
+                            items = items.map { if (it.uid == item.uid) item else it }
+                        }
                     }
                 }
                 onChanged()
+            } catch (e: CancellationException) {
+                throw e // rapid re-tap cancelled this job; optimistic state already reflects next toggle
             } catch (e: Exception) {
                 Log.e("HAdo", "toggleItem failed", e)
+                withContext(Dispatchers.Main) {
+                    items = items.map { if (it.uid == item.uid) item else it }
+                }
+            } finally {
+                if (pendingToggleJobs[item.uid] === job) pendingToggleJobs.remove(item.uid)
             }
         }
+        pendingToggleJobs[item.uid] = job
     }
 
     fun deleteItem(item: TodoItem) {
@@ -415,12 +478,50 @@ fun TodoListEditor(
         }
     }
 
+    val pullToRefreshState = rememberPullToRefreshState()
+    LaunchedEffect(pullToRefreshState.isRefreshing) {
+        if (!pullToRefreshState.isRefreshing) return@LaunchedEffect
+        if (isLocalMode) {
+            items = localStore?.getItems(entityId) ?: emptyList()
+        } else {
+            withContext(Dispatchers.IO) {
+                try {
+                    val payload = gson.toJson(mapOf("entity_id" to entityId))
+                    val response = httpClient.post(
+                        "api/services/todo/get_items?return_response", payload
+                    )
+                    response?.use { resp ->
+                        if (resp.isSuccessful) {
+                            val body = resp.body?.string()
+                            if (body != null) {
+                                val freshItems = parseItemsFromResponse(gson, body, entityId)
+                                withContext(Dispatchers.Main) { items = freshItems }
+                                ItemsCache.save(context, entityId, freshItems)
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("HAdo", "Pull refresh failed", e)
+                }
+            }
+        }
+        pullToRefreshState.endRefresh()
+    }
+
     Scaffold(
         modifier = modifier,
         topBar = {
             if (showTopBar) {
                 TopAppBar(
-                    title = {},
+                    title = {
+                        ListTitle(
+                            resolvedIcon = resolvedIcon,
+                            listName = listName,
+                            iconSize = 28.dp,
+                            textStyle = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
                             Icon(
@@ -456,77 +557,61 @@ fun TodoListEditor(
         },
         containerColor = MaterialTheme.colorScheme.surface
     ) { padding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .nestedScroll(pullToRefreshState.nestedScrollConnection)
+        ) {
         LazyColumn(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .imePadding(),
                 contentPadding = PaddingValues(bottom = contentBottomPadding)
             ) {
                 // List title with icon (Keep: 24sp, paddingTop 12dp)
-                if (showListHeader) {
+                if (showListHeader && !showTopBar) {
                     item {
-                        val resolvedIcon = remember(entityId) {
-                            ListIconManager.resolveIcon(context, entityId)
-                        }
-                        Row(
+                        ListTitle(
+                            resolvedIcon = resolvedIcon,
+                            listName = listName,
+                            iconSize = 32.dp,
+                            textStyle = MaterialTheme.typography.headlineMedium.copy(fontSize = 24.sp),
                             modifier = Modifier.padding(
                                 start = 20.dp,
                                 end = 20.dp,
                                 top = 12.dp,
                                 bottom = 16.dp
-                            ),
-                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-                        ) {
-                            if (resolvedIcon != null) {
-                                when (resolvedIcon.type) {
-                                    ListIconManager.IconType.EMOJI -> {
-                                        Text(
-                                            text = resolvedIcon.value,
-                                            fontSize = 24.sp,
-                                            modifier = Modifier.padding(end = 8.dp)
-                                        )
-                                    }
-                                    ListIconManager.IconType.IMAGE -> {
-                                        val bitmap = remember(resolvedIcon.value) { ListIconManager.loadBitmap(resolvedIcon.value) }
-                                        if (bitmap != null) {
-                                            androidx.compose.foundation.Image(
-                                                bitmap = bitmap.asImageBitmap(),
-                                                contentDescription = null,
-                                                modifier = Modifier
-                                                    .size(28.dp)
-                                                    .clip(CircleShape)
-                                                    .padding(end = 8.dp)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                            Text(
-                                text = listName,
-                                style = MaterialTheme.typography.headlineMedium.copy(fontSize = 24.sp),
-                                fontWeight = FontWeight.Normal,
-                                color = MaterialTheme.colorScheme.onSurface
                             )
-                        }
+                        )
                     }
+                }
+
+                // Add item row (above uncompleted items)
+                item(key = "add-item-row") {
+                    AddItemRow(
+                        text = newItemText,
+                        onTextChange = { newItemText = it },
+                        onAdd = { addItem(newItemText) },
+                        focusRequester = addFocusRequester,
+                        onFocusChanged = { isFocused ->
+                            isAddInputFocused = isFocused
+                        }
+                    )
                 }
 
                 // Uncompleted items with drag handles
                 val uncompleted = items.filter { !it.isCompleted }
                 itemsIndexed(uncompleted, key = { _, item -> item.uid }) { _, item ->
-                    val shouldAnimate = initialLoadComplete
-                    var visible by remember { mutableStateOf(!shouldAnimate) }
-                    LaunchedEffect(Unit) { visible = true }
                     val isDragging = draggedItemUid == item.uid
 
                     AnimatedVisibility(
-                        visible = visible && item.uid !in pendingDeletes,
-                        enter = fadeIn(tween(300)) + expandVertically(
+                        visible = item.uid !in pendingDeletes,
+                        enter = if (item.uid in newlyAddedUids) fadeIn(tween(300)) + expandVertically(
                             expandFrom = Alignment.Top,
                             animationSpec = tween(300)
-                        ),
+                        ) else EnterTransition.None,
                         exit = fadeOut(tween(300)) + shrinkVertically(
                             shrinkTowards = Alignment.Top,
                             animationSpec = tween(300)
@@ -614,19 +699,6 @@ fun TodoListEditor(
                     }
                 }
 
-                // Add item row (Keep: below uncompleted items)
-                item(key = "add-item-row") {
-                    AddItemRow(
-                        text = newItemText,
-                        onTextChange = { newItemText = it },
-                        onAdd = { addItem(newItemText) },
-                        focusRequester = addFocusRequester,
-                        onFocusChanged = { isFocused ->
-                            isAddInputFocused = isFocused
-                        }
-                    )
-                }
-
                 // Completed items section with collapsible header
                 val completed = items.filter { it.isCompleted }
                 if (completed.isNotEmpty()) {
@@ -639,16 +711,12 @@ fun TodoListEditor(
                     }
                     if (completedExpanded) {
                         items(completed, key = { it.uid }) { item ->
-                            val shouldAnimate = initialLoadComplete
-                            var visible by remember { mutableStateOf(!shouldAnimate) }
-                            LaunchedEffect(Unit) { visible = true }
-
                             AnimatedVisibility(
-                                visible = visible && item.uid !in pendingDeletes,
-                                enter = fadeIn(tween(300)) + expandVertically(
+                                visible = item.uid !in pendingDeletes,
+                                enter = if (item.uid in newlyAddedUids) fadeIn(tween(300)) + expandVertically(
                                     expandFrom = Alignment.Top,
                                     animationSpec = tween(300)
-                                ),
+                                ) else EnterTransition.None,
                                 exit = fadeOut(tween(300)) + shrinkVertically(
                                     shrinkTowards = Alignment.Top,
                                     animationSpec = tween(300)
@@ -668,6 +736,14 @@ fun TodoListEditor(
                 }
             }
         }
+
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.TopCenter
+        ) {
+            PullToRefreshContainer(state = pullToRefreshState)
+        }
+        }  // end Box
 
         // Item detail dialog (long-press)
         detailItem?.let { item ->
@@ -730,6 +806,38 @@ fun TodoListEditor(
                 }
                 }
             }
+        )
+    }
+}
+
+@Composable
+private fun ListTitle(
+    resolvedIcon: ListIconManager.ResolvedIcon?,
+    listName: String,
+    iconSize: Dp,
+    textStyle: androidx.compose.ui.text.TextStyle,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (resolvedIcon != null) {
+            ListIconPreview(
+                resolvedIcon = resolvedIcon,
+                size = iconSize,
+                modifier = Modifier.padding(end = 10.dp),
+                emojiColor = MaterialTheme.colorScheme.onSurface,
+                backgroundColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        }
+        Text(
+            text = listName,
+            style = textStyle,
+            fontWeight = FontWeight.Normal,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
@@ -965,6 +1073,47 @@ private fun clearAddInputFocus(
     keyboardController?.hide()
     focusManager.clearFocus(force = true)
     onFocusChanged()
+}
+
+private fun moveAddedItemToTop(
+    httpClient: WidgetHttpClient,
+    gson: Gson,
+    entityId: String,
+    knownItemUids: Set<String>,
+    expectedSummary: String
+): TodoItem? {
+    val payload = gson.toJson(mapOf("entity_id" to entityId))
+    val response = httpClient.post("api/services/todo/get_items?return_response", payload) ?: return null
+
+    var resolvedItem: TodoItem? = null
+
+    response.use { resp ->
+        if (!resp.isSuccessful) {
+            Log.w("HAdo", "Failed to fetch items after add: ${resp.code}")
+            return@use
+        }
+
+        val body = resp.body?.string() ?: return@use
+        val refreshedItems = parseItemsFromResponse(gson, body, entityId)
+        val addedItem = refreshedItems.firstOrNull {
+            it.uid !in knownItemUids && it.summary == expectedSummary
+        } ?: refreshedItems.firstOrNull { it.uid !in knownItemUids } ?: return@use
+        resolvedItem = addedItem
+
+        val firstActiveUid = refreshedItems.firstOrNull { !it.isCompleted }?.uid
+        if (firstActiveUid == addedItem.uid) {
+            return@use
+        }
+
+        val moved = httpClient.moveTodoItem(entityId, addedItem.uid, null)
+        if (moved) {
+            Log.d("HAdo", "Moved added item to top: ${addedItem.uid}")
+        } else {
+            Log.w("HAdo", "Failed to move added item to top: ${addedItem.uid}")
+        }
+    }
+
+    return resolvedItem
 }
 
 private fun parseItemsFromResponse(

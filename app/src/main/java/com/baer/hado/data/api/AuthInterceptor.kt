@@ -80,8 +80,13 @@ class TokenRefreshInterceptor @Inject constructor(
             tokenManager.refreshToken = response.refreshToken
             tokenManager.tokenExpiry =
                 System.currentTimeMillis() + (response.expiresIn * 1000)
+            Log.d("HAdo", "Token refreshed successfully, expires in ${response.expiresIn}s")
             true
-        } catch (_: Exception) {
+        } catch (e: retrofit2.HttpException) {
+            Log.e("HAdo", "Token refresh failed HTTP ${e.code()}: ${e.response()?.errorBody()?.string()}")
+            false
+        } catch (e: Exception) {
+            Log.e("HAdo", "Token refresh failed: ${e.javaClass.simpleName}: ${e.message}")
             false
         }
     }

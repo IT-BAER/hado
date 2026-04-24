@@ -21,8 +21,8 @@ android {
         applicationId = "com.baer.hado"
         minSdk = 33
         targetSdk = 35
-        versionCode = 6
-        versionName = "1.0.5"
+        versionCode = 8
+        versionName = "1.1.0"
 
         manifestPlaceholders["appAuthRedirectScheme"] = "hado"
     }
@@ -96,7 +96,21 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     // Core
-    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.core.ktx) {
+        version {
+            strictly("1.13.1")
+        }
+    }
+    implementation("androidx.core:core:1.13.1") {
+        version {
+            strictly("1.13.1")
+        }
+    }
+    implementation("androidx.startup:startup-runtime:1.1.1") {
+        version {
+            strictly("1.1.1")
+        }
+    }
     implementation(libs.androidx.activity.compose)
 
     // Lifecycle
@@ -131,6 +145,10 @@ dependencies {
 
     // Security
     implementation(libs.androidx.security.crypto)
+
+    // Dynamic MDI icon rendering
+    implementation(libs.iconics.core)
+    implementation("com.mikepenz:community-material-typeface:7.0.96.1-kotlin@aar")
 
     // Browser (Custom Tabs for OAuth)
     implementation(libs.androidx.browser)

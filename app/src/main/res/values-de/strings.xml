@@ -40,8 +40,12 @@
     <string name="dialog_new_list_title">Neue Liste</string>
     <string name="label_list_name">Listenname</string>
     <string name="label_emoji">Emoji</string>
+    <string name="label_mdi_icon">MDI-Symbol</string>
     <string name="emoji_placeholder">z.B. 🛒 📋 ⭐</string>
     <string name="emoji_error">Nur Emojis erlaubt</string>
+    <string name="mdi_icon_placeholder">mdi:home</string>
+    <string name="mdi_icon_supporting">Gib ein MDI-Symbol ein oder suche nach unterstützten Home-Assistant-Symbolen.</string>
+    <string name="mdi_icon_no_match">Kein passendes unterstütztes Symbol gefunden. Probiere z.B. mdi:home.</string>
 
     <!-- Actions -->
     <string name="action_add">Hinzufügen</string>
@@ -93,6 +97,7 @@
     <string name="label_tap_to_change">Antippen zum Ändern</string>
     <string name="dialog_icon_title">Symbol für %1$s</string>
     <string name="label_ha_icon">HA-Symbol: %1$s</string>
+    <string name="list_icon_sync_requires_admin">Die Home-Assistant-Symbolsynchronisierung benötigt ein Admin-Konto. Eigene Symbole funktionieren weiterhin nur lokal.</string>
 
     <!-- Widget Settings -->
     <string name="title_widget_settings">Widget-Einstellungen</string>

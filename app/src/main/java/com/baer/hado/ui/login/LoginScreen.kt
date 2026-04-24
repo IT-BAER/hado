@@ -19,6 +19,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -328,9 +329,13 @@ private fun LoginForm(
                     color = MaterialTheme.colorScheme.onTertiaryContainer
                 )
 
-                OutlinedButton(
+                Button(
                     onClick = onTryDemo,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.tertiaryContainer
+                    )
                 ) {
                     Text(stringResource(R.string.login_local_mode))
                 }

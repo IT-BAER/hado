@@ -1,5 +1,6 @@
 package com.baer.hado.ui.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.baer.hado.data.local.TokenManager
@@ -74,10 +75,15 @@ class HomeViewModel @Inject constructor(
                     selectedId?.let { loadItems(it) }
                 },
                 onFailure = { e ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoadingLists = false,
-                        error = e.message ?: "Failed to load lists"
-                    )
+                    if (e.message?.contains("401") == true) {
+                        Log.w("HAdo", "401 on loadTodoLists — token refresh failed, redirecting to login")
+                        handleUnauthorized(isLoadingLists = false)
+                    } else {
+                        _uiState.value = _uiState.value.copy(
+                            isLoadingLists = false,
+                            error = e.message ?: "Failed to load lists"
+                        )
+                    }
                 }
             )
         }
@@ -120,8 +126,13 @@ class HomeViewModel @Inject constructor(
                     },
                     onFailure = { e ->
                         if (loadToken != activeLoadToken) return@fold
-                        _uiState.update { state ->
-                            state.copy(error = e.message ?: "Failed to load items")
+                        if (e.message?.contains("401") == true) {
+                            Log.w("HAdo", "401 on loadItems — token refresh failed, redirecting to login")
+                            handleUnauthorized()
+                        } else {
+                            _uiState.update { state ->
+                                state.copy(error = e.message ?: "Failed to load items")
+                            }
                         }
                     }
                 )
@@ -225,6 +236,21 @@ class HomeViewModel @Inject constructor(
     fun logout() {
         authRepository.logout()
         _uiState.value = _uiState.value.copy(isLoggedOut = true)
+    }
+
+    private fun handleUnauthorized(isLoadingLists: Boolean = _uiState.value.isLoadingLists) {
+        authRepository.logout()
+        _uiState.value = _uiState.value.copy(
+            isLoadingLists = isLoadingLists,
+            todoLists = emptyList(),
+            selectedListId = null,
+            itemsByList = emptyMap(),
+            loadingListIds = emptySet(),
+            lastLoadedAt = emptyMap(),
+            error = null,
+            isLoggedOut = true,
+            isLocalMode = false
+        )
     }
 
     fun clearError() {

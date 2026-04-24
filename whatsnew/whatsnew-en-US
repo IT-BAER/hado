@@ -1,5 +1,7 @@
-HAdo 1.0.5
+HAdo 1.1.0
 
-• Swiping between lists now keeps the selected list chip visible as the row follows the current page
-• New purple heart support button in the app header opens a quick optional support dialog
-• Widget settings now include a bottom "💜 Support" section with the same external support links
+• New list icon picker with direct `mdi:*` search, live preview, and inline suggestions
+• Emoji and MDI list icons can sync to Home Assistant when admin rights allow it; custom images stay local-only
+• Reopening the picker now restores the active icon choice, and resetting returns to the native default list icon
+• Pull-to-refresh in every list editor plus smoother scrolling and item-state updates
+• Security: updated Glance library to fix a protobuf vulnerability (CVE-2024-7254)

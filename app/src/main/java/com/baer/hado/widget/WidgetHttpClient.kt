@@ -12,16 +12,24 @@ import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import com.google.gson.Gson
+import com.google.gson.JsonNull
+import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Shared OkHttp client for widget code that handles token refresh on 401.
  */
 class WidgetHttpClient(context: Context) {
+
+    data class CurrentUserInfo(
+        val id: String,
+        val isAdmin: Boolean
+    )
 
     private val tokenManager = TokenManager(context)
     private val client = OkHttpClient()
@@ -30,6 +38,8 @@ class WidgetHttpClient(context: Context) {
     val serverUrl: String? get() = tokenManager.serverUrl
     val accessToken: String? get() = tokenManager.accessToken
     val isLoggedIn: Boolean get() = tokenManager.isLoggedIn
+
+    fun hasRemoteSession(): Boolean = tokenManager.serverUrl != null && tokenManager.accessToken != null
 
     fun get(path: String): Response? {
         val url = buildUrl(path) ?: return null
@@ -154,7 +164,114 @@ class WidgetHttpClient(context: Context) {
      * @return true if the move succeeded
      */
     fun moveTodoItem(entityId: String, uid: String, previousUid: String?): Boolean {
+        return executeAuthenticatedWebSocketCommand("todo/item/move") { id ->
+            mutableMapOf<String, Any>(
+                "id" to id,
+                "type" to "todo/item/move",
+                "entity_id" to entityId,
+                "uid" to uid
+            ).apply {
+                if (previousUid != null) {
+                    this["previous_uid"] = previousUid
+                }
+            }
+        }
+    }
+
+    fun updateTodoListIcon(entityId: String, icon: String?): Boolean {
+        return executeAuthenticatedWebSocketCommand("config/entity_registry/update") { id ->
+            JsonObject().apply {
+                addProperty("id", id)
+                addProperty("type", "config/entity_registry/update")
+                addProperty("entity_id", entityId)
+                if (icon != null) {
+                    addProperty("icon", icon)
+                } else {
+                    add("icon", JsonNull.INSTANCE)
+                }
+            }
+        }
+    }
+
+    fun getCurrentUserInfo(): CurrentUserInfo? {
+        val base = tokenManager.serverUrl ?: return null
+        ensureFreshToken()
+        val token = tokenManager.accessToken ?: return null
+        val wsUrl = base.trimEnd('/')
+            .replaceFirst("https://", "wss://")
+            .replaceFirst("http://", "ws://") + "/api/websocket"
+
+        val currentUser = AtomicReference<CurrentUserInfo?>(null)
+        val latch = CountDownLatch(1)
+
+        val request = Request.Builder().url(wsUrl).build()
+        client.newWebSocket(request, object : WebSocketListener() {
+            override fun onMessage(webSocket: WebSocket, text: String) {
+                try {
+                    val msg = gson.fromJson(text, Map::class.java)
+                    when (msg["type"]) {
+                        "auth_required" -> {
+                            val authMsg = gson.toJson(
+                                mapOf(
+                                    "type" to "auth",
+                                    "access_token" to token
+                                )
+                            )
+                            webSocket.send(authMsg)
+                        }
+                        "auth_ok" -> {
+                            webSocket.send(
+                                gson.toJson(
+                                    mapOf(
+                                        "id" to 1,
+                                        "type" to "auth/current_user"
+                                    )
+                                )
+                            )
+                        }
+                        "auth_invalid" -> {
+                            Log.e("HAdo", "WebSocket auth failed: ${msg["message"]}")
+                            webSocket.close(1000, null)
+                            latch.countDown()
+                        }
+                        "result" -> {
+                            if ((msg["success"] as? Boolean) == true) {
+                                val result = msg["result"] as? Map<*, *>
+                                val userId = result?.get("id") as? String
+                                val isAdmin = result?.get("is_admin") as? Boolean
+                                if (userId != null && isAdmin != null) {
+                                    currentUser.set(CurrentUserInfo(userId, isAdmin))
+                                }
+                            } else {
+                                Log.e("HAdo", "auth/current_user failed: $text")
+                            }
+                            webSocket.close(1000, null)
+                            latch.countDown()
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("HAdo", "WebSocket message error", e)
+                    webSocket.close(1000, null)
+                    latch.countDown()
+                }
+            }
+
+            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                Log.e("HAdo", "WebSocket connection failed", t)
+                latch.countDown()
+            }
+        })
+
+        latch.await(10, TimeUnit.SECONDS)
+        return currentUser.get()
+    }
+
+    private fun executeAuthenticatedWebSocketCommand(
+        commandName: String,
+        commandBuilder: (Int) -> Any
+    ): Boolean {
         val base = tokenManager.serverUrl ?: return false
+        ensureFreshToken()
         val token = tokenManager.accessToken ?: return false
         val wsUrl = base.trimEnd('/')
             .replaceFirst("https://", "wss://")
@@ -165,30 +282,23 @@ class WidgetHttpClient(context: Context) {
         val latch = CountDownLatch(1)
 
         val request = Request.Builder().url(wsUrl).build()
-        val ws = client.newWebSocket(request, object : WebSocketListener() {
+        client.newWebSocket(request, object : WebSocketListener() {
             override fun onMessage(webSocket: WebSocket, text: String) {
                 try {
                     val msg = gson.fromJson(text, Map::class.java)
                     when (msg["type"]) {
                         "auth_required" -> {
-                            val authMsg = gson.toJson(mapOf(
-                                "type" to "auth",
-                                "access_token" to token
-                            ))
+                            val authMsg = gson.toJson(
+                                mapOf(
+                                    "type" to "auth",
+                                    "access_token" to token
+                                )
+                            )
                             webSocket.send(authMsg)
                         }
                         "auth_ok" -> {
                             val id = msgId.getAndIncrement()
-                            val moveMsg = mutableMapOf<String, Any>(
-                                "id" to id,
-                                "type" to "todo/item/move",
-                                "entity_id" to entityId,
-                                "uid" to uid
-                            )
-                            if (previousUid != null) {
-                                moveMsg["previous_uid"] = previousUid
-                            }
-                            webSocket.send(gson.toJson(moveMsg))
+                            webSocket.send(gson.toJson(commandBuilder(id)))
                         }
                         "auth_invalid" -> {
                             Log.e("HAdo", "WebSocket auth failed: ${msg["message"]}")
@@ -199,7 +309,7 @@ class WidgetHttpClient(context: Context) {
                             val ok = msg["success"] as? Boolean ?: false
                             success.set(ok)
                             if (!ok) {
-                                Log.e("HAdo", "moveTodoItem failed: $text")
+                                Log.e("HAdo", "$commandName failed: $text")
                             }
                             webSocket.close(1000, null)
                             latch.countDown()

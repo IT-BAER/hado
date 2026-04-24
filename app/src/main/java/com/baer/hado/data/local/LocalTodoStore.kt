@@ -71,7 +71,7 @@ class LocalTodoStore(context: Context) {
             description = description,
             due = due
         )
-        items.add(item)
+        items.add(0, item)
         saveItems(entityId, items)
         updateListCount(entityId, items)
         return item

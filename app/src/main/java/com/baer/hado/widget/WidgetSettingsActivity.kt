@@ -575,11 +575,22 @@ private fun ListIconsSection(
     selectedListIds: Set<String>
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    val scope = rememberCoroutineScope()
+    var syncAvailability by remember {
+        mutableStateOf(ListIconHaSyncManager.SyncAvailability.UNAVAILABLE)
+    }
     var iconDialogEntityId by remember { mutableStateOf<String?>(null) }
     var iconDialogListName by remember { mutableStateOf("") }
     var iconDialogHaIcon by remember { mutableStateOf<String?>(null) }
+    var iconDialogResolvedIcon by remember { mutableStateOf<ListIconManager.ResolvedIcon?>(null) }
     // Force recomposition after icon changes
     var iconVersion by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(context) {
+        syncAvailability = withContext(Dispatchers.IO) {
+            ListIconHaSyncManager.getSyncAvailability(context)
+        }
+    }
 
     // Image picker launcher
     var pendingImageEntityId by remember { mutableStateOf<String?>(null) }
@@ -588,8 +599,13 @@ private fun ListIconsSection(
     ) { uri: Uri? ->
         val entityId = pendingImageEntityId
         if (uri != null && entityId != null) {
-            ListIconManager.setImage(context, entityId, uri)
-            iconVersion++
+            val saved = ListIconManager.setImage(context, entityId, uri)
+            if (saved) {
+                iconVersion++
+                scope.launch(Dispatchers.IO) {
+                    ListIconHaSyncManager.restoreOriginalIconIfNeeded(context, entityId)
+                }
+            }
             iconDialogEntityId = null
         }
         pendingImageEntityId = null
@@ -603,6 +619,15 @@ private fun ListIconsSection(
     }
 
     SettingsSection(title = stringResource(R.string.section_list_icons)) {
+        if (syncAvailability == ListIconHaSyncManager.SyncAvailability.REQUIRES_ADMIN) {
+            Text(
+                text = stringResource(R.string.list_icon_sync_requires_admin),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+            )
+        }
+
         listsToShow.forEach { (entityId, name, haIcon) ->
             val resolved = remember(entityId, iconVersion) {
                 ListIconManager.resolveIcon(context, entityId, haIcon)
@@ -616,37 +641,20 @@ private fun ListIconsSection(
                         iconDialogEntityId = entityId
                         iconDialogListName = name
                         iconDialogHaIcon = haIcon
+                        iconDialogResolvedIcon = resolved
                     }
                     .padding(horizontal = 8.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Current icon preview
-                when (resolved?.type) {
-                    ListIconManager.IconType.EMOJI -> {
-                        Text(
-                            text = resolved.value,
-                            fontSize = 24.sp,
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
-                    ListIconManager.IconType.IMAGE -> {
-                        val bitmap = remember(resolved.value, iconVersion) {
-                            ListIconManager.loadBitmap(resolved.value)
-                        }
-                        if (bitmap != null) {
-                            androidx.compose.foundation.Image(
-                                bitmap = bitmap.asImageBitmap(),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(32.dp)
-                                    .clip(CircleShape)
-                            )
-                        } else {
-                            NoIconPlaceholder()
-                        }
-                    }
-                    null -> NoIconPlaceholder()
-                }
+                resolved?.let {
+                    ListIconPreview(
+                        resolvedIcon = it,
+                        size = 32.dp,
+                        emojiColor = MaterialTheme.colorScheme.onSurface,
+                        backgroundColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                } ?: NoIconPlaceholder()
                 Spacer(Modifier.width(12.dp))
                 Text(
                     text = name,
@@ -664,30 +672,59 @@ private fun ListIconsSection(
 
     // Icon picker dialog
     if (iconDialogEntityId != null) {
-        IconPickerDialog(
-            entityId = iconDialogEntityId!!,
+        ListIconPickerDialog(
             listName = iconDialogListName,
             haIcon = iconDialogHaIcon,
-            onEmojiPicked = { emoji ->
-                ListIconManager.setEmoji(context, iconDialogEntityId!!, emoji)
+            currentIcon = iconDialogResolvedIcon,
+            onMdiPicked = { mdiIcon ->
+                val entityId = iconDialogEntityId!!
+                val currentHaIcon = iconDialogHaIcon
+                ListIconManager.setMdi(context, entityId, mdiIcon)
                 iconVersion++
+                scope.launch(Dispatchers.IO) {
+                    ListIconHaSyncManager.syncMdiOverride(
+                        context = context,
+                        entityId = entityId,
+                        mdiIcon = mdiIcon,
+                        currentHaIcon = currentHaIcon
+                    )
+                }
                 iconDialogEntityId = null
+            },
+            onEmojiPicked = { emoji ->
+                val entityId = iconDialogEntityId!!
+                val currentHaIcon = iconDialogHaIcon
+                ListIconManager.setEmoji(context, entityId, emoji)
+                iconVersion++
+                scope.launch(Dispatchers.IO) {
+                    ListIconHaSyncManager.syncEmojiOverride(
+                        context = context,
+                        entityId = entityId,
+                        emoji = emoji,
+                        currentHaIcon = currentHaIcon
+                    )
+                }
+                iconDialogEntityId = null
+                iconDialogResolvedIcon = null
             },
             onImagePick = {
                 pendingImageEntityId = iconDialogEntityId
                 imagePickerLauncher.launch("image/*")
             },
             onClear = {
-                ListIconManager.clearIcon(context, iconDialogEntityId!!)
+                val entityId = iconDialogEntityId!!
+                ListIconManager.clearIcon(context, entityId)
                 iconVersion++
+                scope.launch(Dispatchers.IO) {
+                    ListIconHaSyncManager.restoreOriginalIconIfNeeded(context, entityId)
+                }
                 iconDialogEntityId = null
+                iconDialogResolvedIcon = null
             },
-            onDisable = {
-                ListIconManager.disableIcon(context, iconDialogEntityId!!)
-                iconVersion++
+            onDismiss = {
                 iconDialogEntityId = null
-            },
-            onDismiss = { iconDialogEntityId = null }
+                iconDialogResolvedIcon = null
+            }
         )
     }
 }
@@ -707,104 +744,6 @@ private fun NoIconPlaceholder() {
             )
         }
     }
-}
-
-@Composable
-private fun IconPickerDialog(
-    entityId: String,
-    listName: String,
-    haIcon: String?,
-    onEmojiPicked: (String) -> Unit,
-    onImagePick: () -> Unit,
-    onClear: () -> Unit,
-    onDisable: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    var emojiInput by remember { mutableStateOf("") }
-    val isValidEmoji = emojiInput.isNotBlank() && !emojiInput.any { it in 'a'..'z' || it in 'A'..'Z' }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.dialog_icon_title, listName)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                if (haIcon != null) {
-                    Text(
-                        text = stringResource(R.string.label_ha_icon, haIcon),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                // Emoji input
-                OutlinedTextField(
-                    value = emojiInput,
-                    onValueChange = { input ->
-                        // Filter out ASCII letters on input
-                        emojiInput = input.filter { it !in 'a'..'z' && it !in 'A'..'Z' }
-                    },
-                    label = { Text(stringResource(R.string.label_emoji)) },
-                    placeholder = { Text(stringResource(R.string.emoji_placeholder)) },
-                    singleLine = true,
-                    isError = emojiInput.isNotBlank() && !isValidEmoji,
-                    supportingText = if (emojiInput.isNotBlank() && !isValidEmoji) {
-                        { Text(stringResource(R.string.emoji_error)) }
-                    } else null,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            if (isValidEmoji) onEmojiPicked(emojiInput.trim())
-                        }
-                    ),
-                    modifier = Modifier.fillMaxWidth(),
-                    trailingIcon = {
-                        if (isValidEmoji) {
-                            IconButton(onClick = { onEmojiPicked(emojiInput.trim()) }) {
-                                Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_apply))
-                            }
-                        }
-                    }
-                )
-
-                // Image picker button
-                OutlinedButton(
-                    onClick = onImagePick,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("📷")
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(R.string.action_choose_image))
-                }
-
-                // Clear button — reset to default (📋)
-                TextButton(
-                    onClick = onClear,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(Icons.Default.Refresh, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(R.string.action_reset_default))
-                }
-
-                // Disable icon button
-                TextButton(
-                    onClick = onDisable,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Icon(Icons.Default.Delete, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(R.string.action_no_icon))
-                }
-            }
-        },
-        confirmButton = {},
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
-        }
-    )
 }
 
 @Composable

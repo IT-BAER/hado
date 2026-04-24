@@ -65,6 +65,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -84,6 +85,7 @@ import com.baer.hado.R
 import com.baer.hado.data.model.TodoItem
 import com.baer.hado.ui.theme.AppSpacing
 import com.baer.hado.widget.ListIconManager
+import com.baer.hado.widget.ListIconPreview
 import com.baer.hado.widget.TodoListEditor
 import com.baer.hado.widget.WidgetHttpClient
 import kotlinx.coroutines.delay
@@ -259,6 +261,7 @@ fun HomeScreen(
                         initialPage = selectedListIndex,
                         pageCount = { uiState.todoLists.size }
                     )
+                    val selectedListId by rememberUpdatedState(uiState.selectedListId)
 
                     LaunchedEffect(selectedListIndex, uiState.todoLists.size) {
                         if (uiState.todoLists.isNotEmpty() && pagerState.currentPage != selectedListIndex) {
@@ -266,11 +269,11 @@ fun HomeScreen(
                         }
                     }
 
-                    LaunchedEffect(pagerState, uiState.todoLists, uiState.selectedListId) {
+                    LaunchedEffect(pagerState, uiState.todoLists) {
                         snapshotFlow { pagerState.currentPage }
                             .collectLatest { page ->
                                 val pageList = uiState.todoLists.getOrNull(page) ?: return@collectLatest
-                                if (pageList.entityId != uiState.selectedListId) {
+                                if (pageList.entityId != selectedListId) {
                                     viewModel.selectList(pageList.entityId)
                                 }
                             }
@@ -528,41 +531,13 @@ private fun HomeListIcon(
 ) {
     val iconSize = if (compact) 24.dp else 30.dp
 
-    when {
-        resolvedIcon == null -> {
-            Text(
-                text = "📋",
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                style = if (compact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.headlineSmall
-            )
-        }
-        resolvedIcon.type == ListIconManager.IconType.EMOJI -> {
-            Text(
-                text = resolvedIcon.value,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                style = if (compact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.headlineSmall
-            )
-        }
-        else -> {
-            val bitmap = remember(resolvedIcon.value) { ListIconManager.loadBitmap(resolvedIcon.value) }
-            if (bitmap != null) {
-                Image(
-                    bitmap = bitmap.asImageBitmap(),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .width(iconSize)
-                        .height(iconSize)
-                        .clip(CircleShape)
-                )
-            } else {
-                Text(
-                    text = "📋",
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    style = if (compact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.headlineSmall
-                )
-            }
-        }
-    }
+    ListIconPreview(
+        resolvedIcon = resolvedIcon,
+        size = iconSize,
+        emojiColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        backgroundColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.22f),
+        fallbackEmoji = "📋"
+    )
 }
 
 @Composable

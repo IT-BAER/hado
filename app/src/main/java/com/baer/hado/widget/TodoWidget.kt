@@ -204,8 +204,8 @@ class TodoWidget : GlanceAppWidget() {
                 LazyColumn(modifier = GlanceModifier.fillMaxSize()) {
                     items(rows, itemId = { it.stableId }) { row ->
                         when (row) {
-                            is WidgetRow.Header -> ListHeader(row.entityId, row.name, row.iconType, row.iconValue, row.supportedFeatures, row.isFirstHeader, settings, anyListHasIcon)
-                            is WidgetRow.Item -> TodoItemRow(row.item, row.entityId, row.listName, row.supportedFeatures, settings, pendingToggleIds.contains(pendingToggleKey(row.entityId, row.item.uid)))
+                            is WidgetRow.Header -> ListHeader(row.entityId, row.name, row.iconType, row.iconValue, row.supportedFeatures, row.isFirstHeader, settings, anyListHasIcon, appWidgetId)
+                            is WidgetRow.Item -> TodoItemRow(row.item, row.entityId, row.listName, row.supportedFeatures, settings, pendingToggleIds.contains(pendingToggleKey(row.entityId, row.item.uid)), appWidgetId)
                             is WidgetRow.EmptyHint -> EmptyHintRow(settings)
                         }
                     }
@@ -215,7 +215,7 @@ class TodoWidget : GlanceAppWidget() {
     }
 
     @Composable
-    private fun ListHeader(entityId: String, name: String, iconType: String?, iconValue: String?, supportedFeatures: Int?, isFirstHeader: Boolean, settings: WidgetSettings, anyListHasIcon: Boolean) {
+    private fun ListHeader(entityId: String, name: String, iconType: String?, iconValue: String?, supportedFeatures: Int?, isFirstHeader: Boolean, settings: WidgetSettings, anyListHasIcon: Boolean, appWidgetId: String) {
         val topPad = when {
             settings.compactMode && isFirstHeader -> 10.dp
             settings.compactMode -> 6.dp
@@ -244,18 +244,26 @@ class TodoWidget : GlanceAppWidget() {
                             AddItemAction.PARAM_ENTITY_ID to entityId,
                             AddItemAction.PARAM_LIST_NAME to name,
                             AddItemAction.PARAM_SUPPORTED_FEATURES to (supportedFeatures ?: 0).toString(),
-                            AddItemAction.PARAM_AUTO_FOCUS to settings.autoFocusOnOpen.toString()
+                            AddItemAction.PARAM_AUTO_FOCUS to settings.autoFocusOnOpen.toString(),
+                            AddItemAction.PARAM_WIDGET_ID to appWidgetId
                         )
                     )
                 )
                 .padding(top = topPad, bottom = bottomPad, start = hzPad, end = hzPad),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Icon: emoji as text, image as bitmap, or placeholder for alignment
+            // Icon: emoji as text, image as bitmap, mdi as emoji fallback, or placeholder for alignment
             if (settings.showListIcons) {
                 if (effectiveIconType == "emoji" && effectiveIconValue != null) {
                     Text(
                         text = effectiveIconValue,
+                        style = TextStyle(fontSize = settings.fontSize.titleSp.sp),
+                        maxLines = 1
+                    )
+                    Spacer(GlanceModifier.width(6.dp))
+                } else if (effectiveIconType == "mdi" && effectiveIconValue != null) {
+                    Text(
+                        text = ListIconManager.mapMdiToEmoji(effectiveIconValue) ?: "📋",
                         style = TextStyle(fontSize = settings.fontSize.titleSp.sp),
                         maxLines = 1
                     )
@@ -302,7 +310,7 @@ class TodoWidget : GlanceAppWidget() {
     }
 
     @Composable
-    private fun TodoItemRow(item: TodoItem, entityId: String, listName: String, supportedFeatures: Int?, settings: WidgetSettings, isPending: Boolean) {
+    private fun TodoItemRow(item: TodoItem, entityId: String, listName: String, supportedFeatures: Int?, settings: WidgetSettings, isPending: Boolean, appWidgetId: String) {
         val vertPad = settings.itemHeight.rowVerticalPaddingDp.dp
         val hzPad = if (settings.compactMode) 6.dp else 12.dp
         val overdueModifier = if (item.isOverdue) {
@@ -322,7 +330,8 @@ class TodoWidget : GlanceAppWidget() {
                 ViewItemAction.PARAM_ENTITY_ID to entityId,
                 ViewItemAction.PARAM_LIST_NAME to listName,
                 ViewItemAction.PARAM_SUPPORTED_FEATURES to (supportedFeatures ?: 0).toString(),
-                ViewItemAction.PARAM_ITEM_UID to item.uid
+                ViewItemAction.PARAM_ITEM_UID to item.uid,
+                ViewItemAction.PARAM_WIDGET_ID to appWidgetId
             )
         )
 
