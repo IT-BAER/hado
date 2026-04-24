@@ -26,3 +26,6 @@ PLAY_STORE_LISTING.md
 # Large source assets
 ASSETS/*.psd
 ASSETS/presentation.png
+
+# Generated Play Store backgrounds
+/screenshots/play_store/backgrounds_png/
