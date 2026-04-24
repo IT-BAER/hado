@@ -29,3 +29,4 @@ ASSETS/presentation.png
 
 # Generated Play Store backgrounds
 /screenshots/play_store/backgrounds_png/
+screenshots/play_store/generate_store_boards.py
