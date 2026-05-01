@@ -53,6 +53,15 @@ class LoginViewModel @Inject constructor(
             "https://$url"
         } else url
 
+        // Validate that the URL has at least a host component before opening a WebView
+        val uri = try { android.net.Uri.parse(normalizedUrl) } catch (_: Exception) { null }
+        if (uri?.host.isNullOrBlank()) {
+            _uiState.value = _uiState.value.copy(
+                error = "Invalid URL — please enter a full address like https://homeassistant.local:8123"
+            )
+            return null
+        }
+
         _uiState.value = _uiState.value.copy(
             serverUrl = normalizedUrl,
             isLoading = true,
@@ -76,9 +85,22 @@ class LoginViewModel @Inject constructor(
                     )
                 },
                 onFailure = { e ->
+                    // Avoid leaking raw exception messages (e.g. hostnames from
+                    // UnknownHostException) which produce confusing toasts like "www. error".
+                    val friendlyError = when {
+                        e is java.net.UnknownHostException ->
+                            "Cannot reach Home Assistant — check the URL and your network connection"
+                        e is java.net.SocketTimeoutException ->
+                            "Connection timed out — is your Home Assistant reachable?"
+                        e is javax.net.ssl.SSLException ->
+                            "SSL error — check your server's certificate or try http://"
+                        e.message?.contains("401") == true ->
+                            "Authentication failed — the authorization code was rejected"
+                        else -> "Authentication failed — please check your URL and try again"
+                    }
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = e.message ?: "Authentication failed"
+                        error = friendlyError
                     )
                 }
             )

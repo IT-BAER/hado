@@ -5,6 +5,13 @@ All notable changes to HAdo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-05-01
+
+### Fixed
+- Due date off-by-one error: The date picker now correctly handles UTC/Local time conversions so selected dates no longer shift by a day in certain timezones
+- Login "www. error" toast: Replaced raw network exception messages (like "www.host: Unable to resolve host") with user-friendly descriptions and added URL validation to catch malformed addresses early
+
+
 ## [1.1.0] - 2026-04-24
 
 ### Added

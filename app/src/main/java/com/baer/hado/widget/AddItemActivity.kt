@@ -1311,9 +1311,12 @@ private fun ItemDetailDialog(
     )
 
     // Material3 DatePicker dialog
+    // NOTE: DatePicker works in UTC midnight epoch millis, so we must use ZoneOffset.UTC
+    // when converting a LocalDate to millis and back — otherwise users in timezones
+    // ahead of UTC would see the date shifted back by one day (the original bug).
     if (showDatePicker) {
         val initialMillis = item.dueDate?.let {
-            it.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+            it.atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
         }
         val datePickerState = rememberDatePickerState(
             initialSelectedDateMillis = initialMillis
@@ -1324,7 +1327,7 @@ private fun ItemDetailDialog(
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
                         val date = java.time.Instant.ofEpochMilli(millis)
-                            .atZone(java.time.ZoneId.systemDefault())
+                            .atZone(java.time.ZoneOffset.UTC)
                             .toLocalDate()
                         dueString = date.toString() // YYYY-MM-DD
                         showDatePicker = false
