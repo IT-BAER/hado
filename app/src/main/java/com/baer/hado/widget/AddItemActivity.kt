@@ -560,7 +560,7 @@ fun TodoListEditor(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .then(if (showTopBar) Modifier.padding(padding) else Modifier)
                 .nestedScroll(pullToRefreshState.nestedScrollConnection)
         ) {
         LazyColumn(

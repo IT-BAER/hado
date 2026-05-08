@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">HAdo</string>
     <string name="widget_name">HAdo Tarefas</string>
     <string name="widget_description">Widget de listas de tarefas do Home Assistant</string>
 
@@ -30,6 +31,7 @@
     <string name="home_local_mode_support">Armazenado neste dispositivo</string>
     <string name="home_remote_mode_support">Sincronizado com Home Assistant</string>
     <string name="home_open_count">%1$d pendentes</string>
+    <string name="home_done_progress">%1$d/%2$d concluídos</string>
     <string name="home_overdue_count">%1$d atrasadas</string>
     <string name="home_section_open">Pendentes</string>
     <string name="home_section_completed">Concluídas</string>
@@ -90,6 +92,10 @@
     <string name="section_refresh_interval">Intervalo de atualização</string>
     <string name="refresh_description">Com que frequência o widget busca novos dados do Home Assistant</string>
     <string name="section_list_icons">Ícones das listas</string>
+    <string name="section_language">Idioma</string>
+    <string name="label_app_language">Idioma do app</string>
+    <string name="settings_language_supporting">Mude o idioma do aplicativo imediatamente.</string>
+    <string name="settings_language_system">Padrão do sistema</string>
     <string name="label_tap_to_change">Toque para alterar</string>
     <string name="dialog_icon_title">Ícone para %1$s</string>
     <string name="label_ha_icon">Ícone HA: %1$s</string>
@@ -154,4 +160,32 @@
     <string name="refresh_1hour">1 hora</string>
     <string name="refresh_2hours">2 horas</string>
     <string name="refresh_4hours">4 horas</string>
+    <string name="section_notifications">Notificações</string>
+    <string name="settings_notifications_supporting">Lembretes opcionais para itens com prazo e atrasados.</string>
+    <string name="settings_overdue_notifications">Notificações de itens atrasados</string>
+    <string name="settings_overdue_notifications_off">Desativado por padrão. Você pode ativar os lembretes a qualquer momento.</string>
+    <string name="settings_notification_timing">Notificar</string>
+    <string name="settings_notification_repeat">Repetir</string>
+    <string name="settings_notification_lists">Listas</string>
+    <string name="settings_notification_lists_supporting">Escolha quais listas podem disparar lembretes.</string>
+    <string name="settings_selected_lists_count">%1$d listas</string>
+    <string name="settings_notifications_permission_required">Permissão de notificações necessária. Ative para receber lembretes.</string>
+    <string name="notification_timing_when_overdue">Quando atrasar</string>
+    <string name="notification_timing_15_min_before">15 minutos antes</string>
+    <string name="notification_timing_1_hour_before">1 hora antes</string>
+    <string name="notification_timing_1_day_before">1 dia antes</string>
+    <string name="notification_cadence_once">Uma vez</string>
+    <string name="notification_cadence_daily_until_done">Diariamente até concluir</string>
+    <string name="notification_channel_name">Lembretes de itens com prazo</string>
+    <string name="notification_channel_description">Notificações para itens com prazo e atrasados.</string>
+    <string name="notification_summary_title">Lembretes do HAdo</string>
+    <string name="notification_summary_text">%1$d itens com prazo ou atrasados</string>
+    <string name="notification_more_items">+%1$d mais</string>
+    <string name="action_remind_later">Mais tarde</string>
+    <string name="action_mark_done">Concluído</string>
+    <string name="label_mdi_icon">Ícone MDI</string>
+    <string name="mdi_icon_placeholder">mdi:home</string>
+    <string name="mdi_icon_supporting">Digite um ícone MDI ou pesquise ícones compatíveis do Home Assistant.</string>
+    <string name="mdi_icon_no_match">Nenhum ícone compatível correspondente encontrado. Tente, por exemplo, mdi:home.</string>
+    <string name="list_icon_sync_requires_admin">A sincronização de ícones do Home Assistant requer uma conta de administrador. Ícones personalizados continuam funcionando localmente.</string>
 </resources>

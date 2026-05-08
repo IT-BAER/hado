@@ -31,6 +31,7 @@
     <string name="home_local_mode_support">Stored on this device</string>
     <string name="home_remote_mode_support">Synced with Home Assistant</string>
     <string name="home_open_count">%1$d open</string>
+    <string name="home_done_progress">%1$d/%2$d done</string>
     <string name="home_overdue_count">%1$d overdue</string>
     <string name="home_section_open">Open</string>
     <string name="home_section_completed">Completed</string>
@@ -62,6 +63,8 @@
     <string name="action_no_icon">No icon</string>
     <string name="action_skip_time">Skip time</string>
     <string name="action_add_description">Add description…</string>
+    <string name="action_remind_later">Later</string>
+    <string name="action_mark_done">Done</string>
 
     <!-- Content descriptions -->
     <string name="cd_new_list">New list</string>
@@ -96,6 +99,31 @@
     <string name="section_refresh_interval">Refresh Interval</string>
     <string name="refresh_description">How often the widget fetches new data from Home Assistant</string>
     <string name="section_list_icons">List Icons</string>
+    <string name="section_notifications">Notifications</string>
+    <string name="section_language">Language</string>
+    <string name="label_app_language">App language</string>
+    <string name="settings_language_supporting">Change the app language immediately.</string>
+    <string name="settings_language_system">System default</string>
+    <string name="settings_notifications_supporting">Optional reminders for due and overdue items.</string>
+    <string name="settings_overdue_notifications">Due item notifications</string>
+    <string name="settings_overdue_notifications_off">Off by default. You can enable reminders any time.</string>
+    <string name="settings_notification_timing">Notify</string>
+    <string name="settings_notification_repeat">Repeat</string>
+    <string name="settings_notification_lists">Lists</string>
+    <string name="settings_notification_lists_supporting">Choose which lists can trigger reminders.</string>
+    <string name="settings_selected_lists_count">%1$d lists</string>
+    <string name="settings_notifications_permission_required">Notification permission required. Enable it to receive reminders.</string>
+    <string name="notification_timing_when_overdue">When overdue</string>
+    <string name="notification_timing_15_min_before">15 minutes before</string>
+    <string name="notification_timing_1_hour_before">1 hour before</string>
+    <string name="notification_timing_1_day_before">1 day before</string>
+    <string name="notification_cadence_once">Once</string>
+    <string name="notification_cadence_daily_until_done">Daily until done</string>
+    <string name="notification_channel_name">Due item reminders</string>
+    <string name="notification_channel_description">Notifications for due and overdue to-do items.</string>
+    <string name="notification_summary_title">HAdo reminders</string>
+    <string name="notification_summary_text">%1$d due or overdue items</string>
+    <string name="notification_more_items">+%1$d more</string>
     <string name="label_tap_to_change">Tap to change</string>
     <string name="dialog_icon_title">Icon for %1$s</string>
     <string name="label_ha_icon">HA icon: %1$s</string>

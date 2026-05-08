@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">HAdo</string>
     <string name="widget_name">HAdo 待办</string>
     <string name="widget_description">Home Assistant 待办清单小组件</string>
 
@@ -30,6 +31,7 @@
     <string name="home_local_mode_support">存储在此设备上</string>
     <string name="home_remote_mode_support">与 Home Assistant 同步</string>
     <string name="home_open_count">%1$d 个待处理</string>
+    <string name="home_done_progress">%1$d/%2$d 已完成</string>
     <string name="home_overdue_count">%1$d 个逾期</string>
     <string name="home_section_open">待处理</string>
     <string name="home_section_completed">已完成</string>
@@ -90,6 +92,10 @@
     <string name="section_refresh_interval">刷新间隔</string>
     <string name="refresh_description">小组件从 Home Assistant 获取新数据的频率</string>
     <string name="section_list_icons">列表图标</string>
+    <string name="section_language">语言</string>
+    <string name="label_app_language">应用语言</string>
+    <string name="settings_language_supporting">立即更改应用语言。</string>
+    <string name="settings_language_system">系统默认</string>
     <string name="label_tap_to_change">点击更改</string>
     <string name="dialog_icon_title">%1$s的图标</string>
     <string name="label_ha_icon">HA 图标：%1$s</string>
@@ -152,4 +158,32 @@
     <string name="refresh_1hour">1 小时</string>
     <string name="refresh_2hours">2 小时</string>
     <string name="refresh_4hours">4 小时</string>
+    <string name="section_notifications">通知</string>
+    <string name="settings_notifications_supporting">针对到期和逾期事项的可选提醒。</string>
+    <string name="settings_overdue_notifications">逾期事项通知</string>
+    <string name="settings_overdue_notifications_off">默认关闭。你可以随时启用提醒。</string>
+    <string name="settings_notification_timing">通知时间</string>
+    <string name="settings_notification_repeat">重复</string>
+    <string name="settings_notification_lists">列表</string>
+    <string name="settings_notification_lists_supporting">选择哪些列表可以触发提醒。</string>
+    <string name="settings_selected_lists_count">%1$d 个列表</string>
+    <string name="settings_notifications_permission_required">需要通知权限。启用后才能接收提醒。</string>
+    <string name="notification_timing_when_overdue">逾期时</string>
+    <string name="notification_timing_15_min_before">提前 15 分钟</string>
+    <string name="notification_timing_1_hour_before">提前 1 小时</string>
+    <string name="notification_timing_1_day_before">提前 1 天</string>
+    <string name="notification_cadence_once">一次</string>
+    <string name="notification_cadence_daily_until_done">每天提醒直到完成</string>
+    <string name="notification_channel_name">到期事项提醒</string>
+    <string name="notification_channel_description">针对到期和逾期待办事项的通知。</string>
+    <string name="notification_summary_title">HAdo 提醒</string>
+    <string name="notification_summary_text">%1$d 个到期或逾期事项</string>
+    <string name="notification_more_items">还有 %1$d 个</string>
+    <string name="action_remind_later">稍后</string>
+    <string name="action_mark_done">完成</string>
+    <string name="label_mdi_icon">MDI 图标</string>
+    <string name="mdi_icon_placeholder">mdi:home</string>
+    <string name="mdi_icon_supporting">输入 MDI 图标，或搜索受支持的 Home Assistant 图标。</string>
+    <string name="mdi_icon_no_match">未找到匹配的受支持图标。可尝试例如 mdi:home。</string>
+    <string name="list_icon_sync_requires_admin">同步 Home Assistant 图标需要管理员账户。自定义图标仍然可以在本地使用。</string>
 </resources>

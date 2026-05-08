@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">HAdo</string>
     <string name="widget_name">HAdo Tâches</string>
     <string name="widget_description">Widget de listes de tâches Home Assistant</string>
 
@@ -30,6 +31,7 @@
     <string name="home_local_mode_support">Stocké sur cet appareil</string>
     <string name="home_remote_mode_support">Synchronisé avec Home Assistant</string>
     <string name="home_open_count">%1$d en cours</string>
+    <string name="home_done_progress">%1$d/%2$d terminé(s)</string>
     <string name="home_overdue_count">%1$d en retard</string>
     <string name="home_section_open">En cours</string>
     <string name="home_section_completed">Terminés</string>
@@ -90,6 +92,10 @@
     <string name="section_refresh_interval">Intervalle de rafraîchissement</string>
     <string name="refresh_description">Fréquence à laquelle le widget récupère de nouvelles données depuis Home Assistant</string>
     <string name="section_list_icons">Icônes des listes</string>
+    <string name="section_language">Langue</string>
+    <string name="label_app_language">Langue de l’application</string>
+    <string name="settings_language_supporting">Changer immédiatement la langue de l’application.</string>
+    <string name="settings_language_system">Par défaut du système</string>
     <string name="label_tap_to_change">Appuyez pour modifier</string>
     <string name="dialog_icon_title">Icône pour %1$s</string>
     <string name="label_ha_icon">Icône HA : %1$s</string>
@@ -154,4 +160,32 @@
     <string name="refresh_1hour">1 heure</string>
     <string name="refresh_2hours">2 heures</string>
     <string name="refresh_4hours">4 heures</string>
+    <string name="section_notifications">Notifications</string>
+    <string name="settings_notifications_supporting">Rappels facultatifs pour les tâches à échéance et en retard.</string>
+    <string name="settings_overdue_notifications">Notifications des tâches en retard</string>
+    <string name="settings_overdue_notifications_off">Désactivé par défaut. Vous pouvez activer les rappels à tout moment.</string>
+    <string name="settings_notification_timing">Notifier</string>
+    <string name="settings_notification_repeat">Répéter</string>
+    <string name="settings_notification_lists">Listes</string>
+    <string name="settings_notification_lists_supporting">Choisissez quelles listes peuvent déclencher des rappels.</string>
+    <string name="settings_selected_lists_count">%1$d listes</string>
+    <string name="settings_notifications_permission_required">Autorisation de notifications requise. Activez-la pour recevoir des rappels.</string>
+    <string name="notification_timing_when_overdue">À l’échéance dépassée</string>
+    <string name="notification_timing_15_min_before">15 minutes avant</string>
+    <string name="notification_timing_1_hour_before">1 heure avant</string>
+    <string name="notification_timing_1_day_before">1 jour avant</string>
+    <string name="notification_cadence_once">Une fois</string>
+    <string name="notification_cadence_daily_until_done">Chaque jour jusqu’à accomplissement</string>
+    <string name="notification_channel_name">Rappels des tâches à échéance</string>
+    <string name="notification_channel_description">Notifications pour les tâches à échéance et en retard.</string>
+    <string name="notification_summary_title">Rappels HAdo</string>
+    <string name="notification_summary_text">%1$d tâches à échéance ou en retard</string>
+    <string name="notification_more_items">+%1$d de plus</string>
+    <string name="action_remind_later">Plus tard</string>
+    <string name="action_mark_done">Terminé</string>
+    <string name="label_mdi_icon">Icône MDI</string>
+    <string name="mdi_icon_placeholder">mdi:home</string>
+    <string name="mdi_icon_supporting">Saisissez une icône MDI ou recherchez des icônes Home Assistant prises en charge.</string>
+    <string name="mdi_icon_no_match">Aucune icône prise en charge correspondante. Essayez par exemple mdi:home.</string>
+    <string name="list_icon_sync_requires_admin">La synchronisation des icônes Home Assistant nécessite un compte administrateur. Les icônes personnalisées fonctionnent toujours localement.</string>
 </resources>

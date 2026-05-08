@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">HAdo</string>
     <string name="widget_name">HAdo Taken</string>
     <string name="widget_description">Home Assistant takenlijst-widget</string>
 
@@ -30,6 +31,7 @@
     <string name="home_local_mode_support">Op dit apparaat opgeslagen</string>
     <string name="home_remote_mode_support">Gesynchroniseerd met Home Assistant</string>
     <string name="home_open_count">%1$d open</string>
+    <string name="home_done_progress">%1$d/%2$d voltooid</string>
     <string name="home_overdue_count">%1$d achterstallig</string>
     <string name="home_section_open">Open</string>
     <string name="home_section_completed">Voltooid</string>
@@ -90,6 +92,10 @@
     <string name="section_refresh_interval">Vernieuwingsinterval</string>
     <string name="refresh_description">Hoe vaak de widget nieuwe gegevens ophaalt van Home Assistant</string>
     <string name="section_list_icons">Lijstpictogrammen</string>
+    <string name="section_language">Taal</string>
+    <string name="label_app_language">App-taal</string>
+    <string name="settings_language_supporting">Wijzig direct de taal van de app.</string>
+    <string name="settings_language_system">Systeemstandaard</string>
     <string name="label_tap_to_change">Tik om te wijzigen</string>
     <string name="dialog_icon_title">Pictogram voor %1$s</string>
     <string name="label_ha_icon">HA-pictogram: %1$s</string>
@@ -152,4 +158,32 @@
     <string name="refresh_1hour">1 uur</string>
     <string name="refresh_2hours">2 uur</string>
     <string name="refresh_4hours">4 uur</string>
+    <string name="section_notifications">Meldingen</string>
+    <string name="settings_notifications_supporting">Optionele herinneringen voor taken met vervaldatum en achterstallige taken.</string>
+    <string name="settings_overdue_notifications">Meldingen voor achterstallige taken</string>
+    <string name="settings_overdue_notifications_off">Standaard uit. Je kunt herinneringen op elk moment inschakelen.</string>
+    <string name="settings_notification_timing">Melden</string>
+    <string name="settings_notification_repeat">Herhalen</string>
+    <string name="settings_notification_lists">Lijsten</string>
+    <string name="settings_notification_lists_supporting">Kies welke lijsten herinneringen mogen activeren.</string>
+    <string name="settings_selected_lists_count">%1$d lijsten</string>
+    <string name="settings_notifications_permission_required">Machtigingen voor meldingen vereist. Schakel deze in om herinneringen te ontvangen.</string>
+    <string name="notification_timing_when_overdue">Wanneer achterstallig</string>
+    <string name="notification_timing_15_min_before">15 minuten van tevoren</string>
+    <string name="notification_timing_1_hour_before">1 uur van tevoren</string>
+    <string name="notification_timing_1_day_before">1 dag van tevoren</string>
+    <string name="notification_cadence_once">Eenmaal</string>
+    <string name="notification_cadence_daily_until_done">Dagelijks tot voltooid</string>
+    <string name="notification_channel_name">Herinneringen voor vervallende taken</string>
+    <string name="notification_channel_description">Meldingen voor taken met vervaldatum en achterstallige taken.</string>
+    <string name="notification_summary_title">HAdo-herinneringen</string>
+    <string name="notification_summary_text">%1$d taken met vervaldatum of achterstallige taken</string>
+    <string name="notification_more_items">+%1$d meer</string>
+    <string name="action_remind_later">Later</string>
+    <string name="action_mark_done">Klaar</string>
+    <string name="label_mdi_icon">MDI-pictogram</string>
+    <string name="mdi_icon_placeholder">mdi:home</string>
+    <string name="mdi_icon_supporting">Voer een MDI-pictogram in of zoek naar ondersteunde Home Assistant-pictogrammen.</string>
+    <string name="mdi_icon_no_match">Geen overeenkomend ondersteund pictogram gevonden. Probeer bijvoorbeeld mdi:home.</string>
+    <string name="list_icon_sync_requires_admin">Synchronisatie van Home Assistant-pictogrammen vereist een beheerdersaccount. Aangepaste pictogrammen werken lokaal nog steeds.</string>
 </resources>

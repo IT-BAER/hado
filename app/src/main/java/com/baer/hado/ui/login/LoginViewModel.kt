@@ -1,9 +1,12 @@
 package com.baer.hado.ui.login
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.baer.hado.data.local.TokenManager
 import com.baer.hado.data.repository.AuthRepository
+import com.baer.hado.notifications.OverdueNotificationScheduler
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,7 +25,8 @@ data class LoginUiState(
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    @ApplicationContext private val appContext: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
@@ -79,6 +83,7 @@ class LoginViewModel @Inject constructor(
             )
             result.fold(
                 onSuccess = {
+                    OverdueNotificationScheduler.reschedule(appContext)
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         isAuthenticated = true
@@ -124,6 +129,7 @@ class LoginViewModel @Inject constructor(
         tokenManager.accessToken = token
         tokenManager.refreshToken = null
         tokenManager.tokenExpiry = System.currentTimeMillis() + (315360000L * 1000)
+        OverdueNotificationScheduler.reschedule(appContext)
 
         _uiState.value = _uiState.value.copy(isAuthenticated = true)
     }
@@ -138,6 +144,7 @@ class LoginViewModel @Inject constructor(
 
     fun enterDemoMode() {
         tokenManager.isDemoMode = true
+        OverdueNotificationScheduler.reschedule(appContext)
         _uiState.value = _uiState.value.copy(isAuthenticated = true)
     }
 }

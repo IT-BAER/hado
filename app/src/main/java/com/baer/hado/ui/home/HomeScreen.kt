@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
@@ -148,6 +149,8 @@ fun HomeScreen(
         }
     }
 
+    val headerToEditorGap = if (uiState.todoLists.isNotEmpty() && selectedList != null) 0.dp else AppSpacing.cardGap
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -189,7 +192,7 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            verticalArrangement = Arrangement.spacedBy(AppSpacing.cardGap)
+            verticalArrangement = Arrangement.spacedBy(headerToEditorGap)
         ) {
             AnimatedVisibility(
                 visible = !isAddInputFocused,
@@ -204,7 +207,6 @@ fun HomeScreen(
                     HomeOverviewCard(
                         listEntityId = selectedList?.entityId,
                         listName = selectedListName,
-                        isLocalMode = uiState.isLocalMode,
                         activeCount = activeCount,
                         completedCount = completedCount,
                         overdueCount = overdueCount,
@@ -224,9 +226,7 @@ fun HomeScreen(
                             selectedId = uiState.selectedListId,
                             listState = listSelectorState,
                             onSelect = viewModel::selectList,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 4.dp)
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
                 }
@@ -424,7 +424,6 @@ private fun ListSelector(
 private fun HomeOverviewCard(
     listEntityId: String?,
     listName: String?,
-    isLocalMode: Boolean,
     activeCount: Int,
     completedCount: Int,
     overdueCount: Int,
@@ -432,6 +431,7 @@ private fun HomeOverviewCard(
     onDeleteCurrentList: (() -> Unit)?
 ) {
     val context = LocalContext.current
+    val totalCount = activeCount + completedCount
     val resolvedIcon = remember(listEntityId) {
         listEntityId?.let { entityId -> ListIconManager.resolveIcon(context, entityId) }
     }
@@ -449,29 +449,54 @@ private fun HomeOverviewCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(if (compact) 14.dp else 18.dp),
-            verticalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 12.dp)
+                .padding(
+                    start = 14.dp,
+                    top = 14.dp,
+                    end = 14.dp,
+                    bottom = 8.dp
+                ),
+            verticalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 8.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Row(
-                    modifier = Modifier.weight(1f),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                HomeListIcon(
+                    resolvedIcon = resolvedIcon,
+                    compact = compact
+                )
+                Text(
+                    text = listName ?: stringResource(R.string.home_choose_list),
+                    style = if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+                Box(
+                    modifier = Modifier.height(60.dp),
+                    contentAlignment = if (overdueCount > 0) Alignment.TopEnd else Alignment.CenterEnd
                 ) {
-                    HomeListIcon(
-                        resolvedIcon = resolvedIcon,
-                        compact = compact
-                    )
-                    Text(
-                        text = listName ?: stringResource(R.string.home_choose_list),
-                        style = if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    if (overdueCount > 0) {
+                        Column(
+                            horizontalAlignment = Alignment.End,
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            StatPill(
+                                text = stringResource(R.string.home_done_progress, completedCount, totalCount)
+                            )
+                            StatPill(
+                                text = stringResource(R.string.home_overdue_count, overdueCount),
+                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                                contentColor = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                    } else {
+                        StatPill(
+                            text = stringResource(R.string.home_done_progress, completedCount, totalCount)
+                        )
+                    }
                 }
                 if (onDeleteCurrentList != null) {
                     IconButton(onClick = onDeleteCurrentList) {
@@ -484,42 +509,6 @@ private fun HomeOverviewCard(
                 }
             }
 
-            if (!compact) {
-                Surface(
-                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
-                    shape = MaterialTheme.shapes.small
-                ) {
-                    Text(
-                        text = if (isLocalMode) stringResource(R.string.home_local_mode_support)
-                        else stringResource(R.string.home_remote_mode_support),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)
-                    )
-                }
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(AppSpacing.compactGap)
-            ) {
-                StatPill(
-                    text = stringResource(R.string.home_open_count, activeCount),
-                    modifier = Modifier.weight(1f)
-                )
-                StatPill(
-                    text = stringResource(R.string.completed_count, completedCount),
-                    modifier = Modifier.weight(1f)
-                )
-                if (overdueCount > 0) {
-                    StatPill(
-                        text = stringResource(R.string.home_overdue_count, overdueCount),
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
         }
     }
 }
@@ -554,9 +543,9 @@ private fun StatPill(
     ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.labelMedium,
             color = contentColor,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )

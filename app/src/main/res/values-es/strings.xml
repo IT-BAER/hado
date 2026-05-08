@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">HAdo</string>
     <string name="widget_name">HAdo Tareas</string>
     <string name="widget_description">Widget de listas de tareas de Home Assistant</string>
 
@@ -30,6 +31,7 @@
     <string name="home_local_mode_support">Guardado en este dispositivo</string>
     <string name="home_remote_mode_support">Sincronizado con Home Assistant</string>
     <string name="home_open_count">%1$d pendientes</string>
+    <string name="home_done_progress">%1$d/%2$d completados</string>
     <string name="home_overdue_count">%1$d vencidas</string>
     <string name="home_section_open">Pendientes</string>
     <string name="home_section_completed">Completadas</string>
@@ -90,6 +92,10 @@
     <string name="section_refresh_interval">Intervalo de actualización</string>
     <string name="refresh_description">Con qué frecuencia el widget obtiene datos nuevos de Home Assistant</string>
     <string name="section_list_icons">Iconos de listas</string>
+    <string name="section_language">Idioma</string>
+    <string name="label_app_language">Idioma de la app</string>
+    <string name="settings_language_supporting">Cambia el idioma de la aplicación al instante.</string>
+    <string name="settings_language_system">Predeterminado del sistema</string>
     <string name="label_tap_to_change">Toca para cambiar</string>
     <string name="dialog_icon_title">Icono para %1$s</string>
     <string name="label_ha_icon">Icono de HA: %1$s</string>
@@ -154,4 +160,32 @@
     <string name="refresh_1hour">1 hora</string>
     <string name="refresh_2hours">2 horas</string>
     <string name="refresh_4hours">4 horas</string>
+    <string name="section_notifications">Notificaciones</string>
+    <string name="settings_notifications_supporting">Recordatorios opcionales para tareas con vencimiento y vencidas.</string>
+    <string name="settings_overdue_notifications">Notificaciones de tareas vencidas</string>
+    <string name="settings_overdue_notifications_off">Desactivadas por defecto. Puedes activar los recordatorios en cualquier momento.</string>
+    <string name="settings_notification_timing">Notificar</string>
+    <string name="settings_notification_repeat">Repetir</string>
+    <string name="settings_notification_lists">Listas</string>
+    <string name="settings_notification_lists_supporting">Elige qué listas pueden activar recordatorios.</string>
+    <string name="settings_selected_lists_count">%1$d listas</string>
+    <string name="settings_notifications_permission_required">Se requiere permiso de notificaciones. Actívalo para recibir recordatorios.</string>
+    <string name="notification_timing_when_overdue">Cuando venza</string>
+    <string name="notification_timing_15_min_before">15 minutos antes</string>
+    <string name="notification_timing_1_hour_before">1 hora antes</string>
+    <string name="notification_timing_1_day_before">1 día antes</string>
+    <string name="notification_cadence_once">Una vez</string>
+    <string name="notification_cadence_daily_until_done">Cada día hasta completar</string>
+    <string name="notification_channel_name">Recordatorios de tareas vencidas</string>
+    <string name="notification_channel_description">Notificaciones para tareas con vencimiento y vencidas.</string>
+    <string name="notification_summary_title">Recordatorios de HAdo</string>
+    <string name="notification_summary_text">%1$d tareas con vencimiento o vencidas</string>
+    <string name="notification_more_items">+%1$d más</string>
+    <string name="action_remind_later">Más tarde</string>
+    <string name="action_mark_done">Hecho</string>
+    <string name="label_mdi_icon">Icono MDI</string>
+    <string name="mdi_icon_placeholder">mdi:home</string>
+    <string name="mdi_icon_supporting">Introduce un icono MDI o busca iconos compatibles de Home Assistant.</string>
+    <string name="mdi_icon_no_match">No se encontró ningún icono compatible. Prueba, por ejemplo, con mdi:home.</string>
+    <string name="list_icon_sync_requires_admin">La sincronización de iconos de Home Assistant requiere una cuenta de administrador. Los iconos personalizados siguen funcionando solo localmente.</string>
 </resources>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">HAdo</string>
     <string name="widget_name">HAdo 할 일</string>
     <string name="widget_description">Home Assistant 할 일 목록 위젯</string>
 
@@ -30,6 +31,7 @@
     <string name="home_local_mode_support">이 기기에 저장됨</string>
     <string name="home_remote_mode_support">Home Assistant와 동기화됨</string>
     <string name="home_open_count">%1$d개 진행 중</string>
+    <string name="home_done_progress">%1$d/%2$d개 완료</string>
     <string name="home_overdue_count">%1$d개 기한 지남</string>
     <string name="home_section_open">진행 중</string>
     <string name="home_section_completed">완료됨</string>
@@ -90,6 +92,10 @@
     <string name="section_refresh_interval">새로고침 간격</string>
     <string name="refresh_description">위젯이 Home Assistant에서 새 데이터를 가져오는 빈도</string>
     <string name="section_list_icons">목록 아이콘</string>
+    <string name="section_language">언어</string>
+    <string name="label_app_language">앱 언어</string>
+    <string name="settings_language_supporting">앱 언어를 즉시 변경합니다.</string>
+    <string name="settings_language_system">시스템 기본값</string>
     <string name="label_tap_to_change">탭하여 변경</string>
     <string name="dialog_icon_title">%1$s 아이콘</string>
     <string name="label_ha_icon">HA 아이콘: %1$s</string>
@@ -154,4 +160,32 @@
     <string name="refresh_1hour">1시간</string>
     <string name="refresh_2hours">2시간</string>
     <string name="refresh_4hours">4시간</string>
+    <string name="section_notifications">알림</string>
+    <string name="settings_notifications_supporting">기한 임박 및 기한 지난 항목을 위한 선택형 알림입니다.</string>
+    <string name="settings_overdue_notifications">기한 지난 항목 알림</string>
+    <string name="settings_overdue_notifications_off">기본값은 꺼짐입니다. 알림은 언제든지 켤 수 있습니다.</string>
+    <string name="settings_notification_timing">알림 시점</string>
+    <string name="settings_notification_repeat">반복</string>
+    <string name="settings_notification_lists">목록</string>
+    <string name="settings_notification_lists_supporting">어떤 목록이 알림을 보낼지 선택하세요.</string>
+    <string name="settings_selected_lists_count">목록 %1$d개</string>
+    <string name="settings_notifications_permission_required">알림 권한이 필요합니다. 리마인더를 받으려면 활성화하세요.</string>
+    <string name="notification_timing_when_overdue">기한이 지났을 때</string>
+    <string name="notification_timing_15_min_before">15분 전</string>
+    <string name="notification_timing_1_hour_before">1시간 전</string>
+    <string name="notification_timing_1_day_before">1일 전</string>
+    <string name="notification_cadence_once">한 번</string>
+    <string name="notification_cadence_daily_until_done">완료할 때까지 매일</string>
+    <string name="notification_channel_name">기한 항목 리마인더</string>
+    <string name="notification_channel_description">기한 임박 및 기한 지난 할 일 항목 알림입니다.</string>
+    <string name="notification_summary_title">HAdo 리마인더</string>
+    <string name="notification_summary_text">기한 임박 또는 기한 지난 항목 %1$d개</string>
+    <string name="notification_more_items">+%1$d개 더</string>
+    <string name="action_remind_later">나중에</string>
+    <string name="action_mark_done">완료</string>
+    <string name="label_mdi_icon">MDI 아이콘</string>
+    <string name="mdi_icon_placeholder">mdi:home</string>
+    <string name="mdi_icon_supporting">MDI 아이콘을 입력하거나 지원되는 Home Assistant 아이콘을 검색하세요.</string>
+    <string name="mdi_icon_no_match">일치하는 지원 아이콘을 찾지 못했습니다. 예: mdi:home</string>
+    <string name="list_icon_sync_requires_admin">Home Assistant 아이콘 동기화에는 관리자 계정이 필요합니다. 사용자 지정 아이콘은 계속 로컬에서 작동합니다.</string>
 </resources>

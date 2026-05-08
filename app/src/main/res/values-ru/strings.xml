@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">HAdo</string>
     <string name="widget_name">HAdo Задачи</string>
     <string name="widget_description">Виджет списков задач Home Assistant</string>
 
@@ -30,6 +31,7 @@
     <string name="home_local_mode_support">Хранится на этом устройстве</string>
     <string name="home_remote_mode_support">Синхронизируется с Home Assistant</string>
     <string name="home_open_count">%1$d активных</string>
+    <string name="home_done_progress">%1$d/%2$d выполнено</string>
     <string name="home_overdue_count">%1$d просрочено</string>
     <string name="home_section_open">Активные</string>
     <string name="home_section_completed">Завершённые</string>
@@ -90,6 +92,10 @@
     <string name="section_refresh_interval">Интервал обновления</string>
     <string name="refresh_description">Как часто виджет получает новые данные из Home Assistant</string>
     <string name="section_list_icons">Значки списков</string>
+    <string name="section_language">Язык</string>
+    <string name="label_app_language">Язык приложения</string>
+    <string name="settings_language_supporting">Сразу изменить язык приложения.</string>
+    <string name="settings_language_system">Системный по умолчанию</string>
     <string name="label_tap_to_change">Нажмите для изменения</string>
     <string name="dialog_icon_title">Значок для %1$s</string>
     <string name="label_ha_icon">Значок HA: %1$s</string>
@@ -154,4 +160,32 @@
     <string name="refresh_1hour">1 час</string>
     <string name="refresh_2hours">2 часа</string>
     <string name="refresh_4hours">4 часа</string>
+    <string name="section_notifications">Уведомления</string>
+    <string name="settings_notifications_supporting">Необязательные напоминания о задачах со сроком и просроченных задачах.</string>
+    <string name="settings_overdue_notifications">Уведомления о просроченных задачах</string>
+    <string name="settings_overdue_notifications_off">По умолчанию выключено. Напоминания можно включить в любой момент.</string>
+    <string name="settings_notification_timing">Когда уведомлять</string>
+    <string name="settings_notification_repeat">Повтор</string>
+    <string name="settings_notification_lists">Списки</string>
+    <string name="settings_notification_lists_supporting">Выберите, какие списки могут отправлять напоминания.</string>
+    <string name="settings_selected_lists_count">%1$d списков</string>
+    <string name="settings_notifications_permission_required">Требуется разрешение на уведомления. Включите его, чтобы получать напоминания.</string>
+    <string name="notification_timing_when_overdue">Когда задача просрочена</string>
+    <string name="notification_timing_15_min_before">За 15 минут</string>
+    <string name="notification_timing_1_hour_before">За 1 час</string>
+    <string name="notification_timing_1_day_before">За 1 день</string>
+    <string name="notification_cadence_once">Один раз</string>
+    <string name="notification_cadence_daily_until_done">Ежедневно до выполнения</string>
+    <string name="notification_channel_name">Напоминания о задачах со сроком</string>
+    <string name="notification_channel_description">Уведомления о задачах со сроком и просроченных задачах.</string>
+    <string name="notification_summary_title">Напоминания HAdo</string>
+    <string name="notification_summary_text">%1$d задач со сроком или просроченных</string>
+    <string name="notification_more_items">+%1$d ещё</string>
+    <string name="action_remind_later">Позже</string>
+    <string name="action_mark_done">Готово</string>
+    <string name="label_mdi_icon">Иконка MDI</string>
+    <string name="mdi_icon_placeholder">mdi:home</string>
+    <string name="mdi_icon_supporting">Введите иконку MDI или найдите поддерживаемые иконки Home Assistant.</string>
+    <string name="mdi_icon_no_match">Подходящая поддерживаемая иконка не найдена. Попробуйте, например, mdi:home.</string>
+    <string name="list_icon_sync_requires_admin">Для синхронизации иконок Home Assistant требуется учетная запись администратора. Пользовательские иконки по-прежнему работают локально.</string>
 </resources>

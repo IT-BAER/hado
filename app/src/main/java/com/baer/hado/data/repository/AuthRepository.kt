@@ -1,11 +1,14 @@
 package com.baer.hado.data.repository
 
+import android.content.Context
 import android.net.Uri
 import com.baer.hado.data.api.HaAuthService
 import com.baer.hado.data.api.TokenRefreshInterceptor.Companion.AUTH_CLIENT_ID
 import com.baer.hado.data.api.TokenRefreshInterceptor.Companion.AUTH_REDIRECT_URI
 import com.baer.hado.data.local.TokenManager
 import com.baer.hado.data.model.TokenResponse
+import com.baer.hado.notifications.OverdueNotificationScheduler
+import dagger.hilt.android.qualifiers.ApplicationContext
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Inject
@@ -13,7 +16,8 @@ import javax.inject.Singleton
 
 @Singleton
 class AuthRepository @Inject constructor(
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    @ApplicationContext private val context: Context
 ) {
     fun buildAuthorizeUrl(serverUrl: String): String {
         val url = Uri.parse(serverUrl.trimEnd('/') + "/auth/authorize")
@@ -54,6 +58,7 @@ class AuthRepository @Inject constructor(
 
     fun logout() {
         tokenManager.clearAll()
+        OverdueNotificationScheduler.cancelAll(context)
     }
 
     val isLoggedIn: Boolean get() = tokenManager.isLoggedIn

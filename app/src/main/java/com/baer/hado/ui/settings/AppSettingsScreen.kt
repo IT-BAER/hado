@@ -1,7 +1,12 @@
 package com.baer.hado.ui.settings
 
+import android.Manifest
+import android.app.LocaleManager
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
+import android.os.LocaleList
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateContentSize
@@ -16,9 +21,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,11 +38,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.baer.hado.BuildConfig
 import com.baer.hado.R
 import com.baer.hado.data.local.LocalTodoStore
 import com.baer.hado.data.local.TokenManager
 import com.baer.hado.data.model.SimpleState
+import com.baer.hado.notifications.OverdueNotificationSettings
+import com.baer.hado.notifications.OverdueNotificationSettingsManager
+import com.baer.hado.notifications.OverdueNotificationScheduler
 import com.baer.hado.ui.theme.AppSpacing
 import com.baer.hado.widget.ListIconHaSyncManager
 import com.baer.hado.widget.ListIconManager
@@ -46,6 +58,41 @@ import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Locale
+
+private data class AppLanguageOption(
+    val tag: String?,
+    val locale: Locale?
+) {
+    fun label(context: android.content.Context): String {
+        if (tag.isNullOrBlank() || locale == null) {
+            return context.getString(R.string.settings_language_system)
+        }
+
+        val displayName = locale.getDisplayName(locale)
+        return displayName.replaceFirstChar { firstChar ->
+            if (firstChar.isLowerCase()) {
+                firstChar.titlecase(locale)
+            } else {
+                firstChar.toString()
+            }
+        }
+    }
+}
+
+private val appLanguageOptions = listOf(
+    AppLanguageOption(tag = null, locale = null),
+    AppLanguageOption(tag = "en", locale = Locale.ENGLISH),
+    AppLanguageOption(tag = "de", locale = Locale.GERMAN),
+    AppLanguageOption(tag = "es", locale = Locale("es")),
+    AppLanguageOption(tag = "fr", locale = Locale.FRENCH),
+    AppLanguageOption(tag = "nl", locale = Locale("nl")),
+    AppLanguageOption(tag = "pt-BR", locale = Locale("pt", "BR")),
+    AppLanguageOption(tag = "ru", locale = Locale("ru")),
+    AppLanguageOption(tag = "ja", locale = Locale.JAPANESE),
+    AppLanguageOption(tag = "ko", locale = Locale.KOREAN),
+    AppLanguageOption(tag = "zh-CN", locale = Locale.SIMPLIFIED_CHINESE)
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,15 +102,50 @@ fun AppSettingsScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    var selectedLanguageTag by remember { mutableStateOf(currentAppLanguageTag(context)) }
+    var showLanguageDialog by remember { mutableStateOf(false) }
+    var notificationSettings by remember {
+        mutableStateOf(OverdueNotificationSettingsManager.load(context))
+    }
+    var notificationPermissionDenied by remember { mutableStateOf(false) }
+    var showTimingDialog by remember { mutableStateOf(false) }
+    var showCadenceDialog by remember { mutableStateOf(false) }
+    var showNotificationListsDialog by remember { mutableStateOf(false) }
 
     var availableLists by remember { mutableStateOf<List<Triple<String, String, String?>>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            notificationPermissionDenied = false
+            notificationSettings = notificationSettings.copy(enabled = true)
+            OverdueNotificationSettingsManager.save(context, notificationSettings)
+            OverdueNotificationScheduler.reschedule(context)
+        } else {
+            notificationPermissionDenied = true
+        }
+    }
 
     LaunchedEffect(Unit) {
         scope.launch {
             availableLists = fetchLists(context)
             isLoading = false
         }
+    }
+
+    LaunchedEffect(isLoading, availableLists) {
+        if (isLoading) return@LaunchedEffect
+        if (notificationSettings.selectedListIds.isEmpty()) return@LaunchedEffect
+
+        val availableIds = availableLists.mapTo(mutableSetOf()) { it.first }
+        val validSelectedIds = notificationSettings.selectedListIds.intersect(availableIds)
+        if (validSelectedIds == notificationSettings.selectedListIds) return@LaunchedEffect
+
+        notificationSettings = notificationSettings.copy(selectedListIds = validSelectedIds)
+        OverdueNotificationSettingsManager.save(context, notificationSettings)
+        OverdueNotificationScheduler.reschedule(context)
     }
 
     Scaffold(
@@ -129,6 +211,112 @@ fun AppSettingsScreen(
                 AppListIconsSection(availableLists = availableLists)
             }
 
+            SettingsSection(title = stringResource(R.string.section_language)) {
+                SettingsItem(
+                    headline = stringResource(R.string.label_app_language),
+                    supporting = stringResource(R.string.settings_language_supporting),
+                    trailingText = languageLabel(context, selectedLanguageTag),
+                    onClick = { showLanguageDialog = true },
+                    leadingContent = {
+                        Icon(
+                            Icons.Default.Language,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                )
+            }
+
+            SettingsSection(title = stringResource(R.string.section_notifications)) {
+                SettingsToggleItem(
+                    headline = stringResource(R.string.settings_overdue_notifications),
+                    supporting = if (notificationPermissionDenied) {
+                        stringResource(R.string.settings_notifications_permission_required)
+                    } else {
+                        stringResource(R.string.settings_notifications_supporting)
+                    },
+                    checked = notificationSettings.enabled,
+                    onCheckedChange = { enabled ->
+                        if (enabled) {
+                            if (hasNotificationPermission(context)) {
+                                notificationPermissionDenied = false
+                                notificationSettings = notificationSettings.copy(enabled = true)
+                                OverdueNotificationSettingsManager.save(context, notificationSettings)
+                                OverdueNotificationScheduler.reschedule(context)
+                            } else {
+                                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            }
+                        } else {
+                            notificationPermissionDenied = false
+                            notificationSettings = notificationSettings.copy(enabled = false)
+                            OverdueNotificationSettingsManager.save(context, notificationSettings)
+                            OverdueNotificationScheduler.reschedule(context)
+                        }
+                    },
+                    leadingContent = {
+                        Icon(
+                            Icons.Default.Notifications,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                )
+
+                HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
+
+                SettingsItem(
+                    headline = stringResource(R.string.settings_notification_timing),
+                    supporting = stringResource(R.string.settings_overdue_notifications_off),
+                    trailingText = stringResource(notificationSettings.timing.labelResId),
+                    onClick = { showTimingDialog = true },
+                    leadingContent = {
+                        Icon(
+                            Icons.Default.Notifications,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                )
+
+                HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
+
+                SettingsItem(
+                    headline = stringResource(R.string.settings_notification_repeat),
+                    supporting = stringResource(R.string.settings_notifications_supporting),
+                    trailingText = stringResource(notificationSettings.cadence.labelResId),
+                    onClick = { showCadenceDialog = true },
+                    leadingContent = {
+                        Icon(
+                            Icons.Default.Notifications,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                )
+
+                if (!isLoading && availableLists.isNotEmpty()) {
+                    HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
+
+                    SettingsItem(
+                        headline = stringResource(R.string.settings_notification_lists),
+                        supporting = stringResource(R.string.settings_notification_lists_supporting),
+                        trailingText = notificationListSummary(
+                            context = context,
+                            settings = notificationSettings,
+                            availableLists = availableLists
+                        ),
+                        onClick = { showNotificationListsDialog = true },
+                        leadingContent = {
+                            Icon(
+                                Icons.Default.Notifications,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    )
+                }
+            }
+
             SettingsSection(title = stringResource(R.string.section_account)) {
                 SettingsItem(
                     headline = stringResource(R.string.action_logout),
@@ -136,6 +324,7 @@ fun AppSettingsScreen(
                     supporting = stringResource(R.string.settings_logout_supporting),
                     onClick = {
                         TokenManager(context).clearAll()
+                        OverdueNotificationScheduler.cancelAll(context)
                         onLogout()
                     },
                     leadingContent = {
@@ -153,6 +342,165 @@ fun AppSettingsScreen(
             Spacer(Modifier.height(32.dp))
         }
     }
+
+    if (showLanguageDialog) {
+        AlertDialog(
+            onDismissRequest = { showLanguageDialog = false },
+            title = { Text(stringResource(R.string.label_app_language)) },
+            text = {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    appLanguageOptions.forEach { option ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(16.dp))
+                                .clickable {
+                                    selectedLanguageTag = option.tag
+                                    applyAppLanguage(context, option.tag)
+                                    showLanguageDialog = false
+                                }
+                                .padding(horizontal = 8.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = selectedLanguageTag == option.tag,
+                                onClick = {
+                                    selectedLanguageTag = option.tag
+                                    applyAppLanguage(context, option.tag)
+                                    showLanguageDialog = false
+                                }
+                            )
+                            Spacer(Modifier.width(12.dp))
+                            Text(
+                                text = option.label(context),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showLanguageDialog = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
+        )
+    }
+
+    if (showTimingDialog) {
+        SingleChoiceSettingsDialog(
+            title = stringResource(R.string.settings_notification_timing),
+            selectedValue = notificationSettings.timing,
+            options = OverdueNotificationSettings.NotificationTiming.entries,
+            labelFor = { stringResource(it.labelResId) },
+            onDismiss = { showTimingDialog = false },
+            onSelected = { timing ->
+                notificationSettings = notificationSettings.copy(timing = timing)
+                OverdueNotificationSettingsManager.save(context, notificationSettings)
+                OverdueNotificationScheduler.reschedule(context)
+                showTimingDialog = false
+            }
+        )
+    }
+
+    if (showCadenceDialog) {
+        SingleChoiceSettingsDialog(
+            title = stringResource(R.string.settings_notification_repeat),
+            selectedValue = notificationSettings.cadence,
+            options = OverdueNotificationSettings.ReminderCadence.entries,
+            labelFor = { stringResource(it.labelResId) },
+            onDismiss = { showCadenceDialog = false },
+            onSelected = { cadence ->
+                notificationSettings = notificationSettings.copy(cadence = cadence)
+                OverdueNotificationSettingsManager.save(context, notificationSettings)
+                OverdueNotificationScheduler.reschedule(context)
+                showCadenceDialog = false
+            }
+        )
+    }
+
+    if (showNotificationListsDialog) {
+        NotificationListsDialog(
+            availableLists = availableLists,
+            selectedListIds = notificationSettings.selectedListIds,
+            onDismiss = { showNotificationListsDialog = false },
+            onSave = { selectedIds ->
+                notificationSettings = notificationSettings.copy(selectedListIds = selectedIds)
+                OverdueNotificationSettingsManager.save(context, notificationSettings)
+                OverdueNotificationScheduler.reschedule(context)
+                showNotificationListsDialog = false
+            }
+        )
+    }
+}
+
+private fun notificationListSummary(
+    context: android.content.Context,
+    settings: OverdueNotificationSettings,
+    availableLists: List<Triple<String, String, String?>>
+): String {
+    if (settings.selectedListIds.isEmpty()) {
+        return context.getString(R.string.settings_all_lists)
+    }
+
+    val selectedNames = availableLists
+        .filter { it.first in settings.selectedListIds }
+        .map { it.second }
+
+    return when (selectedNames.size) {
+        0 -> context.getString(R.string.settings_all_lists)
+        1 -> selectedNames.first()
+        else -> context.getString(R.string.settings_selected_lists_count, selectedNames.size)
+    }
+}
+
+private fun hasNotificationPermission(context: android.content.Context): Boolean {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true
+    return ContextCompat.checkSelfPermission(
+        context,
+        Manifest.permission.POST_NOTIFICATIONS
+    ) == PackageManager.PERMISSION_GRANTED
+}
+
+private fun currentAppLanguageTag(context: android.content.Context): String? {
+    val localeManager = context.getSystemService(LocaleManager::class.java) ?: return null
+    val languageTags = localeManager.applicationLocales.toLanguageTags()
+    return languageTags.ifBlank { null }
+}
+
+private fun applyAppLanguage(context: android.content.Context, languageTag: String?) {
+    val localeManager = context.getSystemService(LocaleManager::class.java) ?: return
+    localeManager.applicationLocales = if (languageTag.isNullOrBlank()) {
+        LocaleList.getEmptyLocaleList()
+    } else {
+        LocaleList.forLanguageTags(languageTag)
+    }
+}
+
+private fun languageLabel(context: android.content.Context, languageTag: String?): String {
+    val exactMatch = appLanguageOptions.firstOrNull { it.tag == languageTag }
+    if (exactMatch != null) {
+        return exactMatch.label(context)
+    }
+
+    if (languageTag.isNullOrBlank()) {
+        return context.getString(R.string.settings_language_system)
+    }
+
+    val locale = Locale.forLanguageTag(languageTag)
+    val displayName = locale.getDisplayName(locale)
+    return displayName.replaceFirstChar { firstChar ->
+        if (firstChar.isLowerCase()) {
+            firstChar.titlecase(locale)
+        } else {
+            firstChar.toString()
+        }
+    }
 }
 
 @Composable
@@ -162,14 +510,28 @@ private fun AboutSection() {
     SettingsSection(title = stringResource(R.string.section_about)) {
         SettingsItem(
             headline = stringResource(R.string.label_version),
-            trailingText = BuildConfig.VERSION_NAME
+            trailingText = BuildConfig.VERSION_NAME,
+            leadingContent = {
+                Icon(
+                    Icons.Default.Info,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         )
 
         HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
 
         SettingsItem(
             headline = stringResource(R.string.label_developer),
-            trailingText = "IT-BAER"
+            trailingText = "IT-BAER",
+            leadingContent = {
+                Icon(
+                    Icons.Default.Person,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         )
 
         HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
@@ -181,6 +543,13 @@ private fun AboutSection() {
                 openExternalUrl(
                     context = context,
                     url = "https://github.com/IT-BAER/hado/blob/master/PRIVACY.md"
+                )
+            },
+            leadingContent = {
+                Icon(
+                    Icons.Default.Lock,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         )
@@ -194,6 +563,13 @@ private fun AboutSection() {
                 openExternalUrl(
                     context = context,
                     url = "https://github.com/IT-BAER/hado"
+                )
+            },
+            leadingContent = {
+                Icon(
+                    Icons.Default.Code,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         )
@@ -356,6 +732,191 @@ private fun NoIconPlaceholder() {
             )
         }
     }
+}
+
+@Composable
+private fun SettingsToggleItem(
+    headline: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    supporting: String? = null,
+    leadingContent: (@Composable () -> Unit)? = null
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .clickable { onCheckedChange(!checked) }
+            .padding(horizontal = 12.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier.size(32.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            leadingContent?.invoke()
+        }
+
+        Spacer(Modifier.width(12.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = headline,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            if (supporting != null) {
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = supporting,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange
+        )
+    }
+}
+
+@Composable
+private fun <T> SingleChoiceSettingsDialog(
+    title: String,
+    selectedValue: T,
+    options: Iterable<T>,
+    labelFor: @Composable (T) -> String,
+    onDismiss: () -> Unit,
+    onSelected: (T) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                options.forEach { option ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .clickable { onSelected(option) }
+                            .padding(horizontal = 8.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = option == selectedValue,
+                            onClick = { onSelected(option) }
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        Text(
+                            text = labelFor(option),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.action_cancel))
+            }
+        }
+    )
+}
+
+@Composable
+private fun NotificationListsDialog(
+    availableLists: List<Triple<String, String, String?>>,
+    selectedListIds: Set<String>,
+    onDismiss: () -> Unit,
+    onSave: (Set<String>) -> Unit
+) {
+    var tempSelected by remember(selectedListIds) { mutableStateOf(selectedListIds) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.settings_notification_lists)) },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable { tempSelected = emptySet() }
+                        .padding(horizontal = 8.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = tempSelected.isEmpty(),
+                        onCheckedChange = { checked ->
+                            if (checked == true) tempSelected = emptySet()
+                        }
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        text = stringResource(R.string.settings_all_lists),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+
+                availableLists.forEach { (entityId, name, _) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .clickable {
+                                tempSelected = if (entityId in tempSelected) {
+                                    tempSelected - entityId
+                                } else {
+                                    tempSelected + entityId
+                                }
+                            }
+                            .padding(horizontal = 8.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = entityId in tempSelected,
+                            onCheckedChange = { checked ->
+                                tempSelected = if (checked == true) {
+                                    tempSelected + entityId
+                                } else {
+                                    tempSelected - entityId
+                                }
+                            }
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        Text(
+                            text = name,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onSave(tempSelected) }) {
+                Text(stringResource(R.string.action_save))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.action_cancel))
+            }
+        }
+    )
 }
 
 @Composable

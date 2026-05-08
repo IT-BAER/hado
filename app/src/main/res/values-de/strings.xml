@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">HAdo</string>
     <string name="widget_name">HAdo Aufgaben</string>
     <string name="widget_description">Home Assistant Aufgabenlisten-Widget</string>
 
@@ -30,6 +31,7 @@
     <string name="home_local_mode_support">Auf diesem Gerät gespeichert</string>
     <string name="home_remote_mode_support">Mit Home Assistant synchronisiert</string>
     <string name="home_open_count">%1$d offen</string>
+    <string name="home_done_progress">%1$d/%2$d erledigt</string>
     <string name="home_overdue_count">%1$d überfällig</string>
     <string name="home_section_open">Offen</string>
     <string name="home_section_completed">Erledigt</string>
@@ -94,6 +96,33 @@
     <string name="section_refresh_interval">Aktualisierungsintervall</string>
     <string name="refresh_description">Wie oft das Widget neue Daten von Home Assistant abruft</string>
     <string name="section_list_icons">Listensymbole</string>
+    <string name="section_notifications">Benachrichtigungen</string>
+    <string name="section_language">Sprache</string>
+    <string name="label_app_language">App-Sprache</string>
+    <string name="settings_language_supporting">Die Sprache der App sofort ändern.</string>
+    <string name="settings_language_system">Systemstandard</string>
+    <string name="settings_notifications_supporting">Optionale Erinnerungen für fällige und überfällige Einträge.</string>
+    <string name="settings_overdue_notifications">Benachrichtigungen für fällige Einträge</string>
+    <string name="settings_overdue_notifications_off">Standardmäßig aus. Du kannst Erinnerungen jederzeit aktivieren.</string>
+    <string name="settings_notification_timing">Benachrichtigen</string>
+    <string name="settings_notification_repeat">Wiederholen</string>
+    <string name="settings_notification_lists">Listen</string>
+    <string name="settings_notification_lists_supporting">Wähle, welche Listen Erinnerungen auslösen dürfen.</string>
+    <string name="settings_selected_lists_count">%1$d Listen</string>
+    <string name="settings_notifications_permission_required">Benachrichtigungsberechtigung erforderlich. Aktiviere sie, um Erinnerungen zu erhalten.</string>
+    <string name="notification_timing_when_overdue">Bei Überfälligkeit</string>
+    <string name="notification_timing_15_min_before">15 Minuten vorher</string>
+    <string name="notification_timing_1_hour_before">1 Stunde vorher</string>
+    <string name="notification_timing_1_day_before">1 Tag vorher</string>
+    <string name="notification_cadence_once">Einmal</string>
+    <string name="notification_cadence_daily_until_done">Täglich bis erledigt</string>
+    <string name="notification_channel_name">Erinnerungen für fällige Einträge</string>
+    <string name="notification_channel_description">Benachrichtigungen für fällige und überfällige To-do-Einträge.</string>
+    <string name="notification_summary_title">HAdo Erinnerungen</string>
+    <string name="notification_summary_text">%1$d fällige oder überfällige Einträge</string>
+    <string name="notification_more_items">+%1$d weitere</string>
+    <string name="action_remind_later">Später</string>
+    <string name="action_mark_done">Erledigt</string>
     <string name="label_tap_to_change">Antippen zum Ändern</string>
     <string name="dialog_icon_title">Symbol für %1$s</string>
     <string name="label_ha_icon">HA-Symbol: %1$s</string>

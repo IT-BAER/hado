@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">HAdo</string>
     <string name="widget_name">HAdo タスク</string>
     <string name="widget_description">Home Assistant ToDo リストウィジェット</string>
 
@@ -30,6 +31,7 @@
     <string name="home_local_mode_support">このデバイスに保存</string>
     <string name="home_remote_mode_support">Home Assistant と同期</string>
     <string name="home_open_count">%1$d 件が未完了</string>
+    <string name="home_done_progress">%1$d/%2$d 件完了</string>
     <string name="home_overdue_count">%1$d 件が期限切れ</string>
     <string name="home_section_open">未完了</string>
     <string name="home_section_completed">完了済み</string>
@@ -90,6 +92,10 @@
     <string name="section_refresh_interval">更新間隔</string>
     <string name="refresh_description">ウィジェットがHome Assistantから新しいデータを取得する頻度</string>
     <string name="section_list_icons">リストアイコン</string>
+    <string name="section_language">言語</string>
+    <string name="label_app_language">アプリの言語</string>
+    <string name="settings_language_supporting">アプリの言語をすぐに変更します。</string>
+    <string name="settings_language_system">システムのデフォルト</string>
     <string name="label_tap_to_change">タップして変更</string>
     <string name="dialog_icon_title">%1$sのアイコン</string>
     <string name="label_ha_icon">HAアイコン: %1$s</string>
@@ -154,4 +160,32 @@
     <string name="refresh_1hour">1時間</string>
     <string name="refresh_2hours">2時間</string>
     <string name="refresh_4hours">4時間</string>
+    <string name="section_notifications">通知</string>
+    <string name="settings_notifications_supporting">期限あり項目と期限切れ項目への任意のリマインダーです。</string>
+    <string name="settings_overdue_notifications">期限切れ項目の通知</string>
+    <string name="settings_overdue_notifications_off">初期状態ではオフです。リマインダーはいつでも有効化できます。</string>
+    <string name="settings_notification_timing">通知するタイミング</string>
+    <string name="settings_notification_repeat">繰り返し</string>
+    <string name="settings_notification_lists">リスト</string>
+    <string name="settings_notification_lists_supporting">どのリストでリマインダーを送るか選択します。</string>
+    <string name="settings_selected_lists_count">%1$d 件のリスト</string>
+    <string name="settings_notifications_permission_required">通知の権限が必要です。リマインダーを受け取るには有効にしてください。</string>
+    <string name="notification_timing_when_overdue">期限切れになったとき</string>
+    <string name="notification_timing_15_min_before">15分前</string>
+    <string name="notification_timing_1_hour_before">1時間前</string>
+    <string name="notification_timing_1_day_before">1日前</string>
+    <string name="notification_cadence_once">1回のみ</string>
+    <string name="notification_cadence_daily_until_done">完了するまで毎日</string>
+    <string name="notification_channel_name">期限項目のリマインダー</string>
+    <string name="notification_channel_description">期限あり項目と期限切れ項目の通知です。</string>
+    <string name="notification_summary_title">HAdo リマインダー</string>
+    <string name="notification_summary_text">期限ありまたは期限切れの項目 %1$d 件</string>
+    <string name="notification_more_items">さらに %1$d 件</string>
+    <string name="action_remind_later">後で</string>
+    <string name="action_mark_done">完了</string>
+    <string name="label_mdi_icon">MDI アイコン</string>
+    <string name="mdi_icon_placeholder">mdi:home</string>
+    <string name="mdi_icon_supporting">MDI アイコンを入力するか、対応する Home Assistant アイコンを検索してください。</string>
+    <string name="mdi_icon_no_match">一致する対応アイコンが見つかりません。例: mdi:home を試してください。</string>
+    <string name="list_icon_sync_requires_admin">Home Assistant のアイコン同期には管理者アカウントが必要です。カスタムアイコンは引き続きローカルで利用できます。</string>
 </resources>
