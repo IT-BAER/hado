@@ -5,6 +5,21 @@ All notable changes to HAdo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2026-05-08
+
+### Added
+- Optional due and overdue item notifications with per-list filtering, configurable lead time, repeat cadence, and quick actions for Later and Done
+- In-app language picker with Android per-app locale support for all supported HAdo languages
+- Completed translation coverage for the latest notification, language, and MDI icon strings across every supported locale
+
+### Changed
+- Home overview header now uses a tighter compact layout with clearer done and overdue status pills
+- The add-item editor no longer applies top-bar padding when launched without the top app bar, keeping full-screen widget launches properly aligned
+
+### Fixed
+- Logging out now cancels scheduled reminder work, and signing in or switching to Local Mode reschedules it cleanly
+- Notification list filters now self-heal when available to-do lists change, preventing stale saved selections from breaking reminder settings
+
 ## [1.1.1] - 2026-05-01
 
 ### Fixed

@@ -1,7 +1,7 @@
-HAdo 1.1.0
+HAdo 1.1.2
 
-• New list icon picker with direct `mdi:*` search, live preview, and inline suggestions
-• Emoji and MDI list icons can sync to Home Assistant when admin rights allow it; custom images stay local-only
-• Reopening the picker now restores the active icon choice, and resetting returns to the native default list icon
-• Pull-to-refresh in every list editor plus smoother scrolling and item-state updates
-• Security: updated Glance library to fix a protobuf vulnerability (CVE-2024-7254)
+• New optional reminders for due and overdue items, with per-list selection and quick Later/Done actions
+• New in-app language picker using Android per-app language support
+• Missing translations completed across all supported languages for notification and icon settings
+• Home overview header is tighter and clearer, with improved done and overdue status pills
+• Reminder scheduling now resets cleanly on login, logout, and Local Mode changes
