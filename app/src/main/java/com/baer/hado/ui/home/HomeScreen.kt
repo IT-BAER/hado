@@ -15,6 +15,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -64,6 +65,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -74,7 +76,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
@@ -226,6 +232,7 @@ fun HomeScreen(
                             selectedId = uiState.selectedListId,
                             listState = listSelectorState,
                             onSelect = viewModel::selectList,
+                            onReorder = viewModel::reorderLists,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -396,8 +403,14 @@ private fun ListSelector(
     selectedId: String?,
     listState: LazyListState,
     onSelect: (String) -> Unit,
+    onReorder: ((Int, Int) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    var draggedId by remember { mutableStateOf<String?>(null) }
+    var dragOffsetX by remember { mutableFloatStateOf(0f) }
+    val haptic = LocalHapticFeedback.current
+    val currentLists by rememberUpdatedState(lists)
+
     LazyRow(
         state = listState,
         modifier = modifier,
@@ -405,16 +418,68 @@ private fun ListSelector(
         horizontalArrangement = Arrangement.spacedBy(AppSpacing.compactGap)
     ) {
         items(lists, key = { it.first }) { (id, name) ->
+            val isDragging = draggedId == id
             FilterChip(
                 selected = id == selectedId,
-                onClick = { onSelect(id) },
+                onClick = { if (draggedId == null) onSelect(id) },
                 label = {
                     Text(
                         text = name,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                }
+                },
+                modifier = Modifier
+                    .graphicsLayer {
+                        if (isDragging) {
+                            translationX = dragOffsetX
+                            shadowElevation = 8f
+                            scaleX = 1.05f
+                            scaleY = 1.05f
+                        }
+                    }
+                    .then(
+                        if (onReorder != null) {
+                            Modifier.pointerInput(id) {
+                                detectDragGesturesAfterLongPress(
+                                    onDragStart = {
+                                        draggedId = id
+                                        dragOffsetX = 0f
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    },
+                                    onDrag = { change, dragAmount ->
+                                        change.consume()
+                                        if (draggedId == id) {
+                                            dragOffsetX += dragAmount.x
+                                            val liveLists = currentLists
+                                            val currentIndex = liveLists.indexOfFirst { it.first == id }
+                                            if (currentIndex < 0) return@detectDragGesturesAfterLongPress
+
+                                            val itemInfo = listState.layoutInfo.visibleItemsInfo
+                                            val draggedInfo = itemInfo.firstOrNull { it.key == id }
+                                            val halfWidth = (draggedInfo?.size ?: 200) / 2
+
+                                            val targetIndex = when {
+                                                dragOffsetX > halfWidth && currentIndex < liveLists.lastIndex -> currentIndex + 1
+                                                dragOffsetX < -halfWidth && currentIndex > 0 -> currentIndex - 1
+                                                else -> return@detectDragGesturesAfterLongPress
+                                            }
+                                            onReorder(currentIndex, targetIndex)
+                                            dragOffsetX -= (targetIndex - currentIndex) * (draggedInfo?.size ?: 200).toFloat()
+                                        }
+                                    },
+                                    onDragEnd = {
+                                        draggedId = null
+                                        dragOffsetX = 0f
+                                    },
+                                    onDragCancel = {
+                                        draggedId = null
+                                        dragOffsetX = 0f
+                                    }
+                                )
+                            }
+                        } else Modifier
+                    )
             )
         }
     }

@@ -13,6 +13,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -24,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -31,6 +33,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -115,6 +122,7 @@ private fun WidgetSettingsScreen(
     var showTitle by remember { mutableStateOf(existingSettings.showTitle) }
     var showListIcons by remember { mutableStateOf(existingSettings.showListIcons) }
     var autoFocusOnOpen by remember { mutableStateOf(existingSettings.autoFocusOnOpen) }
+    var listOrder by remember { mutableStateOf(existingSettings.listOrder) }
 
     fun currentSettings() = WidgetSettings(
         selectedListIds = selectedListIds,
@@ -127,7 +135,8 @@ private fun WidgetSettingsScreen(
         checkboxOnly = checkboxOnly,
         showTitle = showTitle,
         showListIcons = showListIcons,
-        autoFocusOnOpen = autoFocusOnOpen
+        autoFocusOnOpen = autoFocusOnOpen,
+        listOrder = listOrder
     )
 
     // Back gesture/button saves settings instead of discarding
@@ -136,10 +145,20 @@ private fun WidgetSettingsScreen(
     // Available lists — fetched from HA (entityId, friendlyName, haIcon)
     var availableLists by remember { mutableStateOf<List<Triple<String, String, String?>>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
+    // Ordered lists for display (entity IDs in user-defined order)
+    var orderedAvailableLists by remember { mutableStateOf<List<Triple<String, String, String?>>>(emptyList()) }
 
     LaunchedEffect(Unit) {
         scope.launch {
-            availableLists = fetchAvailableLists(context)
+            val fetched = fetchAvailableLists(context)
+            availableLists = fetched
+            // Apply saved order, or fall back to API order
+            orderedAvailableLists = if (listOrder.isEmpty()) {
+                fetched
+            } else {
+                val orderMap = listOrder.withIndex().associate { (i, id) -> id to i }
+                fetched.sortedBy { orderMap[it.first] ?: Int.MAX_VALUE }
+            }
             isLoading = false
         }
     }
@@ -209,22 +228,97 @@ private fun WidgetSettingsScreen(
                         )
                     }
 
-                    // Individual list checkboxes
-                    availableLists.forEach { (entityId, name, _) ->
+                    // Individual list checkboxes with drag-to-reorder
+                    val haptic = LocalHapticFeedback.current
+                    val itemHeightPx = with(LocalDensity.current) { 56.dp.toPx() }
+                    var draggedIndex by remember { mutableIntStateOf(-1) }
+                    var dragTargetIndex by remember { mutableIntStateOf(-1) }
+                    var dragOffsetY by remember { mutableFloatStateOf(0f) }
+
+                    orderedAvailableLists.forEachIndexed { index, (entityId, name, _) ->
+                        val isDragging = draggedIndex == index
+                        // Compute visual shift for non-dragged items to show where dragged item will land
+                        val visualShift = when {
+                            draggedIndex < 0 -> 0f
+                            isDragging -> dragOffsetY
+                            draggedIndex < dragTargetIndex -> {
+                                if (index in (draggedIndex + 1)..dragTargetIndex) -itemHeightPx else 0f
+                            }
+                            draggedIndex > dragTargetIndex -> {
+                                if (index in dragTargetIndex until draggedIndex) itemHeightPx else 0f
+                            }
+                            else -> 0f
+                        }
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .clickable {
-                                    selectedListIds = if (selectedListIds.contains(entityId)) {
-                                        selectedListIds - entityId
-                                    } else {
-                                        selectedListIds + entityId
+                                .graphicsLayer {
+                                    translationY = visualShift
+                                    if (isDragging) {
+                                        shadowElevation = 8f
+                                        scaleX = 1.02f
+                                        scaleY = 1.02f
                                     }
                                 }
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable {
+                                    if (draggedIndex < 0) {
+                                        selectedListIds = if (selectedListIds.contains(entityId)) {
+                                            selectedListIds - entityId
+                                        } else {
+                                            selectedListIds + entityId
+                                        }
+                                    }
+                                }
+                                .padding(start = 0.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            // Drag handle
+                            Icon(
+                                Icons.Default.DragIndicator,
+                                contentDescription = stringResource(R.string.cd_drag_reorder),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .padding(12.dp)
+                                    .pointerInput(entityId) {
+                                        detectDragGesturesAfterLongPress(
+                                            onDragStart = {
+                                                draggedIndex = index
+                                                dragTargetIndex = index
+                                                dragOffsetY = 0f
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            },
+                                            onDrag = { change, dragAmount ->
+                                                change.consume()
+                                                if (draggedIndex == index) {
+                                                    dragOffsetY += dragAmount.y
+                                                    val rawTarget = (index + dragOffsetY / itemHeightPx + 0.5f).toInt()
+                                                    dragTargetIndex = rawTarget.coerceIn(0, orderedAvailableLists.lastIndex)
+                                                }
+                                            },
+                                            onDragEnd = {
+                                                val from = draggedIndex
+                                                val to = dragTargetIndex
+                                                if (from >= 0 && to != from) {
+                                                    val mutable = orderedAvailableLists.toMutableList()
+                                                    val item = mutable.removeAt(from)
+                                                    mutable.add(to, item)
+                                                    orderedAvailableLists = mutable
+                                                    listOrder = mutable.map { it.first }
+                                                }
+                                                draggedIndex = -1
+                                                dragTargetIndex = -1
+                                                dragOffsetY = 0f
+                                            },
+                                            onDragCancel = {
+                                                draggedIndex = -1
+                                                dragTargetIndex = -1
+                                                dragOffsetY = 0f
+                                            }
+                                        )
+                                    }
+                            )
                             Checkbox(
                                 checked = selectedListIds.isEmpty() || selectedListIds.contains(entityId),
                                 onCheckedChange = { checked ->

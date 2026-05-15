@@ -101,10 +101,16 @@ class TodoWidget : GlanceAppWidget() {
             } else {
                 raw
             }
-            if (!settings.showCompleted) {
-                selectedLists.map { list -> list.copy(items = list.items.filter { !it.isCompleted }) }
+            val orderedLists = if (settings.listOrder.isNotEmpty()) {
+                val orderMap = settings.listOrder.withIndex().associate { (i, id) -> id to i }
+                selectedLists.sortedBy { orderMap[it.entityId] ?: Int.MAX_VALUE }
             } else {
                 selectedLists
+            }
+            if (!settings.showCompleted) {
+                orderedLists.map { list -> list.copy(items = list.items.filter { !it.isCompleted }) }
+            } else {
+                orderedLists
             }
         }
 

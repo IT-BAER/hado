@@ -1,7 +1,4 @@
-HAdo 1.1.2
+HAdo 1.1.3
 
-• New optional reminders for due and overdue items, with per-list selection and quick Later/Done actions
-• New in-app language picker using Android per-app language support
-• Missing translations completed across all supported languages for notification and icon settings
-• Home overview header is tighter and clearer, with improved done and overdue status pills
-• Reminder scheduling now resets cleanly on login, logout, and Local Mode changes
+• Drag-to-reorder lists in the main app: long-press a list chip and drag to rearrange
+• Drag-to-reorder lists in widget settings: long-press the drag handle and drag to set the widget display order

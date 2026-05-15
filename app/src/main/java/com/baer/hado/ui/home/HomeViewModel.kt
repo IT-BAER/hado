@@ -1,5 +1,6 @@
 package com.baer.hado.ui.home
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,7 +9,10 @@ import com.baer.hado.data.model.HaState
 import com.baer.hado.data.model.TodoItem
 import com.baer.hado.data.repository.AuthRepository
 import com.baer.hado.data.repository.TodoRepository
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -37,12 +41,48 @@ data class HomeUiState(
 class HomeViewModel @Inject constructor(
     private val todoRepository: TodoRepository,
     private val authRepository: AuthRepository,
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    @ApplicationContext private val appContext: Context
 ) : ViewModel() {
 
     companion object {
         private const val SELECTED_LIST_CACHE_TTL_MS = 5_000L
         private const val BACKGROUND_LIST_CACHE_TTL_MS = 15_000L
+        private const val LIST_ORDER_PREFS = "hado_app_prefs"
+        private const val KEY_LIST_ORDER = "list_order_json"
+    }
+
+    private fun loadSavedOrder(): List<String> {
+        val json = appContext.getSharedPreferences(LIST_ORDER_PREFS, Context.MODE_PRIVATE)
+            .getString(KEY_LIST_ORDER, null) ?: return emptyList()
+        return try {
+            Gson().fromJson(json, object : TypeToken<List<String>>() {}.type)
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    private fun saveOrder(order: List<String>) {
+        appContext.getSharedPreferences(LIST_ORDER_PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .putString(KEY_LIST_ORDER, Gson().toJson(order))
+            .apply()
+    }
+
+    private fun applyOrder(lists: List<HaState>): List<HaState> {
+        val saved = loadSavedOrder()
+        if (saved.isEmpty()) return lists
+        val orderMap = saved.withIndex().associate { (i, id) -> id to i }
+        return lists.sortedBy { orderMap[it.entityId] ?: Int.MAX_VALUE }
+    }
+
+    fun reorderLists(fromIndex: Int, toIndex: Int) {
+        val current = _uiState.value.todoLists.toMutableList()
+        if (fromIndex !in current.indices || toIndex !in current.indices) return
+        val item = current.removeAt(fromIndex)
+        current.add(toIndex, item)
+        _uiState.value = _uiState.value.copy(todoLists = current)
+        saveOrder(current.map { it.entityId })
     }
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -62,12 +102,13 @@ class HomeViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoadingLists = true, error = null)
             todoRepository.getTodoLists().fold(
                 onSuccess = { lists ->
+                    val ordered = applyOrder(lists)
                     val selectedId = _uiState.value.selectedListId
-                        ?.takeIf { currentId -> lists.any { it.entityId == currentId } }
-                        ?: lists.firstOrNull()?.entityId
+                        ?.takeIf { currentId -> ordered.any { it.entityId == currentId } }
+                        ?: ordered.firstOrNull()?.entityId
 
                     _uiState.value = _uiState.value.copy(
-                        todoLists = lists,
+                        todoLists = ordered,
                         selectedListId = selectedId,
                         isLoadingLists = false
                     )

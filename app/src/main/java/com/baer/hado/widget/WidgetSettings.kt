@@ -3,6 +3,8 @@ package com.baer.hado.widget
 import android.content.Context
 import androidx.annotation.StringRes
 import com.baer.hado.R
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 
 /**
  * Per-widget-instance settings stored in SharedPreferences.
@@ -19,7 +21,8 @@ data class WidgetSettings(
     val checkboxOnly: Boolean = false,  // true = only checkbox toggles, false = entire row toggles
     val showTitle: Boolean = true,  // show HAdo icon + title bar
     val showListIcons: Boolean = true,
-    val autoFocusOnOpen: Boolean = false
+    val autoFocusOnOpen: Boolean = false,
+    val listOrder: List<String> = emptyList() // entity IDs in display order
 ) {
     enum class FontSize(@StringRes val labelResId: Int, val titleSp: Float, val itemSp: Float, val headerSp: Float) {
         SMALL(R.string.font_small, 15f, 14f, 12f),
@@ -56,6 +59,7 @@ object WidgetSettingsManager {
     private const val KEY_SHOW_TITLE = "show_title_"
     private const val KEY_SHOW_LIST_ICONS = "show_list_icons_"
     private const val KEY_AUTO_FOCUS_ON_OPEN = "auto_focus_on_open_"
+    private const val KEY_LIST_ORDER = "list_order_json_"
     private const val LEGACY_GLOBAL_REFRESH_INTERVAL = "refresh_interval"
 
     private fun prefs(context: Context) =
@@ -94,7 +98,12 @@ object WidgetSettingsManager {
             checkboxOnly = p.getBoolean("$KEY_CHECKBOX_ONLY$appWidgetId", false),
             showTitle = p.getBoolean("$KEY_SHOW_TITLE$appWidgetId", true),
             showListIcons = p.getBoolean("$KEY_SHOW_LIST_ICONS$appWidgetId", true),
-            autoFocusOnOpen = p.getBoolean("$KEY_AUTO_FOCUS_ON_OPEN$appWidgetId", false)
+            autoFocusOnOpen = p.getBoolean("$KEY_AUTO_FOCUS_ON_OPEN$appWidgetId", false),
+            listOrder = try {
+                val json = p.getString("$KEY_LIST_ORDER$appWidgetId", null)
+                if (json.isNullOrEmpty()) emptyList()
+                else Gson().fromJson(json, object : TypeToken<List<String>>() {}.type)
+            } catch (_: Exception) { emptyList() }
         )
     }
 
@@ -111,6 +120,7 @@ object WidgetSettingsManager {
             putBoolean("$KEY_SHOW_TITLE$appWidgetId", settings.showTitle)
             putBoolean("$KEY_SHOW_LIST_ICONS$appWidgetId", settings.showListIcons)
             putBoolean("$KEY_AUTO_FOCUS_ON_OPEN$appWidgetId", settings.autoFocusOnOpen)
+            putString("$KEY_LIST_ORDER$appWidgetId", Gson().toJson(settings.listOrder))
             apply()
         }
     }
@@ -128,6 +138,7 @@ object WidgetSettingsManager {
             remove("$KEY_SHOW_TITLE$appWidgetId")
             remove("$KEY_SHOW_LIST_ICONS$appWidgetId")
             remove("$KEY_AUTO_FOCUS_ON_OPEN$appWidgetId")
+            remove("$KEY_LIST_ORDER$appWidgetId")
             apply()
         }
     }
