@@ -198,4 +198,8 @@
     >Where new items appear in the list.</string>
     <string name="add_position_top">Top</string>
     <string name="add_position_bottom">Bottom</string>
+
+    <!-- Checkbox only (app) -->
+    <string name="settings_app_checkbox_only">Checkbox only</string>
+    <string name="settings_app_checkbox_only_desc">Only the checkbox toggles the item. Tap opens item options.</string>
 </resources>

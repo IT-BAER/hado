@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -234,6 +235,24 @@ fun AppSettingsScreen(
                     leadingContent = {
                         Icon(
                             Icons.Default.SwapVert,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                )
+
+                var checkboxOnly by remember { mutableStateOf(AppPreferencesManager.loadCheckboxOnly(context)) }
+                SettingsToggleItem(
+                    headline = stringResource(R.string.settings_app_checkbox_only),
+                    supporting = stringResource(R.string.settings_app_checkbox_only_desc),
+                    checked = checkboxOnly,
+                    onCheckedChange = { enabled ->
+                        checkboxOnly = enabled
+                        AppPreferencesManager.saveCheckboxOnly(context, enabled)
+                    },
+                    leadingContent = {
+                        Icon(
+                            Icons.Default.CheckBox,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -805,6 +824,8 @@ private fun SettingsToggleItem(
                 )
             }
         }
+
+        Spacer(Modifier.width(8.dp))
 
         Switch(
             checked = checked,

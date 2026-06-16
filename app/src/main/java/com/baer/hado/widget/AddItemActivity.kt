@@ -207,6 +207,7 @@ fun TodoListEditor(
     var detailItem by remember(entityId) { mutableStateOf<TodoItem?>(null) }
     var dragOffsetY by remember(entityId) { mutableFloatStateOf(0f) }
     var isAddInputFocused by remember(entityId) { mutableStateOf(false) }
+    val checkboxOnly = remember { AppPreferencesManager.loadCheckboxOnly(context) }
     val itemHeightPx = with(LocalDensity.current) { 48.dp.toPx() }
     val haptic = LocalHapticFeedback.current
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -642,10 +643,11 @@ fun TodoListEditor(
                             item = item,
                             onToggle = { toggleItem(item) },
                             onDelete = { deleteItem(item) },
-                            onLongPress = { detailItem = item },
+                            onOpenDetails = { detailItem = item },
                             showDragHandle = true,
                             isDragging = isDragging,
                             dragOffsetY = if (isDragging) dragOffsetY else 0f,
+                            checkboxOnly = checkboxOnly,
                             onDragStart = {
                                 draggedItemUid = item.uid
                                 dragOffsetY = 0f
@@ -747,8 +749,9 @@ fun TodoListEditor(
                                     item = item,
                                     onToggle = { toggleItem(item) },
                                     onDelete = { deleteItem(item) },
-                                    onLongPress = { detailItem = item },
-                                    showDragHandle = false
+                                    onOpenDetails = { detailItem = item },
+                                    showDragHandle = false,
+                                    checkboxOnly = checkboxOnly
                                 )
                             }
                         }
@@ -868,13 +871,14 @@ private fun TodoItemRow(
     item: TodoItem,
     onToggle: () -> Unit,
     onDelete: () -> Unit,
-    onLongPress: () -> Unit = {},
+    onOpenDetails: () -> Unit = {},
     showDragHandle: Boolean,
     isDragging: Boolean = false,
     dragOffsetY: Float = 0f,
     onDragStart: () -> Unit = {},
     onDrag: (Float) -> Unit = {},
     onDragEnd: () -> Unit = {},
+    checkboxOnly: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val overdueColor = if (item.isOverdue) MaterialTheme.colorScheme.error.copy(alpha = 0.08f)
@@ -885,8 +889,8 @@ private fun TodoItemRow(
             .fillMaxWidth()
             .background(overdueColor)
             .combinedClickable(
-                onClick = { onToggle() },
-                onLongClick = { onLongPress() }
+                onClick = { if (checkboxOnly) onOpenDetails() else onToggle() },
+                onLongClick = { onOpenDetails() }
             )
             .height(IntrinsicSize.Min)
             .defaultMinSize(minHeight = 48.dp)

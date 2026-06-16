@@ -17,6 +17,7 @@ object AppPreferencesManager {
 
     private const val PREFS_NAME = "hado_app_prefs"
     private const val KEY_ADD_ITEM_POSITION = "add_item_position"
+    private const val KEY_CHECKBOX_ONLY = "app_checkbox_only"
 
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -35,6 +36,18 @@ object AppPreferencesManager {
     fun saveAddItemPosition(context: Context, position: AddItemPosition) {
         prefs(context).edit()
             .putString(KEY_ADD_ITEM_POSITION, position.name)
+            .apply()
+    }
+
+    // --- Checkbox Only ---
+
+    fun loadCheckboxOnly(context: Context): Boolean {
+        return prefs(context).getBoolean(KEY_CHECKBOX_ONLY, false)
+    }
+
+    fun saveCheckboxOnly(context: Context, enabled: Boolean) {
+        prefs(context).edit()
+            .putBoolean(KEY_CHECKBOX_ONLY, enabled)
             .apply()
     }
 }
