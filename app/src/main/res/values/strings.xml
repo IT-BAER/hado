@@ -202,4 +202,6 @@
     <!-- Checkbox only (app) -->
     <string name="settings_app_checkbox_only">Checkbox only</string>
     <string name="settings_app_checkbox_only_desc">Only the checkbox toggles the item. Tap opens item options.</string>
+    <string name="settings_hide_completed">Hide completed items</string>
+    <string name="settings_hide_completed_desc">Collapse completed section by default when opening a list</string>
 </resources>

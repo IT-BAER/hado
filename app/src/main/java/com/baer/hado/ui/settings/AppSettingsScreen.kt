@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -253,6 +254,24 @@ fun AppSettingsScreen(
                     leadingContent = {
                         Icon(
                             Icons.Default.CheckBox,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                )
+
+                var hideCompleted by remember { mutableStateOf(AppPreferencesManager.loadHideCompleted(context)) }
+                SettingsToggleItem(
+                    headline = stringResource(R.string.settings_hide_completed),
+                    supporting = stringResource(R.string.settings_hide_completed_desc),
+                    checked = hideCompleted,
+                    onCheckedChange = { enabled ->
+                        hideCompleted = enabled
+                        AppPreferencesManager.saveHideCompleted(context, enabled)
+                    },
+                    leadingContent = {
+                        Icon(
+                            Icons.Default.VisibilityOff,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )

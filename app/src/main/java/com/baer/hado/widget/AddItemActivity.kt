@@ -199,7 +199,7 @@ fun TodoListEditor(
     var newItemText by remember(entityId) { mutableStateOf("") }
     val addFocusRequester = remember { FocusRequester() }
     var refocusTrigger by remember(entityId) { mutableIntStateOf(0) }
-    var completedExpanded by remember(entityId) { mutableStateOf(true) }
+    var completedExpanded by remember(entityId) { mutableStateOf(!AppPreferencesManager.loadHideCompleted(context)) }
     var pendingDeletes by remember(entityId) { mutableStateOf(emptySet<String>()) }
     val pendingToggleJobs = remember(entityId) { mutableMapOf<String, Job>() }
     var newlyAddedUids by remember(entityId) { mutableStateOf(setOf<String>()) }
