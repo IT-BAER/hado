@@ -71,6 +71,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.baer.hado.R
+import com.baer.hado.data.local.AddItemPosition
+import com.baer.hado.data.local.AppPreferencesManager
 import com.baer.hado.data.local.LocalTodoStore
 import com.baer.hado.data.local.TokenManager
 import com.baer.hado.data.model.TodoItem
@@ -320,18 +322,20 @@ fun TodoListEditor(
         val trimmed = text.trim()
         val knownItemUids = items.map { it.uid }.toSet()
         newItemText = ""
+        val addPosition = AppPreferencesManager.loadAddItemPosition(context)
+        val prepend = addPosition == AddItemPosition.TOP
 
         // Trigger re-focus on next frame for rapid multi-add
         refocusTrigger++
 
         if (isLocalMode) {
-            val newItem = localStore?.addItem(entityId, trimmed)
+            val newItem = localStore?.addItem(entityId, trimmed, position = addPosition)
             if (newItem != null) {
                 newlyAddedUids += newItem.uid
-                items = listOf(newItem) + items
+                items = if (prepend) listOf(newItem) + items else items + listOf(newItem)
                 widgetAppWidgetId?.let { targetWidgetId ->
                     scope.launch {
-                        WidgetStateMutator.prependItem(context, entityId, newItem, targetWidgetId)
+                        WidgetStateMutator.addItem(context, entityId, newItem, addPosition, targetWidgetId)
                     }
                 }
             }
@@ -346,7 +350,7 @@ fun TodoListEditor(
             status = TodoItemStatus.NEEDS_ACTION
         )
         newlyAddedUids += tempItem.uid
-        items = listOf(tempItem) + items
+        items = if (prepend) listOf(tempItem) + items else items + listOf(tempItem)
 
         scope.launch(Dispatchers.IO) {
             try {
@@ -355,17 +359,33 @@ fun TodoListEditor(
                 response?.use { resp ->
                     if (resp.isSuccessful) {
                         Log.d("HAdo", "addItem succeeded: ${resp.code}")
-                        val addedItem = moveAddedItemToTop(
+                        val addedItem = resolveAddedItem(
                             httpClient = httpClient,
                             gson = gson,
                             entityId = entityId,
                             knownItemUids = knownItemUids,
                             expectedSummary = trimmed
                         )
+
                         if (addedItem != null) {
+                            if (prepend) {
+                                val moved = httpClient.moveTodoItem(entityId, addedItem.uid, null)
+                                if (moved) {
+                                    Log.d("HAdo", "Moved added item to top: ${addedItem.uid}")
+                                } else {
+                                    Log.w("HAdo", "Failed to move added item to top: ${addedItem.uid}")
+                                }
+                            }
+
                             withContext(NonCancellable) {
                                 widgetAppWidgetId?.let { targetWidgetId ->
-                                    WidgetStateMutator.prependItem(context, entityId, addedItem, targetWidgetId)
+                                    WidgetStateMutator.addItem(
+                                        context,
+                                        entityId,
+                                        addedItem,
+                                        addPosition,
+                                        targetWidgetId
+                                    )
                                 }
                             }
                             if (currentCoroutineContext().isActive) {
@@ -1075,7 +1095,10 @@ private fun clearAddInputFocus(
     onFocusChanged()
 }
 
-private fun moveAddedItemToTop(
+/**
+ * Resolves the newly added item by finding the new UID after an add_item call.
+ */
+private fun resolveAddedItem(
     httpClient: WidgetHttpClient,
     gson: Gson,
     entityId: String,
@@ -1095,22 +1118,9 @@ private fun moveAddedItemToTop(
 
         val body = resp.body?.string() ?: return@use
         val refreshedItems = parseItemsFromResponse(gson, body, entityId)
-        val addedItem = refreshedItems.firstOrNull {
+        resolvedItem = refreshedItems.firstOrNull {
             it.uid !in knownItemUids && it.summary == expectedSummary
-        } ?: refreshedItems.firstOrNull { it.uid !in knownItemUids } ?: return@use
-        resolvedItem = addedItem
-
-        val firstActiveUid = refreshedItems.firstOrNull { !it.isCompleted }?.uid
-        if (firstActiveUid == addedItem.uid) {
-            return@use
-        }
-
-        val moved = httpClient.moveTodoItem(entityId, addedItem.uid, null)
-        if (moved) {
-            Log.d("HAdo", "Moved added item to top: ${addedItem.uid}")
-        } else {
-            Log.w("HAdo", "Failed to move added item to top: ${addedItem.uid}")
-        }
+        } ?: refreshedItems.firstOrNull { it.uid !in knownItemUids }
     }
 
     return resolvedItem

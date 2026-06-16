@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.baer.hado.data.local.AppPreferencesManager
 import com.baer.hado.data.local.TokenManager
 import com.baer.hado.data.model.HaState
 import com.baer.hado.data.model.TodoItem
@@ -224,8 +225,9 @@ class HomeViewModel @Inject constructor(
 
     fun addItem(summary: String) {
         val entityId = _uiState.value.selectedListId ?: return
+        val position = AppPreferencesManager.loadAddItemPosition(appContext)
         viewModelScope.launch {
-            todoRepository.addItem(entityId, summary).fold(
+            todoRepository.addItem(entityId, summary, position = position).fold(
                 onSuccess = { loadItems(entityId, force = true) },
                 onFailure = { e ->
                     _uiState.value = _uiState.value.copy(error = e.message)

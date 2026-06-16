@@ -61,7 +61,8 @@ class LocalTodoStore(context: Context) {
         entityId: String,
         summary: String,
         description: String? = null,
-        due: String? = null
+        due: String? = null,
+        position: AddItemPosition = AddItemPosition.TOP
     ): TodoItem {
         val items = getItems(entityId).toMutableList()
         val item = TodoItem(
@@ -71,7 +72,10 @@ class LocalTodoStore(context: Context) {
             description = description,
             due = due
         )
-        items.add(0, item)
+        when (position) {
+            AddItemPosition.TOP -> items.add(0, item)
+            AddItemPosition.BOTTOM -> items.add(item)
+        }
         saveItems(entityId, items)
         updateListCount(entityId, items)
         return item

@@ -5,6 +5,7 @@ import android.content.ComponentName
 import android.content.Context
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.updateAppWidgetState
+import com.baer.hado.data.local.AddItemPosition
 import com.baer.hado.data.model.TodoItem
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -14,14 +15,19 @@ object WidgetStateMutator {
     private val gson = Gson()
     private val listType = object : TypeToken<List<WidgetListData>>() {}.type
 
-    suspend fun prependItem(
+    suspend fun addItem(
         context: Context,
         entityId: String,
         item: TodoItem,
+        position: AddItemPosition = AddItemPosition.TOP,
         preferredAppWidgetId: Int? = null
     ): Set<Int> {
         return mutateMatchingWidgets(context, entityId, preferredAppWidgetId) { list ->
-            list.copy(items = listOf(item) + list.items.filterNot { it.uid == item.uid })
+            val filtered = list.items.filterNot { it.uid == item.uid }
+            when (position) {
+                AddItemPosition.TOP -> list.copy(items = listOf(item) + filtered)
+                AddItemPosition.BOTTOM -> list.copy(items = filtered + listOf(item))
+            }
         }
     }
 

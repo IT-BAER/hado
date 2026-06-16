@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -41,6 +42,8 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.baer.hado.BuildConfig
 import com.baer.hado.R
+import com.baer.hado.data.local.AddItemPosition
+import com.baer.hado.data.local.AppPreferencesManager
 import com.baer.hado.data.local.LocalTodoStore
 import com.baer.hado.data.local.TokenManager
 import com.baer.hado.data.model.SimpleState
@@ -209,6 +212,33 @@ fun AppSettingsScreen(
                 }
             } else if (availableLists.isNotEmpty()) {
                 AppListIconsSection(availableLists = availableLists)
+            }
+
+            SettingsSection(title = stringResource(R.string.section_behavior)) {
+                val addPosition = remember { mutableStateOf(AppPreferencesManager.loadAddItemPosition(context)) }
+                SettingsItem(
+                    headline = stringResource(R.string.settings_add_item_position),
+                    supporting = stringResource(R.string.settings_add_item_position_desc),
+                    trailingText = when (addPosition.value) {
+                        AddItemPosition.TOP -> stringResource(R.string.add_position_top)
+                        AddItemPosition.BOTTOM -> stringResource(R.string.add_position_bottom)
+                    },
+                    onClick = {
+                        val newPosition = when (addPosition.value) {
+                            AddItemPosition.TOP -> AddItemPosition.BOTTOM
+                            AddItemPosition.BOTTOM -> AddItemPosition.TOP
+                        }
+                        addPosition.value = newPosition
+                        AppPreferencesManager.saveAddItemPosition(context, newPosition)
+                    },
+                    leadingContent = {
+                        Icon(
+                            Icons.Default.SwapVert,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                )
             }
 
             SettingsSection(title = stringResource(R.string.section_language)) {

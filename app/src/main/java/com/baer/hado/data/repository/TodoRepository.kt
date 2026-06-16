@@ -2,6 +2,7 @@ package com.baer.hado.data.repository
 
 import android.content.Context
 import com.baer.hado.data.api.HaApiService
+import com.baer.hado.data.local.AddItemPosition
 import com.baer.hado.data.local.LocalTodoStore
 import com.baer.hado.data.local.TokenManager
 import com.baer.hado.data.model.HaState
@@ -112,10 +113,11 @@ class TodoRepository @Inject constructor(
         summary: String,
         description: String? = null,
         dueDate: String? = null,
-        dueDatetime: String? = null
+        dueDatetime: String? = null,
+        position: AddItemPosition = AddItemPosition.TOP
     ): Result<Unit> {
         if (tokenManager.isDemoMode) {
-            localStore.addItem(entityId, summary, description, dueDatetime ?: dueDate)
+            localStore.addItem(entityId, summary, description, dueDatetime ?: dueDate, position)
             return Result.success(Unit)
         }
         return try {
