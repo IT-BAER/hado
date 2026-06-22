@@ -31,6 +31,18 @@ object WidgetStateMutator {
         }
     }
 
+    /** Replaces an existing item in place across widgets showing [entityId] (optimistic detail edit). */
+    suspend fun updateItem(
+        context: Context,
+        entityId: String,
+        item: TodoItem,
+        preferredAppWidgetId: Int? = null
+    ): Set<Int> {
+        return mutateMatchingWidgets(context, entityId, preferredAppWidgetId) { list ->
+            list.copy(items = list.items.map { if (it.uid == item.uid) item else it })
+        }
+    }
+
     private suspend fun mutateMatchingWidgets(
         context: Context,
         entityId: String,

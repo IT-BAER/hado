@@ -1168,7 +1168,7 @@ private fun formatDueDisplay(item: TodoItem): String {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ItemDetailDialog(
+internal fun ItemDetailDialog(
     context: Context,
     item: TodoItem,
     supportsDescription: Boolean,
