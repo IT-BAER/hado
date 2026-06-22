@@ -189,4 +189,19 @@
     <string name="refresh_1hour">1 hour</string>
     <string name="refresh_2hours">2 hours</string>
     <string name="refresh_4hours">4 hours</string>
+
+    <!-- Item position -->
+    <string name="section_behavior">Behavior</string>
+    <string name="settings_add_item_position">New item position</string>
+    <string
+        name="settings_add_item_position_desc"
+    >Where new items appear in the list.</string>
+    <string name="add_position_top">Top</string>
+    <string name="add_position_bottom">Bottom</string>
+
+    <!-- Checkbox only (app) -->
+    <string name="settings_app_checkbox_only">Checkbox only</string>
+    <string name="settings_app_checkbox_only_desc">Only the checkbox toggles the item. Tap opens item options.</string>
+    <string name="settings_hide_completed">Hide completed items</string>
+    <string name="settings_hide_completed_desc">Collapse completed section by default when opening a list</string>
 </resources>

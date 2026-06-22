@@ -36,10 +36,13 @@ android {
                 keyAlias = System.getenv("RELEASE_KEY_ALIAS")
                 keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
             } else {
-                storeFile = file(localProperties.getProperty("RELEASE_STORE_FILE", ""))
-                storePassword = localProperties.getProperty("RELEASE_STORE_PASSWORD", "")
-                keyAlias = localProperties.getProperty("RELEASE_KEY_ALIAS", "")
-                keyPassword = localProperties.getProperty("RELEASE_KEY_PASSWORD", "")
+                val storePath = localProperties.getProperty("RELEASE_STORE_FILE", "")
+                if (storePath.isNotEmpty()) {
+                    storeFile = file(storePath)
+                    storePassword = localProperties.getProperty("RELEASE_STORE_PASSWORD", "")
+                    keyAlias = localProperties.getProperty("RELEASE_KEY_ALIAS", "")
+                    keyPassword = localProperties.getProperty("RELEASE_KEY_PASSWORD", "")
+                }
             }
         }
     }

@@ -71,6 +71,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.baer.hado.R
+import com.baer.hado.data.local.AddItemPosition
+import com.baer.hado.data.local.AppPreferencesManager
 import com.baer.hado.data.local.LocalTodoStore
 import com.baer.hado.data.local.TokenManager
 import com.baer.hado.data.model.TodoItem
@@ -197,7 +199,7 @@ fun TodoListEditor(
     var newItemText by remember(entityId) { mutableStateOf("") }
     val addFocusRequester = remember { FocusRequester() }
     var refocusTrigger by remember(entityId) { mutableIntStateOf(0) }
-    var completedExpanded by remember(entityId) { mutableStateOf(true) }
+    var completedExpanded by remember(entityId) { mutableStateOf(!AppPreferencesManager.loadHideCompleted(context)) }
     var pendingDeletes by remember(entityId) { mutableStateOf(emptySet<String>()) }
     val pendingToggleJobs = remember(entityId) { mutableMapOf<String, Job>() }
     var newlyAddedUids by remember(entityId) { mutableStateOf(setOf<String>()) }
@@ -205,6 +207,7 @@ fun TodoListEditor(
     var detailItem by remember(entityId) { mutableStateOf<TodoItem?>(null) }
     var dragOffsetY by remember(entityId) { mutableFloatStateOf(0f) }
     var isAddInputFocused by remember(entityId) { mutableStateOf(false) }
+    val checkboxOnly = remember { AppPreferencesManager.loadCheckboxOnly(context) }
     val itemHeightPx = with(LocalDensity.current) { 48.dp.toPx() }
     val haptic = LocalHapticFeedback.current
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -320,18 +323,20 @@ fun TodoListEditor(
         val trimmed = text.trim()
         val knownItemUids = items.map { it.uid }.toSet()
         newItemText = ""
+        val addPosition = AppPreferencesManager.loadAddItemPosition(context)
+        val prepend = addPosition == AddItemPosition.TOP
 
         // Trigger re-focus on next frame for rapid multi-add
         refocusTrigger++
 
         if (isLocalMode) {
-            val newItem = localStore?.addItem(entityId, trimmed)
+            val newItem = localStore?.addItem(entityId, trimmed, position = addPosition)
             if (newItem != null) {
                 newlyAddedUids += newItem.uid
-                items = listOf(newItem) + items
+                items = if (prepend) listOf(newItem) + items else items + listOf(newItem)
                 widgetAppWidgetId?.let { targetWidgetId ->
                     scope.launch {
-                        WidgetStateMutator.prependItem(context, entityId, newItem, targetWidgetId)
+                        WidgetStateMutator.addItem(context, entityId, newItem, addPosition, targetWidgetId)
                     }
                 }
             }
@@ -346,7 +351,7 @@ fun TodoListEditor(
             status = TodoItemStatus.NEEDS_ACTION
         )
         newlyAddedUids += tempItem.uid
-        items = listOf(tempItem) + items
+        items = if (prepend) listOf(tempItem) + items else items + listOf(tempItem)
 
         scope.launch(Dispatchers.IO) {
             try {
@@ -355,17 +360,33 @@ fun TodoListEditor(
                 response?.use { resp ->
                     if (resp.isSuccessful) {
                         Log.d("HAdo", "addItem succeeded: ${resp.code}")
-                        val addedItem = moveAddedItemToTop(
+                        val addedItem = resolveAddedItem(
                             httpClient = httpClient,
                             gson = gson,
                             entityId = entityId,
                             knownItemUids = knownItemUids,
                             expectedSummary = trimmed
                         )
+
                         if (addedItem != null) {
+                            if (prepend) {
+                                val moved = httpClient.moveTodoItem(entityId, addedItem.uid, null)
+                                if (moved) {
+                                    Log.d("HAdo", "Moved added item to top: ${addedItem.uid}")
+                                } else {
+                                    Log.w("HAdo", "Failed to move added item to top: ${addedItem.uid}")
+                                }
+                            }
+
                             withContext(NonCancellable) {
                                 widgetAppWidgetId?.let { targetWidgetId ->
-                                    WidgetStateMutator.prependItem(context, entityId, addedItem, targetWidgetId)
+                                    WidgetStateMutator.addItem(
+                                        context,
+                                        entityId,
+                                        addedItem,
+                                        addPosition,
+                                        targetWidgetId
+                                    )
                                 }
                             }
                             if (currentCoroutineContext().isActive) {
@@ -622,10 +643,11 @@ fun TodoListEditor(
                             item = item,
                             onToggle = { toggleItem(item) },
                             onDelete = { deleteItem(item) },
-                            onLongPress = { detailItem = item },
+                            onOpenDetails = { detailItem = item },
                             showDragHandle = true,
                             isDragging = isDragging,
                             dragOffsetY = if (isDragging) dragOffsetY else 0f,
+                            checkboxOnly = checkboxOnly,
                             onDragStart = {
                                 draggedItemUid = item.uid
                                 dragOffsetY = 0f
@@ -727,8 +749,9 @@ fun TodoListEditor(
                                     item = item,
                                     onToggle = { toggleItem(item) },
                                     onDelete = { deleteItem(item) },
-                                    onLongPress = { detailItem = item },
-                                    showDragHandle = false
+                                    onOpenDetails = { detailItem = item },
+                                    showDragHandle = false,
+                                    checkboxOnly = checkboxOnly
                                 )
                             }
                         }
@@ -848,13 +871,14 @@ private fun TodoItemRow(
     item: TodoItem,
     onToggle: () -> Unit,
     onDelete: () -> Unit,
-    onLongPress: () -> Unit = {},
+    onOpenDetails: () -> Unit = {},
     showDragHandle: Boolean,
     isDragging: Boolean = false,
     dragOffsetY: Float = 0f,
     onDragStart: () -> Unit = {},
     onDrag: (Float) -> Unit = {},
     onDragEnd: () -> Unit = {},
+    checkboxOnly: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val overdueColor = if (item.isOverdue) MaterialTheme.colorScheme.error.copy(alpha = 0.08f)
@@ -865,8 +889,8 @@ private fun TodoItemRow(
             .fillMaxWidth()
             .background(overdueColor)
             .combinedClickable(
-                onClick = { onToggle() },
-                onLongClick = { onLongPress() }
+                onClick = { if (checkboxOnly) onOpenDetails() else onToggle() },
+                onLongClick = { onOpenDetails() }
             )
             .height(IntrinsicSize.Min)
             .defaultMinSize(minHeight = 48.dp)
@@ -1075,7 +1099,10 @@ private fun clearAddInputFocus(
     onFocusChanged()
 }
 
-private fun moveAddedItemToTop(
+/**
+ * Resolves the newly added item by finding the new UID after an add_item call.
+ */
+private fun resolveAddedItem(
     httpClient: WidgetHttpClient,
     gson: Gson,
     entityId: String,
@@ -1095,22 +1122,9 @@ private fun moveAddedItemToTop(
 
         val body = resp.body?.string() ?: return@use
         val refreshedItems = parseItemsFromResponse(gson, body, entityId)
-        val addedItem = refreshedItems.firstOrNull {
+        resolvedItem = refreshedItems.firstOrNull {
             it.uid !in knownItemUids && it.summary == expectedSummary
-        } ?: refreshedItems.firstOrNull { it.uid !in knownItemUids } ?: return@use
-        resolvedItem = addedItem
-
-        val firstActiveUid = refreshedItems.firstOrNull { !it.isCompleted }?.uid
-        if (firstActiveUid == addedItem.uid) {
-            return@use
-        }
-
-        val moved = httpClient.moveTodoItem(entityId, addedItem.uid, null)
-        if (moved) {
-            Log.d("HAdo", "Moved added item to top: ${addedItem.uid}")
-        } else {
-            Log.w("HAdo", "Failed to move added item to top: ${addedItem.uid}")
-        }
+        } ?: refreshedItems.firstOrNull { it.uid !in knownItemUids }
     }
 
     return resolvedItem
@@ -1154,7 +1168,7 @@ private fun formatDueDisplay(item: TodoItem): String {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ItemDetailDialog(
+internal fun ItemDetailDialog(
     context: Context,
     item: TodoItem,
     supportsDescription: Boolean,

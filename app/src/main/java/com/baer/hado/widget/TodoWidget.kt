@@ -337,6 +337,7 @@ class TodoWidget : GlanceAppWidget() {
                 ViewItemAction.PARAM_LIST_NAME to listName,
                 ViewItemAction.PARAM_SUPPORTED_FEATURES to (supportedFeatures ?: 0).toString(),
                 ViewItemAction.PARAM_ITEM_UID to item.uid,
+                ViewItemAction.PARAM_ITEM_JSON to Gson().toJson(item),
                 ViewItemAction.PARAM_WIDGET_ID to appWidgetId
             )
         )

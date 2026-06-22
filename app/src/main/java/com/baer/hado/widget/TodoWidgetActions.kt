@@ -220,17 +220,17 @@ class ViewItemAction : ActionCallback {
         parameters: ActionParameters
     ) {
         val entityId = parameters[PARAM_ENTITY_ID] ?: return
-        val listName = parameters[PARAM_LIST_NAME] ?: ""
         val supportedFeatures = parameters[PARAM_SUPPORTED_FEATURES]?.toIntOrNull() ?: 0
-        val itemUid = parameters[PARAM_ITEM_UID] ?: return
+        val itemJson = parameters[PARAM_ITEM_JSON] ?: return
         val appWidgetId = parameters[PARAM_WIDGET_ID]?.toIntOrNull()
             ?.takeIf { it != AppWidgetManager.INVALID_APPWIDGET_ID }
 
-        val intent = Intent(context, AddItemActivity::class.java).apply {
+        // Float only the detail dialog over the home screen (translucent activity),
+        // rather than opening the full list editor in the app.
+        val intent = Intent(context, ItemDetailActivity::class.java).apply {
             putExtra("entity_id", entityId)
-            putExtra("list_name", listName)
             putExtra("supported_features", supportedFeatures)
-            putExtra("detail_item_uid", itemUid)
+            putExtra("item_json", itemJson)
             putExtra("app_widget_id", appWidgetId ?: AppWidgetManager.INVALID_APPWIDGET_ID)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
         }
@@ -242,6 +242,7 @@ class ViewItemAction : ActionCallback {
         val PARAM_LIST_NAME = ActionParameters.Key<String>("view_list_name")
         val PARAM_SUPPORTED_FEATURES = ActionParameters.Key<String>("view_supported_features")
         val PARAM_ITEM_UID = ActionParameters.Key<String>("view_item_uid")
+        val PARAM_ITEM_JSON = ActionParameters.Key<String>("view_item_json")
         val PARAM_WIDGET_ID = ActionParameters.Key<String>("view_widget_id")
     }
 }

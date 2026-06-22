@@ -39,6 +39,14 @@
             android:theme="@style/Theme.HAdo.FastLaunch"
             android:taskAffinity="" />
 
+        <!-- Item detail popup floating over the home screen (widget item tap) -->
+        <activity
+            android:name=".widget.ItemDetailActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:theme="@style/Theme.HAdo.TransparentFade"
+            android:taskAffinity="" />
+
         <!-- Widget Settings / Configuration Activity -->
         <activity
             android:name=".widget.WidgetSettingsActivity"
