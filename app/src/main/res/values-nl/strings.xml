@@ -186,4 +186,17 @@
     <string name="mdi_icon_supporting">Voer een MDI-pictogram in of zoek naar ondersteunde Home Assistant-pictogrammen.</string>
     <string name="mdi_icon_no_match">Geen overeenkomend ondersteund pictogram gevonden. Probeer bijvoorbeeld mdi:home.</string>
     <string name="list_icon_sync_requires_admin">Synchronisatie van Home Assistant-pictogrammen vereist een beheerdersaccount. Aangepaste pictogrammen werken lokaal nog steeds.</string>
+
+    <!-- Item position -->
+    <string name="section_behavior">Gedrag</string>
+    <string name="settings_add_item_position">Positie nieuw item</string>
+    <string name="settings_add_item_position_desc">Waar nieuwe items in de lijst verschijnen.</string>
+    <string name="add_position_top">Boven</string>
+    <string name="add_position_bottom">Onder</string>
+
+    <!-- Checkbox only (app) -->
+    <string name="settings_app_checkbox_only">Alleen selectievakje</string>
+    <string name="settings_app_checkbox_only_desc">Alleen het selectievakje schakelt het item. Tikken opent de itemopties.</string>
+    <string name="settings_hide_completed">Voltooide items verbergen</string>
+    <string name="settings_hide_completed_desc">Sectie voltooid standaard ingeklapt bij het openen van een lijst</string>
 </resources>

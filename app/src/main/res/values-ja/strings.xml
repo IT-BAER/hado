@@ -188,4 +188,17 @@
     <string name="mdi_icon_supporting">MDI アイコンを入力するか、対応する Home Assistant アイコンを検索してください。</string>
     <string name="mdi_icon_no_match">一致する対応アイコンが見つかりません。例: mdi:home を試してください。</string>
     <string name="list_icon_sync_requires_admin">Home Assistant のアイコン同期には管理者アカウントが必要です。カスタムアイコンは引き続きローカルで利用できます。</string>
+
+    <!-- Item position -->
+    <string name="section_behavior">動作</string>
+    <string name="settings_add_item_position">新規アイテムの追加位置</string>
+    <string name="settings_add_item_position_desc">新しいアイテムをリストのどこに追加するか。</string>
+    <string name="add_position_top">先頭</string>
+    <string name="add_position_bottom">末尾</string>
+
+    <!-- Checkbox only (app) -->
+    <string name="settings_app_checkbox_only">チェックボックスのみ</string>
+    <string name="settings_app_checkbox_only_desc">チェックボックスのみでアイテムを切り替え。タップでアイテムオプションを開きます。</string>
+    <string name="settings_hide_completed">完了済みアイテムを非表示</string>
+    <string name="settings_hide_completed_desc">リストを開いたとき、完了済みセクションをデフォルトで折りたたむ</string>
 </resources>

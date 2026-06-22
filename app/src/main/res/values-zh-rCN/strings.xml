@@ -186,4 +186,17 @@
     <string name="mdi_icon_supporting">输入 MDI 图标，或搜索受支持的 Home Assistant 图标。</string>
     <string name="mdi_icon_no_match">未找到匹配的受支持图标。可尝试例如 mdi:home。</string>
     <string name="list_icon_sync_requires_admin">同步 Home Assistant 图标需要管理员账户。自定义图标仍然可以在本地使用。</string>
+
+    <!-- Item position -->
+    <string name="section_behavior">行为</string>
+    <string name="settings_add_item_position">新项目位置</string>
+    <string name="settings_add_item_position_desc">新项目在列表中出现的位置。</string>
+    <string name="add_position_top">顶部</string>
+    <string name="add_position_bottom">底部</string>
+
+    <!-- Checkbox only (app) -->
+    <string name="settings_app_checkbox_only">仅复选框</string>
+    <string name="settings_app_checkbox_only_desc">仅复选框切换项目状态。点击行将打开项目选项。</string>
+    <string name="settings_hide_completed">隐藏已完成项目</string>
+    <string name="settings_hide_completed_desc">打开列表时默认折叠已完成区域</string>
 </resources>

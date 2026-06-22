@@ -188,4 +188,17 @@
     <string name="mdi_icon_supporting">MDI 아이콘을 입력하거나 지원되는 Home Assistant 아이콘을 검색하세요.</string>
     <string name="mdi_icon_no_match">일치하는 지원 아이콘을 찾지 못했습니다. 예: mdi:home</string>
     <string name="list_icon_sync_requires_admin">Home Assistant 아이콘 동기화에는 관리자 계정이 필요합니다. 사용자 지정 아이콘은 계속 로컬에서 작동합니다.</string>
+
+    <!-- Item position -->
+    <string name="section_behavior">동작</string>
+    <string name="settings_add_item_position">새 항목 추가 위치</string>
+    <string name="settings_add_item_position_desc">새 항목이 목록의 어디에 추가될지 설정합니다.</string>
+    <string name="add_position_top">맨 위</string>
+    <string name="add_position_bottom">맨 아래</string>
+
+    <!-- Checkbox only (app) -->
+    <string name="settings_app_checkbox_only">체크박스만</string>
+    <string name="settings_app_checkbox_only_desc">체크박스만 항목을 전환합니다. 탭하면 항목 옵션이 열립니다.</string>
+    <string name="settings_hide_completed">완료된 항목 숨기기</string>
+    <string name="settings_hide_completed_desc">목록을 열 때 완료 섹션을 기본으로 접어 둡니다</string>
 </resources>

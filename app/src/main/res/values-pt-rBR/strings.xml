@@ -188,4 +188,17 @@
     <string name="mdi_icon_supporting">Digite um ícone MDI ou pesquise ícones compatíveis do Home Assistant.</string>
     <string name="mdi_icon_no_match">Nenhum ícone compatível correspondente encontrado. Tente, por exemplo, mdi:home.</string>
     <string name="list_icon_sync_requires_admin">A sincronização de ícones do Home Assistant requer uma conta de administrador. Ícones personalizados continuam funcionando localmente.</string>
+
+    <!-- Item position -->
+    <string name="section_behavior">Comportamento</string>
+    <string name="settings_add_item_position">Posição do novo item</string>
+    <string name="settings_add_item_position_desc">Onde os novos itens aparecem na lista.</string>
+    <string name="add_position_top">Início</string>
+    <string name="add_position_bottom">Final</string>
+
+    <!-- Checkbox only (app) -->
+    <string name="settings_app_checkbox_only">Somente caixa de seleção</string>
+    <string name="settings_app_checkbox_only_desc">Somente a caixa de seleção alterna o item. O toque abre as opções do item.</string>
+    <string name="settings_hide_completed">Ocultar itens concluídos</string>
+    <string name="settings_hide_completed_desc">Recolher a seção de concluídos por padrão ao abrir uma lista</string>
 </resources>

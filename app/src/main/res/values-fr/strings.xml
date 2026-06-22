@@ -160,6 +160,19 @@
     <string name="refresh_1hour">1 heure</string>
     <string name="refresh_2hours">2 heures</string>
     <string name="refresh_4hours">4 heures</string>
+
+    <!-- Item position -->
+    <string name="section_behavior">Comportement</string>
+    <string name="settings_add_item_position">Position des nouveaux éléments</string>
+    <string name="settings_add_item_position_desc">Où les nouveaux éléments apparaissent dans la liste.</string>
+    <string name="add_position_top">Haut</string>
+    <string name="add_position_bottom">Bas</string>
+
+    <!-- Checkbox only (app) -->
+    <string name="settings_app_checkbox_only">Case à cocher uniquement</string>
+    <string name="settings_app_checkbox_only_desc">Seule la case à cocher bascule l\'élément. Appuyer ouvre les options de l\'élément.</string>
+    <string name="settings_hide_completed">Masquer les éléments terminés</string>
+    <string name="settings_hide_completed_desc">Réduire la section terminés par défaut à l\'ouverture d\'une liste</string>
     <string name="section_notifications">Notifications</string>
     <string name="settings_notifications_supporting">Rappels facultatifs pour les tâches à échéance et en retard.</string>
     <string name="settings_overdue_notifications">Notifications des tâches en retard</string>

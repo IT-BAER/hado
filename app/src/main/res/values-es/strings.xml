@@ -160,6 +160,19 @@
     <string name="refresh_1hour">1 hora</string>
     <string name="refresh_2hours">2 horas</string>
     <string name="refresh_4hours">4 horas</string>
+
+    <!-- Item position -->
+    <string name="section_behavior">Comportamiento</string>
+    <string name="settings_add_item_position">Posición de nuevos elementos</string>
+    <string name="settings_add_item_position_desc">Dónde aparecen los nuevos elementos en la lista.</string>
+    <string name="add_position_top">Arriba</string>
+    <string name="add_position_bottom">Abajo</string>
+
+    <!-- Checkbox only (app) -->
+    <string name="settings_app_checkbox_only">Solo casilla</string>
+    <string name="settings_app_checkbox_only_desc">Solo la casilla marca el elemento. Tocar abre las opciones del elemento.</string>
+    <string name="settings_hide_completed">Ocultar completados</string>
+    <string name="settings_hide_completed_desc">Contraer la sección de completados por defecto al abrir una lista</string>
     <string name="section_notifications">Notificaciones</string>
     <string name="settings_notifications_supporting">Recordatorios opcionales para tareas con vencimiento y vencidas.</string>
     <string name="settings_overdue_notifications">Notificaciones de tareas vencidas</string>
