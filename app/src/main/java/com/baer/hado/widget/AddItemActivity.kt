@@ -360,7 +360,7 @@ fun TodoListEditor(
                 response?.use { resp ->
                     if (resp.isSuccessful) {
                         Log.d("HAdo", "addItem succeeded: ${resp.code}")
-                        val addedItem = resolveAddedItem(
+                        val added = resolveAddedItem(
                             httpClient = httpClient,
                             gson = gson,
                             entityId = entityId,
@@ -368,8 +368,10 @@ fun TodoListEditor(
                             expectedSummary = trimmed
                         )
 
-                        if (addedItem != null) {
-                            if (prepend) {
+                        if (added != null) {
+                            val addedItem = added.item
+                            // Only move when prepending and HA didn't already place it first.
+                            if (prepend && !added.alreadyFirstActive) {
                                 val moved = httpClient.moveTodoItem(entityId, addedItem.uid, null)
                                 if (moved) {
                                     Log.d("HAdo", "Moved added item to top: ${addedItem.uid}")
@@ -1099,8 +1101,13 @@ private fun clearAddInputFocus(
     onFocusChanged()
 }
 
+/** The newly added item plus whether HA already placed it first among active items. */
+private data class AddedItem(val item: TodoItem, val alreadyFirstActive: Boolean)
+
 /**
- * Resolves the newly added item by finding the new UID after an add_item call.
+ * Resolves the newly added item by finding the new UID after an add_item call,
+ * and reports whether it is already the first active item (so a redundant move
+ * to the top can be skipped).
  */
 private fun resolveAddedItem(
     httpClient: WidgetHttpClient,
@@ -1108,11 +1115,11 @@ private fun resolveAddedItem(
     entityId: String,
     knownItemUids: Set<String>,
     expectedSummary: String
-): TodoItem? {
+): AddedItem? {
     val payload = gson.toJson(mapOf("entity_id" to entityId))
     val response = httpClient.post("api/services/todo/get_items?return_response", payload) ?: return null
 
-    var resolvedItem: TodoItem? = null
+    var resolved: AddedItem? = null
 
     response.use { resp ->
         if (!resp.isSuccessful) {
@@ -1122,12 +1129,14 @@ private fun resolveAddedItem(
 
         val body = resp.body?.string() ?: return@use
         val refreshedItems = parseItemsFromResponse(gson, body, entityId)
-        resolvedItem = refreshedItems.firstOrNull {
+        val item = refreshedItems.firstOrNull {
             it.uid !in knownItemUids && it.summary == expectedSummary
-        } ?: refreshedItems.firstOrNull { it.uid !in knownItemUids }
+        } ?: refreshedItems.firstOrNull { it.uid !in knownItemUids } ?: return@use
+        val firstActiveUid = refreshedItems.firstOrNull { !it.isCompleted }?.uid
+        resolved = AddedItem(item, alreadyFirstActive = firstActiveUid == item.uid)
     }
 
-    return resolvedItem
+    return resolved
 }
 
 private fun parseItemsFromResponse(
