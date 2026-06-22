@@ -5,6 +5,18 @@ All notable changes to HAdo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.4] - 2026-06-22
+
+### Added
+- New item position: choose whether added items land at the top or bottom of a list, matching the Home Assistant web UI
+- Checkbox-only mode in the app: only the checkbox marks an item done, while tapping a row opens its details
+- Auto-hide completed items: keep the completed section collapsed when you open a list
+- Widget item details now open as a popup over your home screen instead of opening the app, with in-place editing of title, description, and due date
+- Completed translations for the new settings across every supported language
+
+### Changed
+- Adding an item to the top of a list no longer issues a redundant reorder request when Home Assistant already placed it first
+
 ## [1.1.3] - 2026-05-15
 
 ### Added
