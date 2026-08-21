@@ -5,6 +5,17 @@ All notable changes to HAdo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.5] - 2026-08-21
+
+### Fixed
+- Dragging items to reorder them no longer jumps or lands in the wrong place, including lists with wrapped titles or due dates
+- Adding an item from the widget's list view no longer scrolls the input field out of sight, so you can keep typing the next one
+- Failed changes are no longer silent: if Home Assistant cannot be reached, adding, completing, or deleting an item is undone and an error message appears
+- Settings and item updates always reach the widget they belong to when more than one widget is placed
+
+### Changed
+- "Checkbox only" now says which surface it applies to, since the app and each widget have their own setting
+
 ## [1.1.4] - 2026-06-22
 
 ### Added

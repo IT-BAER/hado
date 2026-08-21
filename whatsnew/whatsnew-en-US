@@ -1,4 +1,6 @@
-HAdo 1.1.3
+HAdo 1.1.5
 
-• Drag-to-reorder lists in the main app: long-press a list chip and drag to rearrange
-• Drag-to-reorder lists in widget settings: long-press the drag handle and drag to set the widget display order
+• Dragging items to reorder them no longer jumps or drops at the wrong spot
+• Adding an item from the widget list keeps the input field in view
+• Failed changes are undone and reported instead of silently disappearing
+• Widget settings and updates reach the right widget when several are placed
