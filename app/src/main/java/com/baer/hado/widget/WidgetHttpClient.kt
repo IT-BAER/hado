@@ -104,7 +104,8 @@ class WidgetHttpClient(context: Context) {
             } else {
                 response
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.e("HAdo", "Request failed: ${request.url}", e)
             null
         }
     }

@@ -108,8 +108,8 @@
     <string name="section_completed_items">完了したアイテム</string>
     <string name="settings_show_completed">完了を表示</string>
     <string name="section_interaction">操作</string>
-    <string name="settings_checkbox_only">チェックボックスのみ</string>
-    <string name="settings_checkbox_only_desc">チェックボックスのみでアイテムを切り替え</string>
+    <string name="settings_checkbox_only">チェックボックスのみ（このウィジェット）</string>
+    <string name="settings_checkbox_only_desc">チェックボックスのみでアイテムを切り替え。このウィジェットにのみ適用されます。</string>
     <string name="settings_auto_focus_on_open">開いたとき入力欄にフォーカス</string>
     <string name="settings_auto_focus_on_open_desc">リストを開いたとき新規アイテム入力欄を自動的にフォーカスする</string>
     <string name="section_appearance">外観</string>
@@ -197,8 +197,12 @@
     <string name="add_position_bottom">末尾</string>
 
     <!-- Checkbox only (app) -->
-    <string name="settings_app_checkbox_only">チェックボックスのみ</string>
-    <string name="settings_app_checkbox_only_desc">チェックボックスのみでアイテムを切り替え。タップでアイテムオプションを開きます。</string>
+    <string name="settings_app_checkbox_only">チェックボックスのみ（アプリ）</string>
+    <string name="settings_app_checkbox_only_desc">チェックボックスのみでアイテムを切り替え。タップでアイテムオプションを開きます。ウィジェットには影響しません。</string>
     <string name="settings_hide_completed">完了済みアイテムを非表示</string>
     <string name="settings_hide_completed_desc">リストを開いたとき、完了済みセクションをデフォルトで折りたたむ</string>
+    <string name="error_add_failed">アイテムを追加できませんでした</string>
+    <string name="error_toggle_failed">アイテムを更新できませんでした</string>
+    <string name="error_delete_failed">アイテムを削除できませんでした</string>
+    <string name="error_reorder_failed">新しい並び順を保存できませんでした</string>
 </resources>

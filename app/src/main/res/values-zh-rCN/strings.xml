@@ -108,8 +108,8 @@
     <string name="section_completed_items">已完成的项目</string>
     <string name="settings_show_completed">显示已完成</string>
     <string name="section_interaction">交互</string>
-    <string name="settings_checkbox_only">仅复选框</string>
-    <string name="settings_checkbox_only_desc">仅复选框切换项目状态</string>    <string name="settings_auto_focus_on_open">打开时聚焦输入框</string>
+    <string name="settings_checkbox_only">仅复选框（此小部件）</string>
+    <string name="settings_checkbox_only_desc">仅复选框切换项目状态。仅适用于此小部件。</string>    <string name="settings_auto_focus_on_open">打开时聚焦输入框</string>
     <string name="settings_auto_focus_on_open_desc">打开列表时自动聚焦新建项目输入框</string>    <string name="section_appearance">外观</string>
     <string name="settings_show_title">显示小组件标题</string>
     <string name="settings_show_title_desc">显示 HAdo 图标和标题栏</string>
@@ -195,8 +195,12 @@
     <string name="add_position_bottom">底部</string>
 
     <!-- Checkbox only (app) -->
-    <string name="settings_app_checkbox_only">仅复选框</string>
-    <string name="settings_app_checkbox_only_desc">仅复选框切换项目状态。点击行将打开项目选项。</string>
+    <string name="settings_app_checkbox_only">仅复选框（应用）</string>
+    <string name="settings_app_checkbox_only_desc">仅复选框切换项目状态。点击行将打开项目选项。不影响小部件。</string>
     <string name="settings_hide_completed">隐藏已完成项目</string>
     <string name="settings_hide_completed_desc">打开列表时默认折叠已完成区域</string>
+    <string name="error_add_failed">无法添加项目</string>
+    <string name="error_toggle_failed">无法更新项目</string>
+    <string name="error_delete_failed">无法删除项目</string>
+    <string name="error_reorder_failed">无法保存新的排序</string>
 </resources>

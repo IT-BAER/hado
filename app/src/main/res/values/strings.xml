@@ -137,8 +137,8 @@
     <string name="section_completed_items">Completed Items</string>
     <string name="settings_show_completed">Show completed items</string>
     <string name="section_interaction">Interaction</string>
-    <string name="settings_checkbox_only">Checkbox only</string>
-    <string name="settings_checkbox_only_desc">Only the checkbox toggles the item</string>
+    <string name="settings_checkbox_only">Checkbox only (this widget)</string>
+    <string name="settings_checkbox_only_desc">Only the checkbox toggles the item. Applies to this widget only.</string>
     <string name="settings_auto_focus_on_open">Focus add field on open</string>
     <string name="settings_auto_focus_on_open_desc">Automatically focus the new item field when opening a list</string>
     <string name="section_appearance">Appearance</string>
@@ -200,8 +200,12 @@
     <string name="add_position_bottom">Bottom</string>
 
     <!-- Checkbox only (app) -->
-    <string name="settings_app_checkbox_only">Checkbox only</string>
-    <string name="settings_app_checkbox_only_desc">Only the checkbox toggles the item. Tap opens item options.</string>
+    <string name="settings_app_checkbox_only">Checkbox only (app)</string>
+    <string name="settings_app_checkbox_only_desc">Only the checkbox toggles the item. Tap opens item options. Does not affect widgets.</string>
     <string name="settings_hide_completed">Hide completed items</string>
     <string name="settings_hide_completed_desc">Collapse completed section by default when opening a list</string>
+    <string name="error_add_failed">Could not add the item</string>
+    <string name="error_toggle_failed">Could not update the item</string>
+    <string name="error_delete_failed">Could not delete the item</string>
+    <string name="error_reorder_failed">Could not save the new order</string>
 </resources>

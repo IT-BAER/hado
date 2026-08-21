@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import androidx.annotation.StringRes
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -28,6 +29,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -213,6 +215,7 @@ fun TodoListEditor(
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
     val listState = rememberLazyListState()
+    val snackbarHostState = remember { SnackbarHostState() }
     val imeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     val resolvedIcon = remember(entityId) {
         ListIconManager.resolveIcon(context, entityId)
@@ -220,7 +223,8 @@ fun TodoListEditor(
     // Always-current items ref for gesture callbacks (avoids stale closures)
     val currentItemsState by rememberUpdatedState(items)
 
-    fun addRowIndex(): Int = if (showListHeader) 1 else 0
+    // The list header item only exists when there is no top bar; the add row follows it.
+    fun addRowIndex(): Int = if (showListHeader && !showTopBar) 1 else 0
 
     // Re-focus input field after adding an item (deferred to next frame)
     LaunchedEffect(refocusTrigger) {
@@ -317,6 +321,12 @@ fun TodoListEditor(
         }
     }
 
+    fun showError(@StringRes messageResId: Int) {
+        scope.launch(Dispatchers.Main) {
+            snackbarHostState.showSnackbar(context.getString(messageResId))
+        }
+    }
+
     fun addItem(text: String) {
         Log.d("HAdo", "addItem called with text='$text'")
         if (text.isBlank()) return
@@ -357,6 +367,13 @@ fun TodoListEditor(
             try {
                 val payload = gson.toJson(mapOf("entity_id" to entityId, "item" to trimmed))
                 val response = httpClient.post("api/services/todo/add_item", payload)
+                if (response == null) {
+                    withContext(Dispatchers.Main) {
+                        newlyAddedUids = newlyAddedUids - tempItem.uid
+                        items = items.filter { it.uid != tempItem.uid }
+                        showError(R.string.error_add_failed)
+                    }
+                }
                 response?.use { resp ->
                     if (resp.isSuccessful) {
                         Log.d("HAdo", "addItem succeeded: ${resp.code}")
@@ -402,6 +419,11 @@ fun TodoListEditor(
                         }
                     } else {
                         Log.e("HAdo", "addItem failed: ${resp.code} ${resp.body?.string()}")
+                        withContext(Dispatchers.Main) {
+                            newlyAddedUids = newlyAddedUids - tempItem.uid
+                            items = items.filter { it.uid != tempItem.uid }
+                            showError(R.string.error_add_failed)
+                        }
                     }
                 }
                 withContext(NonCancellable) {
@@ -409,6 +431,11 @@ fun TodoListEditor(
                 }
             } catch (e: Exception) {
                 Log.e("HAdo", "addItem failed", e)
+                withContext(Dispatchers.Main) {
+                    newlyAddedUids = newlyAddedUids - tempItem.uid
+                    items = items.filter { it.uid != tempItem.uid }
+                    showError(R.string.error_add_failed)
+                }
             }
         }
     }
@@ -441,6 +468,12 @@ fun TodoListEditor(
                     "status" to newStatus
                 ))
                 val response = httpClient.post("api/services/todo/update_item", payload)
+                if (response == null) {
+                    withContext(Dispatchers.Main) {
+                        items = items.map { if (it.uid == item.uid) item else it }
+                        showError(R.string.error_toggle_failed)
+                    }
+                }
                 response?.use { resp ->
                     if (resp.isSuccessful) {
                         Log.d("HAdo", "toggleItem succeeded: ${resp.code}")
@@ -448,6 +481,7 @@ fun TodoListEditor(
                         Log.e("HAdo", "toggleItem failed: ${resp.code} ${resp.body?.string()}")
                         withContext(Dispatchers.Main) {
                             items = items.map { if (it.uid == item.uid) item else it }
+                            showError(R.string.error_toggle_failed)
                         }
                     }
                 }
@@ -458,6 +492,7 @@ fun TodoListEditor(
                 Log.e("HAdo", "toggleItem failed", e)
                 withContext(Dispatchers.Main) {
                     items = items.map { if (it.uid == item.uid) item else it }
+                    showError(R.string.error_toggle_failed)
                 }
             } finally {
                 if (pendingToggleJobs[item.uid] === job) pendingToggleJobs.remove(item.uid)
@@ -467,6 +502,7 @@ fun TodoListEditor(
     }
 
     fun deleteItem(item: TodoItem) {
+        val originalIndex = items.indexOfFirst { it.uid == item.uid }
         pendingDeletes = pendingDeletes + item.uid
         scope.launch {
             delay(300) // match exit animation duration
@@ -487,11 +523,29 @@ fun TodoListEditor(
                     "item" to item.uid
                 ))
                 val response = httpClient.post("api/services/todo/remove_item", payload)
+                if (response == null) {
+                    withContext(Dispatchers.Main) {
+                        if (items.none { it.uid == item.uid }) {
+                            items = items.toMutableList().apply {
+                                add(originalIndex.coerceIn(0, size), item)
+                            }
+                        }
+                        showError(R.string.error_delete_failed)
+                    }
+                }
                 response?.use { resp ->
                     if (resp.isSuccessful) {
                         Log.d("HAdo", "deleteItem succeeded: ${resp.code}")
                     } else {
                         Log.e("HAdo", "deleteItem failed: ${resp.code} ${resp.body?.string()}")
+                        withContext(Dispatchers.Main) {
+                            if (items.none { it.uid == item.uid }) {
+                                items = items.toMutableList().apply {
+                                    add(originalIndex.coerceIn(0, size), item)
+                                }
+                            }
+                            showError(R.string.error_delete_failed)
+                        }
                     }
                 }
                 onChanged()
@@ -533,6 +587,7 @@ fun TodoListEditor(
 
     Scaffold(
         modifier = modifier,
+        snackbarHost = { SnackbarHost(snackbarHostState, modifier = Modifier.imePadding()) },
         topBar = {
             if (showTopBar) {
                 TopAppBar(
@@ -639,7 +694,7 @@ fun TodoListEditor(
                             shrinkTowards = Alignment.Top,
                             animationSpec = tween(300)
                         ),
-                        modifier = if (isDragging) Modifier else Modifier.animateItemPlacement()
+                        modifier = if (draggedItemUid != null) Modifier else Modifier.animateItemPlacement()
                     ) {
                         TodoItemRow(
                             item = item,
@@ -663,12 +718,19 @@ fun TodoListEditor(
                                 val currentIndex = liveUncompleted.indexOfFirst { it.uid == uid }
                                 if (currentIndex < 0) return@TodoItemRow
 
-                                val halfItem = itemHeightPx / 2
                                 val targetIndex = when {
-                                    dragOffsetY > halfItem && currentIndex < liveUncompleted.lastIndex -> currentIndex + 1
-                                    dragOffsetY < -halfItem && currentIndex > 0 -> currentIndex - 1
+                                    dragOffsetY > 0 && currentIndex < liveUncompleted.lastIndex -> currentIndex + 1
+                                    dragOffsetY < 0 && currentIndex > 0 -> currentIndex - 1
                                     else -> return@TodoItemRow
                                 }
+                                // Rows vary in height (due date, description), so the swap
+                                // threshold and offset correction use measured heights.
+                                val neighbourHeight = rowHeightPx(
+                                    listState,
+                                    liveUncompleted[targetIndex].uid,
+                                    itemHeightPx
+                                )
+                                if (kotlin.math.abs(dragOffsetY) <= neighbourHeight / 2) return@TodoItemRow
 
                                 val mutableItems = currentItemsState.toMutableList()
                                 val draggedItem = liveUncompleted[currentIndex]
@@ -679,8 +741,8 @@ fun TodoListEditor(
                                     mutableItems.removeAt(fromGlobal)
                                     mutableItems.add(toGlobal, draggedItem)
                                     items = mutableItems
-                                    // Adjust offset so item stays under finger
-                                    dragOffsetY -= (targetIndex - currentIndex) * itemHeightPx
+                                    // Keep the row under the finger after the swap
+                                    dragOffsetY -= (targetIndex - currentIndex) * neighbourHeight
                                 }
                             },
                             onDragEnd = {
@@ -711,6 +773,8 @@ fun TodoListEditor(
                                                 onChanged()
                                             } else {
                                                 Log.w("HAdo", "moveTodoItem not supported or failed for this entity")
+                                                showError(R.string.error_reorder_failed)
+                                                onChanged()
                                             }
                                         } catch (e: Exception) {
                                             Log.e("HAdo", "moveTodoItem error", e)
@@ -833,6 +897,12 @@ fun TodoListEditor(
             }
         )
     }
+}
+
+/** Measured height of the laid-out row with [uid], or [fallbackPx] when it is off-screen. */
+private fun rowHeightPx(listState: LazyListState, uid: String, fallbackPx: Float): Float {
+    val info = listState.layoutInfo.visibleItemsInfo.firstOrNull { it.key == uid }
+    return info?.size?.toFloat()?.takeIf { it > 0f } ?: fallbackPx
 }
 
 @Composable

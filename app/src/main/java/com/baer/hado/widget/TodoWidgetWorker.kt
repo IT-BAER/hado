@@ -1,7 +1,6 @@
 package com.baer.hado.widget
 
 import android.appwidget.AppWidgetManager
-import android.content.ComponentName
 import android.content.Context
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.updateAppWidgetState
@@ -48,9 +47,7 @@ class TodoWidgetWorker @AssistedInject constructor(
         // Build GlanceId → appWidgetId mapping
         val manager = GlanceAppWidgetManager(context)
         val glanceIds = manager.getGlanceIds(TodoWidget::class.java)
-        val appWidgetIds = AppWidgetManager.getInstance(context)
-            .getAppWidgetIds(ComponentName(context, TodoWidgetReceiver::class.java))
-        val glanceToWidgetId = glanceIds.zip(appWidgetIds.toList()).toMap()
+        val glanceToWidgetId = glanceIds.associateWith { manager.getAppWidgetId(it) }
         val targetWidgets = if (targetAppWidgetId != null) {
             glanceToWidgetId.filterValues { it == targetAppWidgetId }
         } else {
@@ -199,12 +196,8 @@ class TodoWidgetWorker @AssistedInject constructor(
 
         suspend fun applySettingsImmediately(context: Context, appWidgetId: Int, settings: WidgetSettings) {
             val manager = GlanceAppWidgetManager(context)
-            val glanceIds = manager.getGlanceIds(TodoWidget::class.java)
-            val appWidgetIds = AppWidgetManager.getInstance(context)
-                .getAppWidgetIds(ComponentName(context, TodoWidgetReceiver::class.java))
-            val glanceId = glanceIds.zip(appWidgetIds.toList())
-                .firstOrNull { it.second == appWidgetId }
-                ?.first
+            val glanceId = manager.getGlanceIds(TodoWidget::class.java)
+                .firstOrNull { manager.getAppWidgetId(it) == appWidgetId }
                 ?: return
 
             updateAppWidgetState(context, glanceId) { prefs ->

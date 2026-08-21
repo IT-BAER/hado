@@ -108,8 +108,8 @@
     <string name="section_completed_items">Itens concluídos</string>
     <string name="settings_show_completed">Mostrar concluídos</string>
     <string name="section_interaction">Interação</string>
-    <string name="settings_checkbox_only">Somente caixa de seleção</string>
-    <string name="settings_checkbox_only_desc">Somente a caixa de seleção alterna o item</string>
+    <string name="settings_checkbox_only">Somente caixa de seleção (este widget)</string>
+    <string name="settings_checkbox_only_desc">Somente a caixa de seleção alterna o item. Aplica-se apenas a este widget.</string>
     <string name="settings_auto_focus_on_open">Focar campo ao abrir</string>
     <string name="settings_auto_focus_on_open_desc">Focar automaticamente o campo de novo item ao abrir uma lista</string>
     <string name="section_appearance">Aparência</string>
@@ -197,8 +197,12 @@
     <string name="add_position_bottom">Final</string>
 
     <!-- Checkbox only (app) -->
-    <string name="settings_app_checkbox_only">Somente caixa de seleção</string>
-    <string name="settings_app_checkbox_only_desc">Somente a caixa de seleção alterna o item. O toque abre as opções do item.</string>
+    <string name="settings_app_checkbox_only">Somente caixa de seleção (app)</string>
+    <string name="settings_app_checkbox_only_desc">Somente a caixa de seleção alterna o item. O toque abre as opções do item. Não afeta os widgets.</string>
     <string name="settings_hide_completed">Ocultar itens concluídos</string>
     <string name="settings_hide_completed_desc">Recolher a seção de concluídos por padrão ao abrir uma lista</string>
+    <string name="error_add_failed">Não foi possível adicionar o item</string>
+    <string name="error_toggle_failed">Não foi possível atualizar o item</string>
+    <string name="error_delete_failed">Não foi possível excluir o item</string>
+    <string name="error_reorder_failed">Não foi possível salvar a nova ordem</string>
 </resources>

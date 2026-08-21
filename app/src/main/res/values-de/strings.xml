@@ -136,8 +136,8 @@
     <string name="section_completed_items">Erledigte Einträge</string>
     <string name="settings_show_completed">Erledigte anzeigen</string>
     <string name="section_interaction">Interaktion</string>
-    <string name="settings_checkbox_only">Nur Checkbox</string>
-    <string name="settings_checkbox_only_desc">Nur die Checkbox schaltet den Eintrag um</string>
+    <string name="settings_checkbox_only">Nur Checkbox (dieses Widget)</string>
+    <string name="settings_checkbox_only_desc">Nur die Checkbox schaltet den Eintrag um. Gilt nur für dieses Widget.</string>
     <string name="settings_auto_focus_on_open">Eingabefeld beim Öffnen fokussieren</string>
     <string name="settings_auto_focus_on_open_desc">Neues-Eintrag-Feld beim Öffnen einer Liste automatisch fokussieren</string>
     <string name="section_appearance">Darstellung</string>
@@ -197,8 +197,12 @@
     <string name="add_position_bottom">Unten</string>
 
     <!-- Checkbox only (app) -->
-    <string name="settings_app_checkbox_only">Nur Checkbox</string>
-    <string name="settings_app_checkbox_only_desc">Nur die Checkbox schaltet den Eintrag um. Tippen öffnet die Eintragsoptionen.</string>
+    <string name="settings_app_checkbox_only">Nur Checkbox (App)</string>
+    <string name="settings_app_checkbox_only_desc">Nur die Checkbox schaltet den Eintrag um. Tippen öffnet die Eintragsoptionen. Gilt nicht für Widgets.</string>
     <string name="settings_hide_completed">Erledigte ausblenden</string>
     <string name="settings_hide_completed_desc">Abschnitt „Erledigt" beim Öffnen einer Liste standardmäßig einklappen</string>
+    <string name="error_add_failed">Eintrag konnte nicht hinzugefügt werden</string>
+    <string name="error_toggle_failed">Eintrag konnte nicht geändert werden</string>
+    <string name="error_delete_failed">Eintrag konnte nicht gelöscht werden</string>
+    <string name="error_reorder_failed">Neue Reihenfolge konnte nicht gespeichert werden</string>
 </resources>

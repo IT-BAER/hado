@@ -1,7 +1,5 @@
 package com.baer.hado.widget
 
-import android.appwidget.AppWidgetManager
-import android.content.ComponentName
 import android.content.Context
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.updateAppWidgetState
@@ -51,9 +49,7 @@ object WidgetStateMutator {
     ): Set<Int> {
         val widgetManager = GlanceAppWidgetManager(context)
         val glanceIds = widgetManager.getGlanceIds(TodoWidget::class.java)
-        val appWidgetIds = AppWidgetManager.getInstance(context)
-            .getAppWidgetIds(ComponentName(context, TodoWidgetReceiver::class.java))
-        val glanceToWidgetId = glanceIds.zip(appWidgetIds.toList())
+        val glanceToWidgetId = glanceIds.map { it to widgetManager.getAppWidgetId(it) }
         val orderedTargets = if (preferredAppWidgetId != null) {
             val preferred = glanceToWidgetId.firstOrNull { it.second == preferredAppWidgetId }
             listOfNotNull(preferred) + glanceToWidgetId.filter { it.second != preferredAppWidgetId }

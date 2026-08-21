@@ -108,8 +108,8 @@
     <string name="section_completed_items">Elementos completados</string>
     <string name="settings_show_completed">Mostrar completados</string>
     <string name="section_interaction">Interacción</string>
-    <string name="settings_checkbox_only">Solo casilla</string>
-    <string name="settings_checkbox_only_desc">Solo la casilla marca/desmarca el elemento</string>
+    <string name="settings_checkbox_only">Solo casilla (este widget)</string>
+    <string name="settings_checkbox_only_desc">Solo la casilla marca/desmarca el elemento. Se aplica solo a este widget.</string>
     <string name="settings_auto_focus_on_open">Enfocar campo al abrir</string>
     <string name="settings_auto_focus_on_open_desc">Enfocar automáticamente el campo de nuevo elemento al abrir una lista</string>
     <string name="section_appearance">Apariencia</string>
@@ -169,8 +169,8 @@
     <string name="add_position_bottom">Abajo</string>
 
     <!-- Checkbox only (app) -->
-    <string name="settings_app_checkbox_only">Solo casilla</string>
-    <string name="settings_app_checkbox_only_desc">Solo la casilla marca el elemento. Tocar abre las opciones del elemento.</string>
+    <string name="settings_app_checkbox_only">Solo casilla (app)</string>
+    <string name="settings_app_checkbox_only_desc">Solo la casilla marca el elemento. Tocar abre las opciones del elemento. No afecta a los widgets.</string>
     <string name="settings_hide_completed">Ocultar completados</string>
     <string name="settings_hide_completed_desc">Contraer la sección de completados por defecto al abrir una lista</string>
     <string name="section_notifications">Notificaciones</string>
@@ -201,4 +201,8 @@
     <string name="mdi_icon_supporting">Introduce un icono MDI o busca iconos compatibles de Home Assistant.</string>
     <string name="mdi_icon_no_match">No se encontró ningún icono compatible. Prueba, por ejemplo, con mdi:home.</string>
     <string name="list_icon_sync_requires_admin">La sincronización de iconos de Home Assistant requiere una cuenta de administrador. Los iconos personalizados siguen funcionando solo localmente.</string>
+    <string name="error_add_failed">No se pudo añadir el elemento</string>
+    <string name="error_toggle_failed">No se pudo actualizar el elemento</string>
+    <string name="error_delete_failed">No se pudo eliminar el elemento</string>
+    <string name="error_reorder_failed">No se pudo guardar el nuevo orden</string>
 </resources>

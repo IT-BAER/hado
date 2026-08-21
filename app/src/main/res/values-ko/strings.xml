@@ -108,8 +108,8 @@
     <string name="section_completed_items">완료된 항목</string>
     <string name="settings_show_completed">완료 항목 표시</string>
     <string name="section_interaction">상호작용</string>
-    <string name="settings_checkbox_only">체크박스만</string>
-    <string name="settings_checkbox_only_desc">체크박스만 항목을 전환합니다</string>
+    <string name="settings_checkbox_only">체크박스만 (이 위젯)</string>
+    <string name="settings_checkbox_only_desc">체크박스만 항목을 전환합니다. 이 위젯에만 적용됩니다.</string>
     <string name="settings_auto_focus_on_open">열 때 입력 필드 포커스</string>
     <string name="settings_auto_focus_on_open_desc">목록을 열 때 새 항목 입력 필드를 자동으로 포커스합니다</string>
     <string name="section_appearance">모양</string>
@@ -197,8 +197,12 @@
     <string name="add_position_bottom">맨 아래</string>
 
     <!-- Checkbox only (app) -->
-    <string name="settings_app_checkbox_only">체크박스만</string>
-    <string name="settings_app_checkbox_only_desc">체크박스만 항목을 전환합니다. 탭하면 항목 옵션이 열립니다.</string>
+    <string name="settings_app_checkbox_only">체크박스만 (앱)</string>
+    <string name="settings_app_checkbox_only_desc">체크박스만 항목을 전환합니다. 탭하면 항목 옵션이 열립니다. 위젯에는 적용되지 않습니다.</string>
     <string name="settings_hide_completed">완료된 항목 숨기기</string>
     <string name="settings_hide_completed_desc">목록을 열 때 완료 섹션을 기본으로 접어 둡니다</string>
+    <string name="error_add_failed">항목을 추가하지 못했습니다</string>
+    <string name="error_toggle_failed">항목을 업데이트하지 못했습니다</string>
+    <string name="error_delete_failed">항목을 삭제하지 못했습니다</string>
+    <string name="error_reorder_failed">새 순서를 저장하지 못했습니다</string>
 </resources>
