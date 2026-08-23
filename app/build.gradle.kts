@@ -15,14 +15,14 @@ val localProperties = Properties().apply {
 
 android {
     namespace = "com.baer.hado"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.baer.hado"
         minSdk = 33
-        targetSdk = 35
-        versionCode = 13
-        versionName = "1.1.5"
+        targetSdk = 36
+        versionCode = 14
+        versionName = "1.1.6"
 
         manifestPlaceholders["appAuthRedirectScheme"] = "hado"
     }

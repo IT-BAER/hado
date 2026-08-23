@@ -5,6 +5,12 @@ All notable changes to HAdo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.6] - 2026-08-23
+
+### Changed
+- Updated the app to target Android 16 (API 36) to meet Google Play's target API level requirement
+- Upgraded the build toolchain to Android Gradle Plugin 8.9.3 and Gradle 8.11.1
+
 ## [1.1.5] - 2026-08-21
 
 ### Fixed
