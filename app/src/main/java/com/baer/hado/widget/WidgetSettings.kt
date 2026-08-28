@@ -13,7 +13,7 @@ import com.google.gson.reflect.TypeToken
 data class WidgetSettings(
     val selectedListIds: Set<String> = emptySet(), // empty = show all
     val showCompleted: Boolean = true,
-    val refreshInterval: RefreshInterval = RefreshInterval.MIN_30,
+    val refreshIntervalMinutes: Int = 30,
     val fontSize: FontSize = FontSize.MEDIUM,
     val itemHeight: ItemHeight = ItemHeight.MEDIUM,
     val backgroundOpacity: Float = 1.0f,
@@ -36,13 +36,6 @@ data class WidgetSettings(
         LARGE(R.string.font_large, 8)
     }
 
-    enum class RefreshInterval(@StringRes val labelResId: Int, val minutes: Long) {
-        MIN_15(R.string.refresh_15min, 15),
-        MIN_30(R.string.refresh_30min, 30),
-        HOUR_1(R.string.refresh_1hour, 60),
-        HOUR_2(R.string.refresh_2hours, 120),
-        HOUR_4(R.string.refresh_4hours, 240)
-    }
 }
 
 object WidgetSettingsManager {
@@ -50,7 +43,8 @@ object WidgetSettingsManager {
     private const val PREFS_NAME = "hado_widget_settings"
     private const val KEY_SELECTED_LISTS = "selected_lists_"
     private const val KEY_SHOW_COMPLETED = "show_completed_"
-    private const val KEY_REFRESH_INTERVAL = "refresh_interval_"
+    private const val KEY_REFRESH_INTERVAL_LEGACY = "refresh_interval_"
+    private const val KEY_REFRESH_MINUTES = "refresh_minutes_"
     private const val KEY_FONT_SIZE = "font_size_"
     private const val KEY_ITEM_HEIGHT = "item_height_"
     private const val KEY_BG_OPACITY = "bg_opacity_"
@@ -65,19 +59,32 @@ object WidgetSettingsManager {
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
+    private fun mapLegacyInterval(name: String?): Int = when (name) {
+        "MIN_15" -> 15
+        "MIN_30" -> 30
+        "HOUR_1", "HOUR_2", "HOUR_4" -> 60
+        else -> 30
+    }
+
     fun load(context: Context, appWidgetId: Int): WidgetSettings {
         val p = prefs(context)
         return WidgetSettings(
             selectedListIds = p.getStringSet("$KEY_SELECTED_LISTS$appWidgetId", emptySet()) ?: emptySet(),
             showCompleted = p.getBoolean("$KEY_SHOW_COMPLETED$appWidgetId", true),
-            refreshInterval = try {
-                WidgetSettings.RefreshInterval.valueOf(
-                    p.getString("$KEY_REFRESH_INTERVAL$appWidgetId", null)
-                        ?: p.getString(LEGACY_GLOBAL_REFRESH_INTERVAL, "MIN_30")
-                        ?: "MIN_30"
-                )
-            } catch (_: Exception) {
-                WidgetSettings.RefreshInterval.MIN_30
+            refreshIntervalMinutes = run {
+                val minutesKey = "$KEY_REFRESH_MINUTES$appWidgetId"
+                if (p.contains(minutesKey)) {
+                    p.getInt(minutesKey, 30).coerceIn(1, 60)
+                } else {
+                    val legacyName = p.getString("$KEY_REFRESH_INTERVAL_LEGACY$appWidgetId", null)
+                        ?: p.getString(LEGACY_GLOBAL_REFRESH_INTERVAL, null)
+                    val minutes = mapLegacyInterval(legacyName)
+                    p.edit()
+                        .putInt(minutesKey, minutes)
+                        .remove("$KEY_REFRESH_INTERVAL_LEGACY$appWidgetId")
+                        .apply()
+                    minutes
+                }
             },
             fontSize = try {
                 WidgetSettings.FontSize.valueOf(
@@ -111,7 +118,7 @@ object WidgetSettingsManager {
         prefs(context).edit().apply {
             putStringSet("$KEY_SELECTED_LISTS$appWidgetId", settings.selectedListIds)
             putBoolean("$KEY_SHOW_COMPLETED$appWidgetId", settings.showCompleted)
-            putString("$KEY_REFRESH_INTERVAL$appWidgetId", settings.refreshInterval.name)
+            putInt("$KEY_REFRESH_MINUTES$appWidgetId", settings.refreshIntervalMinutes.coerceIn(1, 60))
             putString("$KEY_FONT_SIZE$appWidgetId", settings.fontSize.name)
             putString("$KEY_ITEM_HEIGHT$appWidgetId", settings.itemHeight.name)
             putFloat("$KEY_BG_OPACITY$appWidgetId", settings.backgroundOpacity)
@@ -129,7 +136,8 @@ object WidgetSettingsManager {
         prefs(context).edit().apply {
             remove("$KEY_SELECTED_LISTS$appWidgetId")
             remove("$KEY_SHOW_COMPLETED$appWidgetId")
-            remove("$KEY_REFRESH_INTERVAL$appWidgetId")
+            remove("$KEY_REFRESH_MINUTES$appWidgetId")
+            remove("$KEY_REFRESH_INTERVAL_LEGACY$appWidgetId")
             remove("$KEY_FONT_SIZE$appWidgetId")
             remove("$KEY_ITEM_HEIGHT$appWidgetId")
             remove("$KEY_BG_OPACITY$appWidgetId")

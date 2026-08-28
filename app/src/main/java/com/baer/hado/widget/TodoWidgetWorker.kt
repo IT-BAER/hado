@@ -66,6 +66,29 @@ class TodoWidgetWorker @AssistedInject constructor(
             TodoWidget().update(context, glanceId)
         }
 
+        if (inputData.getBoolean(KEY_INPUT_IS_CHAIN, false) &&
+            targetAppWidgetId != null &&
+            glanceToWidgetId.containsValue(targetAppWidgetId)
+        ) {
+            val minutes = WidgetSettingsManager.load(context, targetAppWidgetId).refreshIntervalMinutes
+            if (minutes < 15) {
+                val request = OneTimeWorkRequestBuilder<TodoWidgetWorker>()
+                    .setInputData(
+                        workDataOf(
+                            KEY_INPUT_APP_WIDGET_ID to targetAppWidgetId,
+                            KEY_INPUT_IS_CHAIN to true
+                        )
+                    )
+                    .setInitialDelay(minutes.toLong(), TimeUnit.MINUTES)
+                    .build()
+                WorkManager.getInstance(context).enqueueUniqueWork(
+                    periodicWorkName(targetAppWidgetId),
+                    ExistingWorkPolicy.REPLACE,
+                    request
+                )
+            }
+        }
+
         return Result.success()
     }
 
@@ -155,21 +178,52 @@ class TodoWidgetWorker @AssistedInject constructor(
         private const val WORK_NAME_ONETIME = "todo_widget_refresh"
         private const val WORK_NAME_ONETIME_PREFIX = "todo_widget_refresh_"
         private const val KEY_INPUT_APP_WIDGET_ID = "input_app_widget_id"
+        private const val KEY_INPUT_IS_CHAIN = "input_is_chain"
 
-        fun enqueuePeriodic(context: Context, appWidgetId: Int) {
+        /**
+         * [reschedule] true replaces an existing schedule; false leaves a pending one alone.
+         * Widget updates call this on every onUpdate, and replacing a sub-15-minute chain there
+         * would restart its delay before it can ever fire.
+         */
+        fun enqueuePeriodic(context: Context, appWidgetId: Int, reschedule: Boolean = false) {
             cancelLegacyPeriodic(context)
-            val interval = WidgetSettingsManager.load(context, appWidgetId).refreshInterval
-            val request = PeriodicWorkRequestBuilder<TodoWidgetWorker>(
-                interval.minutes, TimeUnit.MINUTES
-            ).setInputData(
-                workDataOf(KEY_INPUT_APP_WIDGET_ID to appWidgetId)
-            ).build()
+            val minutes = WidgetSettingsManager.load(context, appWidgetId).refreshIntervalMinutes
+            val workManager = WorkManager.getInstance(context)
+            val uniqueName = periodicWorkName(appWidgetId)
 
-            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-                periodicWorkName(appWidgetId),
-                ExistingPeriodicWorkPolicy.UPDATE,
-                request
-            )
+            if (reschedule) {
+                workManager.cancelUniqueWork(uniqueName)
+            }
+
+            if (minutes >= 15) {
+                val request = PeriodicWorkRequestBuilder<TodoWidgetWorker>(
+                    minutes.toLong(), TimeUnit.MINUTES
+                ).setInputData(
+                    workDataOf(KEY_INPUT_APP_WIDGET_ID to appWidgetId)
+                ).build()
+
+                workManager.enqueueUniquePeriodicWork(
+                    uniqueName,
+                    if (reschedule) ExistingPeriodicWorkPolicy.UPDATE else ExistingPeriodicWorkPolicy.KEEP,
+                    request
+                )
+            } else {
+                val request = OneTimeWorkRequestBuilder<TodoWidgetWorker>()
+                    .setInputData(
+                        workDataOf(
+                            KEY_INPUT_APP_WIDGET_ID to appWidgetId,
+                            KEY_INPUT_IS_CHAIN to true
+                        )
+                    )
+                    .setInitialDelay(minutes.toLong(), TimeUnit.MINUTES)
+                    .build()
+
+                workManager.enqueueUniqueWork(
+                    uniqueName,
+                    if (reschedule) ExistingWorkPolicy.REPLACE else ExistingWorkPolicy.KEEP,
+                    request
+                )
+            }
         }
 
         fun enqueuePeriodic(context: Context, appWidgetIds: IntArray) {

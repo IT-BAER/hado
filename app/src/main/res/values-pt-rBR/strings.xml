@@ -155,11 +155,11 @@
     <string name="font_large">Grande</string>
 
     <!-- Refresh intervals -->
-    <string name="refresh_15min">15 minutos</string>
-    <string name="refresh_30min">30 minutos</string>
-    <string name="refresh_1hour">1 hora</string>
-    <string name="refresh_2hours">2 horas</string>
-    <string name="refresh_4hours">4 horas</string>
+    <plurals name="refresh_minutes_value">
+        <item quantity="one">%d minuto</item>
+        <item quantity="other">%d minutos</item>
+    </plurals>
+    <string name="refresh_frequent_warning">Atualizar com essa frequência consome mais bateria, e o Android ainda pode atrasar as atualizações com a tela desligada.</string>
     <string name="section_notifications">Notificações</string>
     <string name="settings_notifications_supporting">Lembretes opcionais para itens com prazo e atrasados.</string>
     <string name="settings_overdue_notifications">Notificações de itens atrasados</string>

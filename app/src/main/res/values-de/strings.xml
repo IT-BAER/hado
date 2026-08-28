@@ -183,11 +183,11 @@
     <string name="font_large">Groß</string>
 
     <!-- Refresh intervals -->
-    <string name="refresh_15min">15 Minuten</string>
-    <string name="refresh_30min">30 Minuten</string>
-    <string name="refresh_1hour">1 Stunde</string>
-    <string name="refresh_2hours">2 Stunden</string>
-    <string name="refresh_4hours">4 Stunden</string>
+    <plurals name="refresh_minutes_value">
+        <item quantity="one">%d Minute</item>
+        <item quantity="other">%d Minuten</item>
+    </plurals>
+    <string name="refresh_frequent_warning">So häufiges Aktualisieren verbraucht mehr Akku, und Android kann Aktualisierungen bei ausgeschaltetem Display trotzdem verzögern.</string>
 
     <!-- Item position -->
     <string name="section_behavior">Verhalten</string>

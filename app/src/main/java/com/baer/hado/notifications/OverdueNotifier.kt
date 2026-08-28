@@ -1,11 +1,14 @@
 package com.baer.hado.notifications
 
+import android.Manifest
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import com.baer.hado.R
 import com.baer.hado.ui.MainActivity
 
@@ -28,6 +31,9 @@ object OverdueNotifier {
 
     fun notify(context: Context, items: List<OverdueNotificationItem>) {
         if (items.isEmpty()) return
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED
+        ) return
 
         val manager = NotificationManagerCompat.from(context)
         items.forEach { item ->

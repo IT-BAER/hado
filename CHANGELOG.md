@@ -5,6 +5,18 @@ All notable changes to HAdo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.7] - 2026-08-28
+
+### Added
+- The widget refresh interval is now a slider from 1 to 60 minutes, instead of five fixed choices
+- Below 5 minutes the slider warns that refreshing that often drains the battery and that Android may still delay refreshes while the screen is off
+
+### Changed
+- Widgets previously set to 1, 2 or 4 hours now refresh every 60 minutes, the new maximum
+
+### Fixed
+- Overdue reminders no longer fail when notification permission has been denied
+
 ## [1.1.6] - 2026-08-23
 
 ### Changed

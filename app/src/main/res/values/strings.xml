@@ -184,11 +184,11 @@
     <string name="font_large">Large</string>
 
     <!-- Refresh intervals -->
-    <string name="refresh_15min">15 minutes</string>
-    <string name="refresh_30min">30 minutes</string>
-    <string name="refresh_1hour">1 hour</string>
-    <string name="refresh_2hours">2 hours</string>
-    <string name="refresh_4hours">4 hours</string>
+    <plurals name="refresh_minutes_value">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
+    <string name="refresh_frequent_warning">Refreshing this often uses more battery, and Android may still delay refreshes while the screen is off.</string>
 
     <!-- Item position -->
     <string name="section_behavior">Behavior</string>

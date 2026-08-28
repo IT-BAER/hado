@@ -153,11 +153,11 @@
     <string name="font_large">Groot</string>
 
     <!-- Refresh intervals -->
-    <string name="refresh_15min">15 minuten</string>
-    <string name="refresh_30min">30 minuten</string>
-    <string name="refresh_1hour">1 uur</string>
-    <string name="refresh_2hours">2 uur</string>
-    <string name="refresh_4hours">4 uur</string>
+    <plurals name="refresh_minutes_value">
+        <item quantity="one">%d minuut</item>
+        <item quantity="other">%d minuten</item>
+    </plurals>
+    <string name="refresh_frequent_warning">Zo vaak vernieuwen verbruikt meer batterij, en Android kan vernieuwingen nog steeds uitstellen als het scherm uit is.</string>
     <string name="section_notifications">Meldingen</string>
     <string name="settings_notifications_supporting">Optionele herinneringen voor taken met vervaldatum en achterstallige taken.</string>
     <string name="settings_overdue_notifications">Meldingen voor achterstallige taken</string>

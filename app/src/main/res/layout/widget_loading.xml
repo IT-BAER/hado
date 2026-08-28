@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/transparent">
@@ -23,7 +24,8 @@
                 android:layout_height="28dp"
                 android:contentDescription="@null"
                 android:src="@drawable/ic_widget_logo"
-                android:tint="@color/widget_loading_primary" />
+                android:tint="@color/widget_loading_primary"
+                tools:ignore="UseAppTint" />
 
             <TextView
                 android:layout_width="wrap_content"

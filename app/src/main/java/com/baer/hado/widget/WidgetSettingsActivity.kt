@@ -38,6 +38,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -81,7 +82,7 @@ class WidgetSettingsActivity : ComponentActivity() {
                         lifecycleScope.launch {
                             WidgetSettingsManager.save(this@WidgetSettingsActivity, appWidgetId, settings)
                             TodoWidgetWorker.applySettingsImmediately(this@WidgetSettingsActivity, appWidgetId, settings)
-                            TodoWidgetWorker.enqueuePeriodic(this@WidgetSettingsActivity, appWidgetId)
+                            TodoWidgetWorker.enqueuePeriodic(this@WidgetSettingsActivity, appWidgetId, reschedule = true)
                             TodoWidgetWorker.enqueueOneTime(this@WidgetSettingsActivity, appWidgetId)
 
                             val resultIntent = Intent().putExtra(
@@ -113,7 +114,7 @@ private fun WidgetSettingsScreen(
 
     var selectedListIds by remember { mutableStateOf(existingSettings.selectedListIds) }
     var showCompleted by remember { mutableStateOf(existingSettings.showCompleted) }
-    var refreshInterval by remember { mutableStateOf(existingSettings.refreshInterval) }
+    var refreshMinutes by remember { mutableIntStateOf(existingSettings.refreshIntervalMinutes) }
     var fontSize by remember { mutableStateOf(existingSettings.fontSize) }
     var itemHeight by remember { mutableStateOf(existingSettings.itemHeight) }
     var backgroundOpacity by remember { mutableFloatStateOf(existingSettings.backgroundOpacity) }
@@ -127,7 +128,7 @@ private fun WidgetSettingsScreen(
     fun currentSettings() = WidgetSettings(
         selectedListIds = selectedListIds,
         showCompleted = showCompleted,
-        refreshInterval = refreshInterval,
+        refreshIntervalMinutes = refreshMinutes,
         fontSize = fontSize,
         itemHeight = itemHeight,
         backgroundOpacity = backgroundOpacity,
@@ -554,39 +555,30 @@ private fun WidgetSettingsScreen(
 
             // --- Refresh interval (global) ---
             SettingsSection(title = stringResource(R.string.section_refresh_interval)) {
-                Column {
-                    WidgetSettings.RefreshInterval.entries.forEachIndexed { index, interval ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .clickable {
-                                    refreshInterval = interval
-                                }
-                                .padding(horizontal = 8.dp, vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = refreshInterval == interval,
-                                onClick = {
-                                    refreshInterval = interval
-                                }
-                            )
-                            Text(
-                                text = stringResource(interval.labelResId),
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.padding(start = 8.dp)
-                            )
-                        }
-                        if (index < WidgetSettings.RefreshInterval.entries.size - 1) {
-                            HorizontalDivider()
-                        }
+                Column(modifier = Modifier.padding(horizontal = 8.dp)) {
+                    Text(
+                        text = pluralStringResource(R.plurals.refresh_minutes_value, refreshMinutes, refreshMinutes),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Slider(
+                        value = refreshMinutes.toFloat(),
+                        onValueChange = { refreshMinutes = it.toInt() },
+                        valueRange = 1f..60f,
+                        steps = 58
+                    )
+                    if (refreshMinutes < 5) {
+                        Text(
+                            text = stringResource(R.string.refresh_frequent_warning),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
                     }
                     Text(
                         text = stringResource(R.string.refresh_description),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        modifier = Modifier.padding(vertical = 4.dp)
                     )
                 }
             }

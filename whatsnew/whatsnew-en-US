@@ -1,6 +1,6 @@
-HAdo 1.1.5
+HAdo 1.1.7
 
-• Dragging items to reorder them no longer jumps or drops at the wrong spot
-• Adding an item from the widget list keeps the input field in view
-• Failed changes are undone and reported instead of silently disappearing
-• Widget settings and updates reach the right widget when several are placed
+• The widget refresh interval is now a slider from 1 to 60 minutes, instead of five fixed choices
+• Below 5 minutes the slider warns that refreshing that often drains the battery and that Android may still delay refreshes while the screen is off
+• Widgets previously set to 1, 2 or 4 hours now refresh every 60 minutes, the new maximum
+• Overdue reminders no longer fail when notification permission has been denied

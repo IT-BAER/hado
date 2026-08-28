@@ -155,11 +155,10 @@
     <string name="font_large">크게</string>
 
     <!-- Refresh intervals -->
-    <string name="refresh_15min">15분</string>
-    <string name="refresh_30min">30분</string>
-    <string name="refresh_1hour">1시간</string>
-    <string name="refresh_2hours">2시간</string>
-    <string name="refresh_4hours">4시간</string>
+    <plurals name="refresh_minutes_value">
+        <item quantity="other">%d분</item>
+    </plurals>
+    <string name="refresh_frequent_warning">이렇게 자주 새로고침하면 배터리 소모가 늘어나며, 화면이 꺼져 있으면 Android가 새로고침을 지연시킬 수 있습니다.</string>
     <string name="section_notifications">알림</string>
     <string name="settings_notifications_supporting">기한 임박 및 기한 지난 항목을 위한 선택형 알림입니다.</string>
     <string name="settings_overdue_notifications">기한 지난 항목 알림</string>

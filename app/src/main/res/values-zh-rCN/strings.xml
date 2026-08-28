@@ -153,11 +153,10 @@
     <string name="font_large">大</string>
 
     <!-- Refresh intervals -->
-    <string name="refresh_15min">15 分钟</string>
-    <string name="refresh_30min">30 分钟</string>
-    <string name="refresh_1hour">1 小时</string>
-    <string name="refresh_2hours">2 小时</string>
-    <string name="refresh_4hours">4 小时</string>
+    <plurals name="refresh_minutes_value">
+        <item quantity="other">%d 分钟</item>
+    </plurals>
+    <string name="refresh_frequent_warning">如此频繁地刷新会消耗更多电量，且在屏幕关闭时 Android 仍可能延迟刷新。</string>
     <string name="section_notifications">通知</string>
     <string name="settings_notifications_supporting">针对到期和逾期事项的可选提醒。</string>
     <string name="settings_overdue_notifications">逾期事项通知</string>

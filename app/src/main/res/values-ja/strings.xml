@@ -155,11 +155,10 @@
     <string name="font_large">大</string>
 
     <!-- Refresh intervals -->
-    <string name="refresh_15min">15分</string>
-    <string name="refresh_30min">30分</string>
-    <string name="refresh_1hour">1時間</string>
-    <string name="refresh_2hours">2時間</string>
-    <string name="refresh_4hours">4時間</string>
+    <plurals name="refresh_minutes_value">
+        <item quantity="other">%d分</item>
+    </plurals>
+    <string name="refresh_frequent_warning">この頻度で更新するとバッテリーの消費が増え、画面がオフのときはAndroidが更新を遅らせることがあります。</string>
     <string name="section_notifications">通知</string>
     <string name="settings_notifications_supporting">期限あり項目と期限切れ項目への任意のリマインダーです。</string>
     <string name="settings_overdue_notifications">期限切れ項目の通知</string>

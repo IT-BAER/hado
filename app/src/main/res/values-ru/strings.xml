@@ -155,11 +155,13 @@
     <string name="font_large">Большой</string>
 
     <!-- Refresh intervals -->
-    <string name="refresh_15min">15 минут</string>
-    <string name="refresh_30min">30 минут</string>
-    <string name="refresh_1hour">1 час</string>
-    <string name="refresh_2hours">2 часа</string>
-    <string name="refresh_4hours">4 часа</string>
+    <plurals name="refresh_minutes_value">
+        <item quantity="one">%d минута</item>
+        <item quantity="few">%d минуты</item>
+        <item quantity="many">%d минут</item>
+        <item quantity="other">%d минуты</item>
+    </plurals>
+    <string name="refresh_frequent_warning">Такое частое обновление расходует больше заряда батареи, и Android всё равно может задерживать обновления при выключенном экране.</string>
     <string name="section_notifications">Уведомления</string>
     <string name="settings_notifications_supporting">Необязательные напоминания о задачах со сроком и просроченных задачах.</string>
     <string name="settings_overdue_notifications">Уведомления о просроченных задачах</string>
