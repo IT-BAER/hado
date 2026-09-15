@@ -1243,7 +1243,7 @@ private fun TodoItemRow(
             )
             // Due date indicator
             if (item.due != null) {
-                val dueText = formatDueDisplay(item)
+                val dueText = formatDueDisplay(androidx.compose.ui.platform.LocalContext.current, item)
                 Text(
                     text = dueText,
                     style = MaterialTheme.typography.bodySmall,
@@ -1502,10 +1502,11 @@ private fun parseItemsFromResponse(
     }
 }
 
-private fun formatDueDisplay(item: TodoItem): String {
+private fun formatDueDisplay(context: Context, item: TodoItem): String {
     val dt = item.dueDateTime
     if (dt != null) {
-        val formatter = java.time.format.DateTimeFormatter.ofPattern("MMM d, yyyy HH:mm")
+        val time = if (android.text.format.DateFormat.is24HourFormat(context)) "HH:mm" else "h:mm a"
+        val formatter = java.time.format.DateTimeFormatter.ofPattern("MMM d, yyyy $time")
         return (if (item.isOverdue) "⚠ " else "📅 ") + dt.format(formatter)
     }
     val d = item.dueDate
@@ -1630,7 +1631,7 @@ internal fun ItemDetailDialog(
                     ) {
                         val dateDisplay = if (dueString != null) {
                             val parsed = item.copy(due = dueString)
-                            formatDueDisplay(parsed).removePrefix("⚠ ").removePrefix("📅 ")
+                            formatDueDisplay(androidx.compose.ui.platform.LocalContext.current, parsed).removePrefix("⚠ ").removePrefix("📅 ")
                         } else stringResource(R.string.label_no_due_date)
 
                         TextButton(onClick = { showDatePicker = true }) {

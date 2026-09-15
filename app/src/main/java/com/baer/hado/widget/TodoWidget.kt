@@ -433,7 +433,9 @@ class TodoWidget : GlanceAppWidget() {
         if (dt != null) {
             val dueDate = dt.toLocalDate()
             val daysDiff = java.time.temporal.ChronoUnit.DAYS.between(now, dueDate)
-            val timeStr = dt.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
+            val timeStr = dt.format(java.time.format.DateTimeFormatter.ofPattern(
+                if (android.text.format.DateFormat.is24HourFormat(context)) "HH:mm" else "h:mm a"
+            ))
             val relative = when {
                 daysDiff < -1L -> context.getString(R.string.due_days_ago, -daysDiff)
                 daysDiff == -1L -> context.getString(R.string.due_yesterday)

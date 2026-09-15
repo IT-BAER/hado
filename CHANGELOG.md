@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.2.0] - 2026-09-15
 
+### Fixed
+- Due times follow the Android 24-hour setting, so they show AM/PM when 24-hour format is off
+
 ### Added
 - Move an item to another list: long-press an item, tap "Move to list" and pick the target list
 - Moving keeps the title, description, due date and done status when the target list supports them
