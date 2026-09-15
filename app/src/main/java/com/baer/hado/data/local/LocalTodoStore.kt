@@ -137,6 +137,20 @@ class LocalTodoStore(context: Context) {
         saveItems(entityId, items)
     }
 
+    /** Inserts [item] into the target and removes its uid from the source in one prefs write. */
+    fun moveItemToList(fromEntityId: String, toEntityId: String, item: TodoItem, position: AddItemPosition) {
+        val source = getItems(fromEntityId).filter { it.uid != item.uid }
+        val target = getItems(toEntityId).filter { it.uid != item.uid }.toMutableList()
+        when (position) {
+            AddItemPosition.TOP -> target.add(0, item)
+            AddItemPosition.BOTTOM -> target.add(item)
+        }
+        prefs.edit()
+            .putString(itemsKey(fromEntityId), gson.toJson(source))
+            .putString(itemsKey(toEntityId), gson.toJson(target))
+            .apply()
+    }
+
     // --- Internal ---
 
     private data class LocalList(

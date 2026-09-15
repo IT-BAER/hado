@@ -204,5 +204,14 @@
     <string name="error_add_failed">Impossible d\'ajouter l\'élément</string>
     <string name="error_toggle_failed">Impossible de mettre à jour l\'élément</string>
     <string name="error_delete_failed">Impossible de supprimer l\'élément</string>
+    <string name="action_move_to_list">Déplacer vers une liste</string>
+    <string name="dialog_move_to_list_title">Déplacer vers une liste</string>
+    <string name="move_done">Déplacé vers %1$s</string>
+    <string name="error_move_failed">Impossible de déplacer l\'élément</string>
+    <string name="error_move_remove_failed">Copié vers %1$s, mais impossible de le retirer de cette liste</string>
+    <string name="move_loss_description">La description sera perdue</string>
+    <string name="move_loss_time">L\'heure sera perdue</string>
+    <string name="move_loss_due">L\'échéance sera perdue</string>
+    <string name="move_loss_status">Sera marqué comme non terminé</string>
     <string name="error_reorder_failed">Impossible d\'enregistrer le nouvel ordre</string>
 </resources>

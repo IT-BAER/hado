@@ -203,5 +203,14 @@
     <string name="error_add_failed">アイテムを追加できませんでした</string>
     <string name="error_toggle_failed">アイテムを更新できませんでした</string>
     <string name="error_delete_failed">アイテムを削除できませんでした</string>
+    <string name="action_move_to_list">リストへ移動</string>
+    <string name="dialog_move_to_list_title">リストへ移動</string>
+    <string name="move_done">%1$s に移動しました</string>
+    <string name="error_move_failed">アイテムを移動できませんでした</string>
+    <string name="error_move_remove_failed">%1$s にコピーしましたが、このリストから削除できませんでした</string>
+    <string name="move_loss_description">説明は失われます</string>
+    <string name="move_loss_time">時刻は失われます</string>
+    <string name="move_loss_due">期限は失われます</string>
+    <string name="move_loss_status">未完了としてマークされます</string>
     <string name="error_reorder_failed">新しい並び順を保存できませんでした</string>
 </resources>

@@ -31,11 +31,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.DriveFileMove
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarToday
@@ -77,6 +80,7 @@ import com.baer.hado.data.local.AddItemPosition
 import com.baer.hado.data.local.AppPreferencesManager
 import com.baer.hado.data.local.LocalTodoStore
 import com.baer.hado.data.local.TokenManager
+import com.baer.hado.data.model.HaState
 import com.baer.hado.data.model.TodoItem
 import com.baer.hado.data.model.TodoItemStatus
 import com.baer.hado.data.model.TodoListFeature
@@ -180,7 +184,9 @@ fun TodoListEditor(
     onItemsChanged: (List<TodoItem>) -> Unit = {},
     onAddInputFocusChanged: (Boolean) -> Unit = {},
     widgetAppWidgetId: Int? = null,
-    autoFocusInput: Boolean = false
+    autoFocusInput: Boolean = false,
+    moveTargets: List<HaState> = emptyList(),
+    onItemMoved: (targetEntityId: String) -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
     val gson = remember { Gson() }
@@ -207,6 +213,8 @@ fun TodoListEditor(
     var newlyAddedUids by remember(entityId) { mutableStateOf(setOf<String>()) }
     var draggedItemUid by remember(entityId) { mutableStateOf<String?>(null) }
     var detailItem by remember(entityId) { mutableStateOf<TodoItem?>(null) }
+    var moveCandidate by remember(entityId) { mutableStateOf<TodoItem?>(null) }
+    val supportsDelete = TodoListFeature.hasFeature(supportedFeatures, TodoListFeature.DELETE_TODO_ITEM)
     var dragOffsetY by remember(entityId) { mutableFloatStateOf(0f) }
     var isAddInputFocused by remember(entityId) { mutableStateOf(false) }
     val checkboxOnly = remember { AppPreferencesManager.loadCheckboxOnly(context) }
@@ -555,6 +563,132 @@ fun TodoListEditor(
         }
     }
 
+    fun showMessage(message: String) {
+        scope.launch(Dispatchers.Main) { snackbarHostState.showSnackbar(message) }
+    }
+
+    // HA has no cross-list move: add to the target, then remove from the source only after the add succeeded.
+    fun moveItem(item: TodoItem, target: HaState) {
+        val targetId = target.entityId
+        val targetName = target.attributes.friendlyName ?: targetId
+        val targetFeatures = target.attributes.supportedFeatures ?: 0
+        val current = items.firstOrNull { it.uid == item.uid } ?: item
+        val originalIndex = items.indexOfFirst { it.uid == current.uid }
+        val plan = buildMovePayload(current, targetFeatures)
+        val addPosition = AppPreferencesManager.loadAddItemPosition(context)
+        val toggleJob = pendingToggleJobs[current.uid]
+
+        pendingDeletes = pendingDeletes + current.uid
+        scope.launch {
+            delay(300) // match exit animation duration
+            if (current.uid in pendingDeletes) {
+                items = items.filter { it.uid != current.uid }
+                pendingDeletes = pendingDeletes - current.uid
+            }
+        }
+
+        fun restoreRow() {
+            pendingDeletes = pendingDeletes - current.uid
+            if (items.none { it.uid == current.uid }) {
+                items = items.toMutableList().apply { add(originalIndex.coerceIn(0, size), current) }
+            }
+        }
+
+        if (isLocalMode) {
+            val moved = current.copy(
+                description = plan.description,
+                due = plan.due,
+                status = if (plan.markCompleted) TodoItemStatus.COMPLETED else TodoItemStatus.NEEDS_ACTION
+            )
+            localStore?.moveItemToList(entityId, targetId, moved, addPosition)
+            showMessage(context.getString(R.string.move_done, targetName))
+            // Source reload first: the Home view model cancels an older load when a newer one starts.
+            onChanged()
+            onItemMoved(targetId)
+            return
+        }
+
+        scope.launch(Dispatchers.IO) {
+            withContext(NonCancellable) {
+                toggleJob?.join() // let a debounced toggle reach HA so a failed move restores the real status
+                var added = false
+                try {
+                    val targetUids = fetchListItems(httpClient, gson, targetId)?.map { it.uid }?.toSet()
+                    if (targetUids != null) {
+                        val addBody = mapOf("entity_id" to targetId, "item" to current.summary) + plan.haFields()
+                        added = httpClient.post("api/services/todo/add_item", gson.toJson(addBody))
+                            ?.use { resp ->
+                                if (!resp.isSuccessful) Log.e("HAdo", "move add failed: ${resp.code} ${resp.body?.string()}")
+                                resp.isSuccessful
+                            } == true
+                    }
+                    if (!added) {
+                        withContext(Dispatchers.Main) {
+                            restoreRow()
+                            showError(R.string.error_move_failed)
+                        }
+                        return@withContext
+                    }
+
+                    val resolved = resolveAddedItem(httpClient, gson, targetId, targetUids!!, current.summary)
+                    if (resolved != null) {
+                        val newUid = resolved.item.uid
+                        if (addPosition == AddItemPosition.TOP && !current.isCompleted && !resolved.alreadyFirstActive &&
+                            TodoListFeature.hasFeature(targetFeatures, TodoListFeature.MOVE_TODO_ITEM)
+                        ) {
+                            if (!httpClient.moveTodoItem(targetId, newUid, null)) {
+                                Log.w("HAdo", "Failed to move moved item to top: $newUid")
+                            }
+                        }
+                        if (plan.markCompleted) {
+                            val body = mapOf("entity_id" to targetId, "item" to newUid, "status" to "completed")
+                            httpClient.post("api/services/todo/update_item", gson.toJson(body))?.use { resp ->
+                                if (!resp.isSuccessful) Log.w("HAdo", "move mark completed failed: ${resp.code}")
+                            }
+                        }
+                    } else {
+                        Log.w("HAdo", "Could not resolve moved item in $targetId")
+                    }
+
+                    val removeBody = mapOf("entity_id" to entityId, "item" to current.uid)
+                    val removed = httpClient.post("api/services/todo/remove_item", gson.toJson(removeBody))
+                        ?.use { resp ->
+                            if (!resp.isSuccessful) Log.e("HAdo", "move remove failed: ${resp.code} ${resp.body?.string()}")
+                            resp.isSuccessful
+                        } == true
+                    if (!removed) {
+                        val fresh = fetchListItems(httpClient, gson, entityId)
+                        withContext(Dispatchers.Main) {
+                            pendingDeletes = pendingDeletes - current.uid
+                            if (fresh != null) items = fresh else restoreRow()
+                            showMessage(context.getString(R.string.error_move_remove_failed, targetName))
+                            onItemMoved(targetId)
+                        }
+                        return@withContext
+                    }
+
+                    withContext(Dispatchers.Main) {
+                        showMessage(context.getString(R.string.move_done, targetName))
+                        onChanged()
+                        onItemMoved(targetId)
+                    }
+                } catch (e: Exception) {
+                    Log.e("HAdo", "moveItem failed", e)
+                    withContext(Dispatchers.Main) {
+                        if (added) {
+                            showMessage(context.getString(R.string.error_move_remove_failed, targetName))
+                            onChanged()
+                            onItemMoved(targetId)
+                        } else {
+                            restoreRow()
+                            showError(R.string.error_move_failed)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     val pullToRefreshState = rememberPullToRefreshState()
     LaunchedEffect(pullToRefreshState.isRefreshing) {
         if (!pullToRefreshState.isRefreshing) return@LaunchedEffect
@@ -843,6 +977,12 @@ fun TodoListEditor(
             supportsDueDate = supportsDueDate,
             supportsDueDatetime = supportsDueDatetime,
             onDismiss = { detailItem = null },
+            onMoveToList = if (moveTargets.isNotEmpty() && supportsDelete && !item.uid.startsWith("temp_")) {
+                {
+                    detailItem = null
+                    moveCandidate = item
+                }
+            } else null,
             onSave = { updatedItem ->
                 // Optimistic UI update
                 items = items.map { if (it.uid == item.uid) updatedItem else it }
@@ -897,6 +1037,81 @@ fun TodoListEditor(
             }
         )
     }
+
+    moveCandidate?.let { item ->
+        MoveToListDialog(
+            context = context,
+            item = items.firstOrNull { it.uid == item.uid } ?: item,
+            targets = moveTargets,
+            onDismiss = { moveCandidate = null },
+            onPick = { target ->
+                moveCandidate = null
+                moveItem(item, target)
+            }
+        )
+    }
+}
+
+@Composable
+private fun MoveToListDialog(
+    context: Context,
+    item: TodoItem,
+    targets: List<HaState>,
+    onDismiss: () -> Unit,
+    onPick: (HaState) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.dialog_move_to_list_title)) },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
+                targets.forEach { target ->
+                    val features = target.attributes.supportedFeatures ?: 0
+                    val enabled = TodoListFeature.hasFeature(features, TodoListFeature.CREATE_TODO_ITEM)
+                    val losses = remember(item, features) { buildMovePayload(item, features).losses }
+                    val icon = remember(target.entityId) { ListIconManager.resolveIcon(context, target.entityId) }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(MaterialTheme.shapes.small)
+                            .clickable(enabled = enabled) { onPick(target) }
+                            .alpha(if (enabled) 1f else 0.38f)
+                            .defaultMinSize(minHeight = 48.dp)
+                            .padding(horizontal = 8.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        ListIconPreview(
+                            resolvedIcon = icon,
+                            size = 28.dp,
+                            modifier = Modifier.padding(end = 12.dp),
+                            emojiColor = MaterialTheme.colorScheme.onSurface,
+                            backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
+                            fallbackEmoji = "📋"
+                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = target.attributes.friendlyName ?: target.entityId,
+                                style = MaterialTheme.typography.bodyLarge,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            if (enabled && losses.isNotEmpty()) {
+                                Text(
+                                    text = losses.joinToString(" · ") { context.getString(it) },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+        }
+    )
 }
 
 /** Measured height of the laid-out row with [uid], or [fallbackPx] when it is off-screen. */
@@ -1209,6 +1424,62 @@ private fun resolveAddedItem(
     return resolved
 }
 
+/** Items of [entityId] from HA, or null when the request failed. */
+private fun fetchListItems(httpClient: WidgetHttpClient, gson: Gson, entityId: String): List<TodoItem>? {
+    val payload = gson.toJson(mapOf("entity_id" to entityId))
+    return httpClient.post("api/services/todo/get_items?return_response", payload)?.use { resp ->
+        val body = resp.body?.string()
+        if (resp.isSuccessful && body != null) parseItemsFromResponse(gson, body, entityId) else null
+    }
+}
+
+/** An item's fields reduced to what a target list supports, plus the captions for what is dropped. */
+internal data class MovePlan(
+    val description: String?,
+    /** Mapped due in the source format: `YYYY-MM-DD` when [dueIsDatetime] is false. */
+    val due: String?,
+    val dueIsDatetime: Boolean,
+    val markCompleted: Boolean,
+    /** String resource ids of the loss captions, in field order. */
+    val losses: List<Int>
+) {
+    /** Extra `todo.add_item` fields; HA rejects the whole call if one is unsupported by the target. */
+    fun haFields(): Map<String, String> = buildMap {
+        description?.let { put("description", it) }
+        due?.let { if (dueIsDatetime) put("due_datetime", it.replace("T", " ")) else put("due_date", it) }
+    }
+}
+
+internal fun buildMovePayload(item: TodoItem, targetFeatures: Int): MovePlan {
+    fun has(feature: Int) = TodoListFeature.hasFeature(targetFeatures, feature)
+    val losses = mutableListOf<Int>()
+
+    val description = item.description?.takeIf { it.isNotBlank() }
+    val keptDescription = if (description != null && !has(TodoListFeature.SET_DESCRIPTION_ON_ITEM)) {
+        losses += R.string.move_loss_description
+        null
+    } else description
+
+    var due: String? = null
+    var dueIsDatetime = false
+    val sourceDue = item.due?.takeIf { it.isNotBlank() }
+    if (sourceDue != null) {
+        val hasTime = sourceDue.contains("T") || (sourceDue.contains(" ") && sourceDue.length > 10)
+        val datePart = sourceDue.substringBefore("T").substringBefore(" ")
+        when {
+            hasTime && has(TodoListFeature.SET_DUE_DATETIME_ON_ITEM) -> { due = sourceDue; dueIsDatetime = true }
+            hasTime && has(TodoListFeature.SET_DUE_DATE_ON_ITEM) -> { due = datePart; losses += R.string.move_loss_time }
+            !hasTime && has(TodoListFeature.SET_DUE_DATE_ON_ITEM) -> due = datePart
+            else -> losses += R.string.move_loss_due
+        }
+    }
+
+    val markCompleted = item.isCompleted && has(TodoListFeature.UPDATE_TODO_ITEM)
+    if (item.isCompleted && !markCompleted) losses += R.string.move_loss_status
+
+    return MovePlan(keptDescription, due, dueIsDatetime, markCompleted, losses)
+}
+
 private fun parseItemsFromResponse(
     gson: Gson, json: String, entityId: String
 ): List<TodoItem> {
@@ -1254,7 +1525,8 @@ internal fun ItemDetailDialog(
     supportsDueDate: Boolean,
     supportsDueDatetime: Boolean,
     onDismiss: () -> Unit,
-    onSave: (TodoItem) -> Unit
+    onSave: (TodoItem) -> Unit,
+    onMoveToList: (() -> Unit)? = null
 ) {
     var summary by remember { mutableStateOf(item.summary) }
     var description by remember { mutableStateOf(item.description ?: "") }
@@ -1379,6 +1651,19 @@ internal fun ItemDetailDialog(
                                 )
                             }
                         }
+                    }
+                }
+
+                if (onMoveToList != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    TextButton(onClick = onMoveToList) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.DriveFileMove,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(stringResource(R.string.action_move_to_list))
                     }
                 }
             }

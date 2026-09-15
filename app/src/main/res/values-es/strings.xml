@@ -204,5 +204,14 @@
     <string name="error_add_failed">No se pudo añadir el elemento</string>
     <string name="error_toggle_failed">No se pudo actualizar el elemento</string>
     <string name="error_delete_failed">No se pudo eliminar el elemento</string>
+    <string name="action_move_to_list">Mover a lista</string>
+    <string name="dialog_move_to_list_title">Mover a lista</string>
+    <string name="move_done">Movido a %1$s</string>
+    <string name="error_move_failed">No se pudo mover el elemento</string>
+    <string name="error_move_remove_failed">Copiado a %1$s, pero no se pudo quitar de esta lista</string>
+    <string name="move_loss_description">Se perderá la descripción</string>
+    <string name="move_loss_time">Se perderá la hora</string>
+    <string name="move_loss_due">Se perderá la fecha de vencimiento</string>
+    <string name="move_loss_status">Se marcará como no completado</string>
     <string name="error_reorder_failed">No se pudo guardar el nuevo orden</string>
 </resources>

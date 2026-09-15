@@ -317,7 +317,9 @@ fun HomeScreen(
                                 if (pageList.entityId == uiState.selectedListId) {
                                     isAddInputFocused = isFocused
                                 }
-                            }
+                            },
+                            moveTargets = uiState.todoLists.filter { it.entityId != pageList.entityId },
+                            onItemMoved = { targetId -> viewModel.loadItems(targetId, force = true) }
                         )
                     }
                 }

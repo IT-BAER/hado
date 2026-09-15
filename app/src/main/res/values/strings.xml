@@ -207,5 +207,14 @@
     <string name="error_add_failed">Could not add the item</string>
     <string name="error_toggle_failed">Could not update the item</string>
     <string name="error_delete_failed">Could not delete the item</string>
+    <string name="action_move_to_list">Move to list</string>
+    <string name="dialog_move_to_list_title">Move to list</string>
+    <string name="move_done">Moved to %1$s</string>
+    <string name="error_move_failed">Could not move the item</string>
+    <string name="error_move_remove_failed">Copied to %1$s, but could not remove it from this list</string>
+    <string name="move_loss_description">Description will be lost</string>
+    <string name="move_loss_time">Time will be lost</string>
+    <string name="move_loss_due">Due date will be lost</string>
+    <string name="move_loss_status">Will be marked as not done</string>
     <string name="error_reorder_failed">Could not save the new order</string>
 </resources>

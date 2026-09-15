@@ -203,5 +203,14 @@
     <string name="error_add_failed">항목을 추가하지 못했습니다</string>
     <string name="error_toggle_failed">항목을 업데이트하지 못했습니다</string>
     <string name="error_delete_failed">항목을 삭제하지 못했습니다</string>
+    <string name="action_move_to_list">목록으로 이동</string>
+    <string name="dialog_move_to_list_title">목록으로 이동</string>
+    <string name="move_done">%1$s(으)로 이동했습니다</string>
+    <string name="error_move_failed">항목을 이동하지 못했습니다</string>
+    <string name="error_move_remove_failed">%1$s에 복사했지만 이 목록에서 제거하지 못했습니다</string>
+    <string name="move_loss_description">설명이 사라집니다</string>
+    <string name="move_loss_time">시간이 사라집니다</string>
+    <string name="move_loss_due">마감일이 사라집니다</string>
+    <string name="move_loss_status">미완료로 표시됩니다</string>
     <string name="error_reorder_failed">새 순서를 저장하지 못했습니다</string>
 </resources>

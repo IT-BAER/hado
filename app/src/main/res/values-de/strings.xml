@@ -204,5 +204,14 @@
     <string name="error_add_failed">Eintrag konnte nicht hinzugefügt werden</string>
     <string name="error_toggle_failed">Eintrag konnte nicht geändert werden</string>
     <string name="error_delete_failed">Eintrag konnte nicht gelöscht werden</string>
+    <string name="action_move_to_list">In Liste verschieben</string>
+    <string name="dialog_move_to_list_title">In Liste verschieben</string>
+    <string name="move_done">Nach %1$s verschoben</string>
+    <string name="error_move_failed">Eintrag konnte nicht verschoben werden</string>
+    <string name="error_move_remove_failed">Nach %1$s kopiert, aber konnte nicht aus dieser Liste entfernt werden</string>
+    <string name="move_loss_description">Beschreibung geht verloren</string>
+    <string name="move_loss_time">Uhrzeit geht verloren</string>
+    <string name="move_loss_due">Fälligkeitsdatum geht verloren</string>
+    <string name="move_loss_status">Wird als nicht erledigt markiert</string>
     <string name="error_reorder_failed">Neue Reihenfolge konnte nicht gespeichert werden</string>
 </resources>

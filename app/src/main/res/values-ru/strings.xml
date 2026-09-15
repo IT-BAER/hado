@@ -206,5 +206,14 @@
     <string name="error_add_failed">Не удалось добавить элемент</string>
     <string name="error_toggle_failed">Не удалось обновить элемент</string>
     <string name="error_delete_failed">Не удалось удалить элемент</string>
+    <string name="action_move_to_list">Переместить в список</string>
+    <string name="dialog_move_to_list_title">Переместить в список</string>
+    <string name="move_done">Перемещено в %1$s</string>
+    <string name="error_move_failed">Не удалось переместить элемент</string>
+    <string name="error_move_remove_failed">Скопировано в %1$s, но не удалось удалить из этого списка</string>
+    <string name="move_loss_description">Описание будет потеряно</string>
+    <string name="move_loss_time">Время будет потеряно</string>
+    <string name="move_loss_due">Срок будет потерян</string>
+    <string name="move_loss_status">Будет отмечено как невыполненное</string>
     <string name="error_reorder_failed">Не удалось сохранить новый порядок</string>
 </resources>

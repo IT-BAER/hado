@@ -204,5 +204,14 @@
     <string name="error_add_failed">Não foi possível adicionar o item</string>
     <string name="error_toggle_failed">Não foi possível atualizar o item</string>
     <string name="error_delete_failed">Não foi possível excluir o item</string>
+    <string name="action_move_to_list">Mover para lista</string>
+    <string name="dialog_move_to_list_title">Mover para lista</string>
+    <string name="move_done">Movido para %1$s</string>
+    <string name="error_move_failed">Não foi possível mover o item</string>
+    <string name="error_move_remove_failed">Copiado para %1$s, mas não foi possível removê-lo desta lista</string>
+    <string name="move_loss_description">A descrição será perdida</string>
+    <string name="move_loss_time">O horário será perdido</string>
+    <string name="move_loss_due">A data de vencimento será perdida</string>
+    <string name="move_loss_status">Será marcado como não concluído</string>
     <string name="error_reorder_failed">Não foi possível salvar a nova ordem</string>
 </resources>

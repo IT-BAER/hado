@@ -202,5 +202,14 @@
     <string name="error_add_failed">Item kon niet worden toegevoegd</string>
     <string name="error_toggle_failed">Item kon niet worden bijgewerkt</string>
     <string name="error_delete_failed">Item kon niet worden verwijderd</string>
+    <string name="action_move_to_list">Verplaatsen naar lijst</string>
+    <string name="dialog_move_to_list_title">Verplaatsen naar lijst</string>
+    <string name="move_done">Verplaatst naar %1$s</string>
+    <string name="error_move_failed">Item kon niet worden verplaatst</string>
+    <string name="error_move_remove_failed">Gekopieerd naar %1$s, maar kon niet uit deze lijst worden verwijderd</string>
+    <string name="move_loss_description">Beschrijving gaat verloren</string>
+    <string name="move_loss_time">Tijd gaat verloren</string>
+    <string name="move_loss_due">Vervaldatum gaat verloren</string>
+    <string name="move_loss_status">Wordt gemarkeerd als niet voltooid</string>
     <string name="error_reorder_failed">Nieuwe volgorde kon niet worden opgeslagen</string>
 </resources>
