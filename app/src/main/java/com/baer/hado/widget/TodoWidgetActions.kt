@@ -110,23 +110,26 @@ class ToggleItemAction : ActionCallback {
 
         val newStatus = if (wasCompleted) "needs_action" else "completed"
         val tokenManager = TokenManager(context)
+        val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(glanceId)
+        val accountId = WidgetSettingsManager.accountIdFor(context, appWidgetId, tokenManager)
         val newItemStatus = if (wasCompleted) TodoItemStatus.NEEDS_ACTION else TodoItemStatus.COMPLETED
         val previousItemStatus = if (wasCompleted) TodoItemStatus.COMPLETED else TodoItemStatus.NEEDS_ACTION
 
         // Apply state immediately and lock the item while HA sync is in flight.
-        updateItemUiInWidgets(context, entityId, itemUid, status = newItemStatus, pending = true)
+        updateItemUiInWidgets(context, tokenManager, accountId, entityId, itemUid, status = newItemStatus, pending = true)
 
         withContext(Dispatchers.IO) {
             try {
                 if (tokenManager.isDemoMode) {
                     LocalTodoStore(context).updateItemStatus(entityId, itemUid, newStatus == "completed")
                 } else {
+                    checkNotNull(accountId) { "Widget server was removed" }
                     val payload = Gson().toJson(mapOf(
                         "entity_id" to entityId,
                         "item" to itemUid,
                         "status" to newStatus
                     ))
-                    val httpClient = WidgetHttpClient(context)
+                    val httpClient = WidgetHttpClient(context, accountId)
                     val response = httpClient.post("api/services/todo/update_item", payload)
                     val wasSuccessful = response?.use { it.isSuccessful } ?: false
                     if (!wasSuccessful) {
@@ -135,12 +138,12 @@ class ToggleItemAction : ActionCallback {
                 }
 
                 waitForMinimumToggleLock(actionStartedAt)
-                updateItemUiInWidgets(context, entityId, itemUid, pending = false)
+                updateItemUiInWidgets(context, tokenManager, accountId, entityId, itemUid, pending = false)
                 TodoWidgetWorker.enqueueOneTime(context)
             } catch (e: Exception) {
                 Log.w("HAdo", "Widget toggle sync failed, reverting optimistic state", e)
                 waitForMinimumToggleLock(actionStartedAt)
-                updateItemUiInWidgets(context, entityId, itemUid, status = previousItemStatus, pending = false)
+                updateItemUiInWidgets(context, tokenManager, accountId, entityId, itemUid, status = previousItemStatus, pending = false)
             }
         }
     }
@@ -155,6 +158,8 @@ class ToggleItemAction : ActionCallback {
 
     private suspend fun updateItemUiInWidgets(
         context: Context,
+        tokenManager: TokenManager,
+        accountId: String?,
         entityId: String,
         itemUid: String,
         status: TodoItemStatus? = null,
@@ -167,6 +172,11 @@ class ToggleItemAction : ActionCallback {
         val pendingKey = pendingToggleKey(entityId, itemUid)
 
         widgetManager.getGlanceIds(TodoWidget::class.java).forEach { widgetId ->
+            // Same entity id on another server is a different list.
+            val widgetAccountId = WidgetSettingsManager.accountIdFor(
+                context, widgetManager.getAppWidgetId(widgetId), tokenManager
+            )
+            if (widgetAccountId != accountId) return@forEach
             updateAppWidgetState(context, widgetId) { prefs ->
                 val listsJson = prefs[TodoWidgetKeys.ALL_LISTS_KEY] ?: "[]"
                 if (status != null) {

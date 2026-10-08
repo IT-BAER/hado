@@ -38,11 +38,11 @@ class TodoWidgetWorker @AssistedInject constructor(
             .getInt(KEY_INPUT_APP_WIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
             .takeIf { it != AppWidgetManager.INVALID_APPWIDGET_ID }
 
-        val allLists = if (tokenManager.isDemoMode) {
-            fetchLocalModeLists()
-        } else {
-            fetchHaLists() ?: return Result.retry()
-        }
+        val isLocalMode = tokenManager.isDemoMode
+        val localLists = if (isLocalMode) fetchLocalModeLists() else null
+        // One fetch per server; a null value marks a failed fetch.
+        val listsByAccount = mutableMapOf<String, List<WidgetListData>?>()
+        var anyFetchFailed = false
 
         // Build GlanceId → appWidgetId mapping
         val manager = GlanceAppWidgetManager(context)
@@ -56,15 +56,32 @@ class TodoWidgetWorker @AssistedInject constructor(
 
         // Update each widget instance with per-widget filtered data
         for ((glanceId, appWidgetId) in targetWidgets) {
-            val settings = WidgetSettingsManager.load(context, appWidgetId)
+            val savedSettings = WidgetSettingsManager.load(context, appWidgetId)
+            val accountId = if (isLocalMode) null else tokenManager.resolveWidgetAccountId(savedSettings.accountId)
+            val settings = savedSettings.copy(accountId = accountId)
+            val allLists = when {
+                localLists != null -> localLists
+                // The widget's server was removed: show no lists instead of another server's data.
+                accountId == null -> emptyList()
+                accountId in listsByAccount -> listsByAccount[accountId]
+                else -> fetchHaLists(context, WidgetHttpClient(context, accountId))
+                    .also { listsByAccount[accountId] = it }
+            }
+            if (allLists == null) {
+                anyFetchFailed = true
+                continue
+            }
 
             updateAppWidgetState(context, glanceId) { prefs ->
                 prefs[TodoWidgetKeys.ALL_LISTS_KEY] = gson.toJson(allLists)
                 prefs[TodoWidgetKeys.SETTINGS_JSON_KEY] = gson.toJson(settings)
                 prefs[TodoWidgetKeys.APP_WIDGET_ID_KEY] = appWidgetId.toString()
+                prefs[TodoWidgetKeys.SERVER_REMOVED_KEY] = localLists == null && accountId == null
             }
             TodoWidget().update(context, glanceId)
         }
+        // Retry before re-chaining: a REPLACE enqueue under this work's own name would cancel the retry.
+        if (anyFetchFailed) return Result.retry()
 
         if (inputData.getBoolean(KEY_INPUT_IS_CHAIN, false) &&
             targetAppWidgetId != null &&
@@ -108,71 +125,77 @@ class TodoWidgetWorker @AssistedInject constructor(
         }
     }
 
-    private fun fetchHaLists(): List<WidgetListData>? {
-        val httpClient = WidgetHttpClient(context)
+    companion object {
+        /**
+         * Fetches all to-do lists with items from [httpClient]'s server; null when the server is unreachable.
+         * [strict] also returns null when one list's items fail, instead of showing that list empty.
+         */
+        fun fetchHaLists(context: Context, httpClient: WidgetHttpClient, strict: Boolean = false): List<WidgetListData>? {
+            val gson = Gson()
 
-        val statesResponse = httpClient.get("api/states") ?: return null
-        val statesJson = statesResponse.use { resp ->
-            if (!resp.isSuccessful) return null
-            resp.body?.string() ?: return null
+            val statesResponse = httpClient.get("api/states") ?: return null
+            val statesJson = statesResponse.use { resp ->
+                if (!resp.isSuccessful) return null
+                resp.body?.string() ?: return null
+            }
+
+            val statesType = object : TypeToken<List<SimpleState>>() {}.type
+            val states: List<SimpleState> = gson.fromJson(statesJson, statesType)
+            val todoEntities = states.filter { it.entity_id.startsWith("todo.") }
+
+            val allLists = mutableListOf<WidgetListData>()
+            for (entity in todoEntities) {
+                val friendlyName = entity.attributes?.get("friendly_name") as? String
+                    ?: entity.entity_id
+                val haIcon = entity.attributes?.get("icon") as? String
+                val supportedFeatures = (entity.attributes?.get("supported_features") as? Number)?.toInt()
+
+                val payload = gson.toJson(mapOf("entity_id" to entity.entity_id))
+                val items = try {
+                    val response = httpClient.post(
+                        "api/services/todo/get_items?return_response", payload
+                    )
+                    response?.use { resp ->
+                        if (!resp.isSuccessful) return@use null
+                        val body = resp.body?.string() ?: return@use null
+                        parseItems(gson, body, entity.entity_id)
+                    }
+                } catch (_: Exception) {
+                    null
+                } ?: if (strict) return null else emptyList()
+
+                val resolved = ListIconManager.resolveIcon(
+                    context, TokenManager.scopedKey(httpClient.accountId, entity.entity_id), haIcon
+                )
+                allLists.add(
+                    WidgetListData(
+                        entityId = entity.entity_id,
+                        name = friendlyName,
+                        items = items,
+                        iconType = resolved?.type?.name?.lowercase(),
+                        iconValue = resolved?.value,
+                        supportedFeatures = supportedFeatures
+                    )
+                )
+            }
+            return allLists
         }
 
-        val statesType = object : TypeToken<List<SimpleState>>() {}.type
-        val states: List<SimpleState> = gson.fromJson(statesJson, statesType)
-        val todoEntities = states.filter { it.entity_id.startsWith("todo.") }
-
-        val allLists = mutableListOf<WidgetListData>()
-        for (entity in todoEntities) {
-            val friendlyName = entity.attributes?.get("friendly_name") as? String
-                ?: entity.entity_id
-            val haIcon = entity.attributes?.get("icon") as? String
-            val supportedFeatures = (entity.attributes?.get("supported_features") as? Number)?.toInt()
-
-            val payload = gson.toJson(mapOf("entity_id" to entity.entity_id))
-            val items = try {
-                val response = httpClient.post(
-                    "api/services/todo/get_items?return_response", payload
-                )
-                response?.use { resp ->
-                    if (!resp.isSuccessful) return@use emptyList()
-                    val body = resp.body?.string() ?: return@use emptyList()
-                    parseItems(body, entity.entity_id)
-                } ?: emptyList()
+        private fun parseItems(gson: Gson, json: String, entityId: String): List<TodoItem> {
+            return try {
+                val type = object : TypeToken<Map<String, Any>>() {}.type
+                val root: Map<String, Any> = gson.fromJson(json, type)
+                val serviceResponse = root["service_response"] as? Map<*, *> ?: root
+                val entityData = serviceResponse[entityId] as? Map<*, *> ?: return emptyList()
+                val itemsList = entityData["items"] ?: return emptyList()
+                val itemsJson = gson.toJson(itemsList)
+                val itemsType = object : TypeToken<List<TodoItem>>() {}.type
+                gson.fromJson(itemsJson, itemsType)
             } catch (_: Exception) {
                 emptyList()
             }
-
-            val resolved = ListIconManager.resolveIcon(context, entity.entity_id, haIcon)
-            allLists.add(
-                WidgetListData(
-                    entityId = entity.entity_id,
-                    name = friendlyName,
-                    items = items,
-                    iconType = resolved?.type?.name?.lowercase(),
-                    iconValue = resolved?.value,
-                    supportedFeatures = supportedFeatures
-                )
-            )
         }
-        return allLists
-    }
 
-    private fun parseItems(json: String, entityId: String): List<TodoItem> {
-        return try {
-            val type = object : TypeToken<Map<String, Any>>() {}.type
-            val root: Map<String, Any> = gson.fromJson(json, type)
-            val serviceResponse = root["service_response"] as? Map<*, *> ?: root
-            val entityData = serviceResponse[entityId] as? Map<*, *> ?: return emptyList()
-            val itemsList = entityData["items"] ?: return emptyList()
-            val itemsJson = gson.toJson(itemsList)
-            val itemsType = object : TypeToken<List<TodoItem>>() {}.type
-            gson.fromJson(itemsJson, itemsType)
-        } catch (_: Exception) {
-            emptyList()
-        }
-    }
-
-    companion object {
         private const val LEGACY_WORK_NAME_PERIODIC = "todo_widget_sync"
         private const val WORK_NAME_PERIODIC_PREFIX = "todo_widget_sync_"
         private const val WORK_NAME_ONETIME = "todo_widget_refresh"

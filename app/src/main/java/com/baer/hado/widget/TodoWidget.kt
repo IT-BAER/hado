@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.ColorFilter
 import androidx.glance.GlanceId
@@ -41,6 +42,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextDecoration
 import androidx.glance.text.TextStyle
 import com.baer.hado.R
+import com.baer.hado.data.local.TokenManager
 import com.baer.hado.data.model.TodoItem
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -154,12 +156,13 @@ class TodoWidget : GlanceAppWidget() {
                         )
                         Spacer(GlanceModifier.width(6.dp))
                         Text(
-                            text = LocalContext.current.getString(R.string.app_name),
+                            text = settings.customTitle.ifBlank { LocalContext.current.getString(R.string.app_name) },
                             style = TextStyle(
                                 fontWeight = FontWeight.Bold,
                                 fontSize = settings.fontSize.titleSp.sp,
                                 color = GlanceTheme.colors.onSurface
-                            )
+                            ),
+                            maxLines = 1
                         )
                     }
                     Image(
@@ -179,7 +182,10 @@ class TodoWidget : GlanceAppWidget() {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = LocalContext.current.getString(R.string.widget_no_lists),
+                        text = LocalContext.current.getString(
+                            if (prefs[TodoWidgetKeys.SERVER_REMOVED_KEY] == true) R.string.widget_server_removed
+                            else R.string.widget_no_lists
+                        ),
                         style = TextStyle(
                             color = GlanceTheme.colors.onSurfaceVariant,
                             fontSize = settings.fontSize.itemSp.sp
@@ -190,7 +196,7 @@ class TodoWidget : GlanceAppWidget() {
                 val rows = mutableListOf<WidgetRow>()
                 val anyListHasIcon = settings.showListIcons && lists.any { list ->
                     (list.iconType != null && list.iconValue != null) ||
-                        ListIconManager.resolveIcon(context, list.entityId) != null
+                        ListIconManager.resolveIcon(context, TokenManager.scopedKey(settings.accountId, list.entityId)) != null
                 }
                 lists.forEachIndexed { index, list ->
                     rows.add(WidgetRow.Header(list.entityId, list.name, list.iconType, list.iconValue, list.supportedFeatures, isFirstHeader = index == 0))
@@ -232,7 +238,7 @@ class TodoWidget : GlanceAppWidget() {
         val iconSize = (settings.fontSize.titleSp * 1.4f).dp
         val context = LocalContext.current
         val fallbackIcon = if (settings.showListIcons && (iconType == null || iconValue == null)) {
-            ListIconManager.resolveIcon(context, entityId)
+            ListIconManager.resolveIcon(context, TokenManager.scopedKey(settings.accountId, entityId))
         } else {
             null
         }
@@ -286,7 +292,7 @@ class TodoWidget : GlanceAppWidget() {
                         )
                         Spacer(GlanceModifier.width(6.dp))
                     } else {
-                        val defaultIcon = ListIconManager.resolveIcon(context, entityId)
+                        val defaultIcon = ListIconManager.resolveIcon(context, TokenManager.scopedKey(settings.accountId, entityId))
                         if (defaultIcon?.type == ListIconManager.IconType.EMOJI) {
                             Text(
                                 text = defaultIcon.value,
@@ -498,6 +504,7 @@ object TodoWidgetKeys {
     val PENDING_TOGGLE_IDS_KEY = stringPreferencesKey("widget_pending_toggle_ids")
     val SETTINGS_JSON_KEY = stringPreferencesKey("widget_settings_json")
     val APP_WIDGET_ID_KEY = stringPreferencesKey("widget_app_widget_id")
+    val SERVER_REMOVED_KEY = booleanPreferencesKey("widget_server_removed")
 }
 
 fun pendingToggleKey(entityId: String, itemUid: String): String = "$entityId|$itemUid"

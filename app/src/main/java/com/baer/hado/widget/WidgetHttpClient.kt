@@ -23,8 +23,9 @@ import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Shared OkHttp client for widget code that handles token refresh on 401.
+ * Talks to [accountId]'s server, or to the active server when it is null.
  */
-class WidgetHttpClient(context: Context) {
+class WidgetHttpClient(context: Context, accountId: String? = null) {
 
     data class CurrentUserInfo(
         val id: String,
@@ -32,14 +33,17 @@ class WidgetHttpClient(context: Context) {
     )
 
     private val tokenManager = TokenManager(context)
+    private val account: TokenManager.Account? = tokenManager.account(accountId)
     private val client = OkHttpClient()
     private val gson = Gson()
 
-    val serverUrl: String? get() = tokenManager.serverUrl
-    val accessToken: String? get() = tokenManager.accessToken
-    val isLoggedIn: Boolean get() = tokenManager.isLoggedIn
+    /** Resolved account, or null when the requested account no longer exists. */
+    val accountId: String? get() = account?.id
+    val serverUrl: String? get() = account?.serverUrl
+    val accessToken: String? get() = account?.accessToken
+    val isLoggedIn: Boolean get() = tokenManager.isDemoMode || account?.isLoggedIn == true
 
-    fun hasRemoteSession(): Boolean = tokenManager.serverUrl != null && tokenManager.accessToken != null
+    fun hasRemoteSession(): Boolean = account?.isLoggedIn == true
 
     fun get(path: String): Response? {
         val url = buildUrl(path) ?: return null
@@ -55,14 +59,14 @@ class WidgetHttpClient(context: Context) {
     }
 
     private fun buildUrl(path: String): String? {
-        val base = tokenManager.serverUrl ?: return null
+        val base = account?.serverUrl ?: return null
         return "${base.trimEnd('/')}/$path"
     }
 
     private fun buildRequest(url: String): Request.Builder {
         return Request.Builder()
             .url(url)
-            .addHeader("Authorization", "Bearer ${tokenManager.accessToken}")
+            .addHeader("Authorization", "Bearer ${account?.accessToken}")
     }
 
     /**
@@ -70,8 +74,9 @@ class WidgetHttpClient(context: Context) {
      * avoiding 401 responses that trigger HA "invalid authentication" warnings.
      */
     private fun ensureFreshToken() {
-        val expiresIn = tokenManager.tokenExpiry - System.currentTimeMillis()
-        if (expiresIn < 60_000 && tokenManager.refreshToken != null) {
+        val account = account ?: return
+        val expiresIn = account.tokenExpiry - System.currentTimeMillis()
+        if (expiresIn < 60_000 && account.refreshToken != null) {
             Log.d("HAdo", "Token expires in ${expiresIn / 1000}s, proactively refreshing")
             refreshAccessToken()
         }
@@ -83,10 +88,10 @@ class WidgetHttpClient(context: Context) {
             // Rebuild request with (possibly refreshed) token
             val currentRequest = request.newBuilder()
                 .removeHeader("Authorization")
-                .addHeader("Authorization", "Bearer ${tokenManager.accessToken}")
+                .addHeader("Authorization", "Bearer ${account?.accessToken}")
                 .build()
             val response = client.newCall(currentRequest).execute()
-            if (response.code == 401 && tokenManager.refreshToken != null) {
+            if (response.code == 401 && account?.refreshToken != null) {
                 Log.w("HAdo", "Got 401 for ${request.url}, attempting token refresh")
                 response.close()
                 if (refreshAccessToken()) {
@@ -94,7 +99,7 @@ class WidgetHttpClient(context: Context) {
                     // Retry with new token
                     val retryRequest = request.newBuilder()
                         .removeHeader("Authorization")
-                        .addHeader("Authorization", "Bearer ${tokenManager.accessToken}")
+                        .addHeader("Authorization", "Bearer ${account.accessToken}")
                         .build()
                     client.newCall(retryRequest).execute()
                 } else {
@@ -111,8 +116,9 @@ class WidgetHttpClient(context: Context) {
     }
 
     private fun refreshAccessToken(): Boolean {
-        val serverUrl = tokenManager.serverUrl ?: return false
-        val refreshToken = tokenManager.refreshToken ?: return false
+        val account = account ?: return false
+        val serverUrl = account.serverUrl ?: return false
+        val refreshToken = account.refreshToken ?: return false
 
         return try {
             val formBody = okhttp3.FormBody.Builder()
@@ -138,12 +144,11 @@ class WidgetHttpClient(context: Context) {
             response.close()
 
             val tokenResponse = gson.fromJson(body, RefreshTokenResponse::class.java)
-            tokenManager.accessToken = tokenResponse.accessToken
-            if (tokenResponse.refreshToken != null) {
-                tokenManager.refreshToken = tokenResponse.refreshToken
-            }
-            tokenManager.tokenExpiry =
-                System.currentTimeMillis() + (tokenResponse.expiresIn * 1000)
+            account.setTokens(
+                accessToken = tokenResponse.accessToken,
+                refreshToken = tokenResponse.refreshToken ?: refreshToken,
+                expiresAtMillis = System.currentTimeMillis() + (tokenResponse.expiresIn * 1000)
+            )
             true
         } catch (_: Exception) {
             false
@@ -195,9 +200,10 @@ class WidgetHttpClient(context: Context) {
     }
 
     fun getCurrentUserInfo(): CurrentUserInfo? {
-        val base = tokenManager.serverUrl ?: return null
+        val account = account ?: return null
+        val base = account.serverUrl ?: return null
         ensureFreshToken()
-        val token = tokenManager.accessToken ?: return null
+        val token = account.accessToken ?: return null
         val wsUrl = base.trimEnd('/')
             .replaceFirst("https://", "wss://")
             .replaceFirst("http://", "ws://") + "/api/websocket"
@@ -271,9 +277,10 @@ class WidgetHttpClient(context: Context) {
         commandName: String,
         commandBuilder: (Int) -> Any
     ): Boolean {
-        val base = tokenManager.serverUrl ?: return false
+        val account = account ?: return false
+        val base = account.serverUrl ?: return false
         ensureFreshToken()
-        val token = tokenManager.accessToken ?: return false
+        val token = account.accessToken ?: return false
         val wsUrl = base.trimEnd('/')
             .replaceFirst("https://", "wss://")
             .replaceFirst("http://", "ws://") + "/api/websocket"

@@ -10,6 +10,7 @@ import com.baer.hado.data.model.HaState
 import com.baer.hado.data.model.TodoItem
 import com.baer.hado.data.repository.AuthRepository
 import com.baer.hado.data.repository.TodoRepository
+import com.baer.hado.notifications.OverdueNotificationScheduler
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,7 +32,12 @@ data class HomeUiState(
     val isLoadingLists: Boolean = false,
     val error: String? = null,
     val isLoggedOut: Boolean = false,
-    val isLocalMode: Boolean = false
+    val isLocalMode: Boolean = false,
+    /** id to display name of every HA server, in settings order. */
+    val servers: List<Pair<String, String>> = emptyList(),
+    val activeServerId: String? = null,
+    /** Set when the active server changed and the screen must reload. */
+    val serverChanged: Boolean = false
 ) {
     fun itemsFor(entityId: String?): List<TodoItem> {
         return entityId?.let { itemsByList[it] }.orEmpty()
@@ -53,9 +59,15 @@ class HomeViewModel @Inject constructor(
         private const val KEY_LIST_ORDER = "list_order_json"
     }
 
+    private val listOrderKey: String
+        get() = TokenManager.scopedKey(
+            if (tokenManager.isDemoMode) null else tokenManager.activeAccountId,
+            KEY_LIST_ORDER
+        )
+
     private fun loadSavedOrder(): List<String> {
         val json = appContext.getSharedPreferences(LIST_ORDER_PREFS, Context.MODE_PRIVATE)
-            .getString(KEY_LIST_ORDER, null) ?: return emptyList()
+            .getString(listOrderKey, null) ?: return emptyList()
         return try {
             Gson().fromJson(json, object : TypeToken<List<String>>() {}.type)
         } catch (_: Exception) {
@@ -66,7 +78,7 @@ class HomeViewModel @Inject constructor(
     private fun saveOrder(order: List<String>) {
         appContext.getSharedPreferences(LIST_ORDER_PREFS, Context.MODE_PRIVATE)
             .edit()
-            .putString(KEY_LIST_ORDER, Gson().toJson(order))
+            .putString(listOrderKey, Gson().toJson(order))
             .apply()
     }
 
@@ -95,7 +107,16 @@ class HomeViewModel @Inject constructor(
 
     init {
         _uiState.value = _uiState.value.copy(isLocalMode = tokenManager.isDemoMode)
+        refreshServers()
         loadTodoLists()
+    }
+
+    /** Settings can rename or remove servers while Home stays on the back stack. */
+    fun refreshServers() {
+        _uiState.value = _uiState.value.copy(
+            servers = tokenManager.accounts.map { it.id to it.displayName },
+            activeServerId = tokenManager.activeAccountId.takeUnless { tokenManager.isDemoMode }
+        )
     }
 
     fun loadTodoLists() {
@@ -281,7 +302,19 @@ class HomeViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(isLoggedOut = true)
     }
 
+    fun switchServer(accountId: String) {
+        if (accountId == tokenManager.activeAccountId) return
+        tokenManager.activeAccountId = accountId
+        OverdueNotificationScheduler.reschedule(appContext)
+        _uiState.value = _uiState.value.copy(serverChanged = true)
+    }
+
     private fun handleUnauthorized(isLoadingLists: Boolean = _uiState.value.isLoadingLists) {
+        // Another server stays signed in: drop only the rejected one and reload.
+        if (!tokenManager.isDemoMode && !authRepository.removeActiveAccount()) {
+            _uiState.value = _uiState.value.copy(serverChanged = true)
+            return
+        }
         authRepository.logout()
         _uiState.value = _uiState.value.copy(
             isLoadingLists = isLoadingLists,

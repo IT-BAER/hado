@@ -3,6 +3,7 @@ package com.baer.hado.widget
 import android.content.Context
 import androidx.annotation.StringRes
 import com.baer.hado.R
+import com.baer.hado.data.local.TokenManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
@@ -22,7 +23,9 @@ data class WidgetSettings(
     val showTitle: Boolean = true,  // show HAdo icon + title bar
     val showListIcons: Boolean = true,
     val autoFocusOnOpen: Boolean = false,
-    val listOrder: List<String> = emptyList() // entity IDs in display order
+    val listOrder: List<String> = emptyList(), // entity IDs in display order
+    val customTitle: String = "", // blank = app name
+    val accountId: String? = null // HA server; null = primary server (widgets from before multi-server)
 ) {
     enum class FontSize(@StringRes val labelResId: Int, val titleSp: Float, val itemSp: Float, val headerSp: Float) {
         SMALL(R.string.font_small, 15f, 14f, 12f),
@@ -54,6 +57,8 @@ object WidgetSettingsManager {
     private const val KEY_SHOW_LIST_ICONS = "show_list_icons_"
     private const val KEY_AUTO_FOCUS_ON_OPEN = "auto_focus_on_open_"
     private const val KEY_LIST_ORDER = "list_order_json_"
+    private const val KEY_CUSTOM_TITLE = "custom_title_"
+    private const val KEY_ACCOUNT_ID = "account_id_"
     private const val LEGACY_GLOBAL_REFRESH_INTERVAL = "refresh_interval"
 
     private fun prefs(context: Context) =
@@ -110,7 +115,9 @@ object WidgetSettingsManager {
                 val json = p.getString("$KEY_LIST_ORDER$appWidgetId", null)
                 if (json.isNullOrEmpty()) emptyList()
                 else Gson().fromJson(json, object : TypeToken<List<String>>() {}.type)
-            } catch (_: Exception) { emptyList() }
+            } catch (_: Exception) { emptyList() },
+            customTitle = p.getString("$KEY_CUSTOM_TITLE$appWidgetId", "") ?: "",
+            accountId = p.getString("$KEY_ACCOUNT_ID$appWidgetId", null)
         )
     }
 
@@ -128,9 +135,18 @@ object WidgetSettingsManager {
             putBoolean("$KEY_SHOW_LIST_ICONS$appWidgetId", settings.showListIcons)
             putBoolean("$KEY_AUTO_FOCUS_ON_OPEN$appWidgetId", settings.autoFocusOnOpen)
             putString("$KEY_LIST_ORDER$appWidgetId", Gson().toJson(settings.listOrder))
+            putString("$KEY_CUSTOM_TITLE$appWidgetId", settings.customTitle.trim())
+            putString("$KEY_ACCOUNT_ID$appWidgetId", settings.accountId)
             apply()
         }
     }
+
+    /** The widget's HA server, or null when that server was removed or Local Mode is on. */
+    fun accountIdFor(
+        context: Context,
+        appWidgetId: Int,
+        tokenManager: TokenManager = TokenManager(context)
+    ): String? = tokenManager.resolveWidgetAccountId(load(context, appWidgetId).accountId)
 
     fun delete(context: Context, appWidgetId: Int) {
         prefs(context).edit().apply {
@@ -147,6 +163,8 @@ object WidgetSettingsManager {
             remove("$KEY_SHOW_LIST_ICONS$appWidgetId")
             remove("$KEY_AUTO_FOCUS_ON_OPEN$appWidgetId")
             remove("$KEY_LIST_ORDER$appWidgetId")
+            remove("$KEY_CUSTOM_TITLE$appWidgetId")
+            remove("$KEY_ACCOUNT_ID$appWidgetId")
             apply()
         }
     }

@@ -15,6 +15,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,6 +38,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Refresh
@@ -45,6 +47,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
@@ -89,6 +93,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.baer.hado.R
+import com.baer.hado.data.local.TokenManager
 import com.baer.hado.data.model.TodoItem
 import com.baer.hado.ui.theme.AppSpacing
 import com.baer.hado.widget.ListIconManager
@@ -102,6 +107,8 @@ import kotlinx.coroutines.flow.collectLatest
 fun HomeScreen(
     onLoggedOut: () -> Unit,
     onOpenSettings: () -> Unit,
+    onAccountChanged: () -> Unit,
+    onAddServer: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -112,6 +119,7 @@ fun HomeScreen(
     var showNewListDialog by remember { mutableStateOf(false) }
     var showDeleteListDialog by remember { mutableStateOf(false) }
     var showSupportDialog by remember { mutableStateOf(false) }
+    var showServerMenu by remember { mutableStateOf(false) }
     val selectedList = uiState.todoLists.find { it.entityId == uiState.selectedListId }
     val selectedListIndex = uiState.todoLists.indexOfFirst { it.entityId == uiState.selectedListId }
         .let { index -> if (index >= 0) index else 0 }
@@ -142,6 +150,14 @@ fun HomeScreen(
         if (uiState.isLoggedOut) onLoggedOut()
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.refreshServers()
+    }
+
+    LaunchedEffect(uiState.serverChanged) {
+        if (uiState.serverChanged) onAccountChanged()
+    }
+
     LaunchedEffect(uiState.error) {
         uiState.error?.let {
             snackbarHostState.showSnackbar(it)
@@ -161,10 +177,61 @@ fun HomeScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        text = stringResource(R.string.app_name),
-                        style = MaterialTheme.typography.titleLarge
-                    )
+                    if (uiState.servers.size > 1) {
+                        Box {
+                            Row(
+                                modifier = Modifier
+                                    .clip(MaterialTheme.shapes.small)
+                                    .clickable { showServerMenu = true },
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = uiState.servers.firstOrNull { it.first == uiState.activeServerId }?.second
+                                        ?: stringResource(R.string.app_name),
+                                    style = MaterialTheme.typography.titleLarge,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Icon(
+                                    Icons.Default.ArrowDropDown,
+                                    contentDescription = stringResource(R.string.cd_switch_server)
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = showServerMenu,
+                                onDismissRequest = { showServerMenu = false }
+                            ) {
+                                uiState.servers.forEach { (id, name) ->
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                text = name,
+                                                color = if (id == uiState.activeServerId) MaterialTheme.colorScheme.primary
+                                                else MaterialTheme.colorScheme.onSurface
+                                            )
+                                        },
+                                        onClick = {
+                                            showServerMenu = false
+                                            viewModel.switchServer(id)
+                                        }
+                                    )
+                                }
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.action_add_server)) },
+                                    leadingIcon = { Icon(Icons.Default.Add, contentDescription = null) },
+                                    onClick = {
+                                        showServerMenu = false
+                                        onAddServer()
+                                    }
+                                )
+                            }
+                        }
+                    } else {
+                        Text(
+                            text = stringResource(R.string.app_name),
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
@@ -211,6 +278,7 @@ fun HomeScreen(
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.cardGap)) {
                     HomeOverviewCard(
+                        accountId = uiState.activeServerId,
                         listEntityId = selectedList?.entityId,
                         listName = selectedListName,
                         activeCount = activeCount,
@@ -489,6 +557,7 @@ private fun ListSelector(
 
 @Composable
 private fun HomeOverviewCard(
+    accountId: String?,
     listEntityId: String?,
     listName: String?,
     activeCount: Int,
@@ -500,7 +569,7 @@ private fun HomeOverviewCard(
     val context = LocalContext.current
     val totalCount = activeCount + completedCount
     val resolvedIcon = remember(listEntityId) {
-        listEntityId?.let { entityId -> ListIconManager.resolveIcon(context, entityId) }
+        listEntityId?.let { entityId -> ListIconManager.resolveIcon(context, TokenManager.scopedKey(accountId, entityId)) }
     }
 
     Card(

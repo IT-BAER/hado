@@ -214,4 +214,20 @@
     <string name="move_loss_due">A data de vencimento será perdida</string>
     <string name="move_loss_status">Será marcado como não concluído</string>
     <string name="error_reorder_failed">Não foi possível salvar a nova ordem</string>
+    <string name="login_add_server_title">Adicionar outro servidor do Home Assistant</string>
+    <string name="cd_switch_server">Trocar de servidor</string>
+    <string name="action_add_server">Adicionar servidor</string>
+    <string name="section_server">Servidor</string>
+    <string name="settings_widget_title">Título do widget</string>
+    <string name="section_servers">Servidores</string>
+    <string name="label_server_active">Ativo</string>
+    <string name="settings_add_server_supporting">Entrar em outra instância do Home Assistant</string>
+    <string name="dialog_server_title">Servidor</string>
+    <string name="label_server_name">Nome</string>
+    <string name="action_sign_out_server">Sair deste servidor</string>
+    <string name="action_use_server">Usar este servidor</string>
+    <string name="dialog_sign_out_server_title">Sair de %1$s?</string>
+    <string name="dialog_sign_out_server_message">Widgets que usam este servidor ficam vazios até você escolher outro servidor nas configurações deles.</string>
+    <string name="action_sign_out">Sair</string>
+    <string name="widget_server_removed">Servidor removido. Escolha um servidor nas configurações do widget.</string>
 </resources>

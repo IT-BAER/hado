@@ -45,12 +45,18 @@ class ItemDetailActivity : ComponentActivity() {
             }
         }
 
-        if (entityId.isNullOrBlank() || original == null) {
+        val tokenManager = TokenManager(this)
+        val isLocalMode = tokenManager.isDemoMode
+        val accountId = targetAppWidgetId?.let { WidgetSettingsManager.accountIdFor(this, it, tokenManager) }
+
+        // A widget whose server was removed must not fall back to another server.
+        if (entityId.isNullOrBlank() || original == null ||
+            (targetAppWidgetId != null && !isLocalMode && accountId == null)
+        ) {
             finish()
             return
         }
 
-        val isLocalMode = TokenManager(this).isDemoMode
         val supportsDescription = TodoListFeature.hasFeature(supportedFeatures, TodoListFeature.SET_DESCRIPTION_ON_ITEM)
         val supportsDueDate = TodoListFeature.hasFeature(supportedFeatures, TodoListFeature.SET_DUE_DATE_ON_ITEM)
         val supportsDueDatetime = TodoListFeature.hasFeature(supportedFeatures, TodoListFeature.SET_DUE_DATETIME_ON_ITEM)
@@ -65,7 +71,7 @@ class ItemDetailActivity : ComponentActivity() {
                     supportsDueDatetime = supportsDueDatetime,
                     onDismiss = { finish() },
                     onSave = { updated ->
-                        persist(entityId, original, updated, isLocalMode, targetAppWidgetId)
+                        persist(entityId, original, updated, isLocalMode, accountId, targetAppWidgetId)
                         finish()
                     }
                 )
@@ -78,12 +84,13 @@ class ItemDetailActivity : ComponentActivity() {
         original: TodoItem,
         updated: TodoItem,
         isLocalMode: Boolean,
+        accountId: String?,
         appWidgetId: Int?
     ) {
         val appContext = applicationContext
         saveScope.launch {
             // Optimistic: reflect the edit in any widget showing this list right away.
-            WidgetStateMutator.updateItem(appContext, entityId, updated, appWidgetId)
+            WidgetStateMutator.updateItem(appContext, accountId, entityId, updated, appWidgetId)
 
             if (isLocalMode) {
                 LocalTodoStore(appContext).updateItemDetails(
@@ -113,7 +120,7 @@ class ItemDetailActivity : ComponentActivity() {
                 }
                 if (body.size > 2) {
                     val payload = Gson().toJson(body)
-                    WidgetHttpClient(appContext).post("api/services/todo/update_item", payload)?.close()
+                    WidgetHttpClient(appContext, accountId).post("api/services/todo/update_item", payload)?.close()
                 }
             }
 

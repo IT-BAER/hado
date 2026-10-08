@@ -213,4 +213,20 @@
     <string name="move_loss_due">期限は失われます</string>
     <string name="move_loss_status">未完了としてマークされます</string>
     <string name="error_reorder_failed">新しい並び順を保存できませんでした</string>
+    <string name="login_add_server_title">別の Home Assistant サーバーを追加</string>
+    <string name="cd_switch_server">サーバーを切り替え</string>
+    <string name="action_add_server">サーバーを追加</string>
+    <string name="section_server">サーバー</string>
+    <string name="settings_widget_title">ウィジェットのタイトル</string>
+    <string name="section_servers">サーバー</string>
+    <string name="label_server_active">使用中</string>
+    <string name="settings_add_server_supporting">別の Home Assistant インスタンスにサインイン</string>
+    <string name="dialog_server_title">サーバー</string>
+    <string name="label_server_name">名前</string>
+    <string name="action_sign_out_server">このサーバーからサインアウト</string>
+    <string name="action_use_server">このサーバーを使用</string>
+    <string name="dialog_sign_out_server_title">%1$s からサインアウトしますか？</string>
+    <string name="dialog_sign_out_server_message">このサーバーを使うウィジェットは、設定で別のサーバーを選ぶまで空のままです。</string>
+    <string name="action_sign_out">サインアウト</string>
+    <string name="widget_server_removed">サーバーが削除されました。ウィジェット設定でサーバーを選んでください。</string>
 </resources>

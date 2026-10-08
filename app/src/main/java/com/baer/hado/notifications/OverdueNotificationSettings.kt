@@ -3,6 +3,7 @@ package com.baer.hado.notifications
 import android.content.Context
 import androidx.annotation.StringRes
 import com.baer.hado.R
+import com.baer.hado.data.local.TokenManager
 
 data class OverdueNotificationSettings(
     val enabled: Boolean = false,
@@ -49,7 +50,8 @@ object OverdueNotificationSettingsManager {
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-    fun load(context: Context): OverdueNotificationSettings {
+    /** [accountId] picks that server's list selection (null = primary server or Local Mode). */
+    fun load(context: Context, accountId: String? = null): OverdueNotificationSettings {
         val preferences = prefs(context)
         return OverdueNotificationSettings(
             enabled = preferences.getBoolean(KEY_ENABLED, false),
@@ -59,19 +61,21 @@ object OverdueNotificationSettingsManager {
             cadence = preferences.getString(KEY_CADENCE, null)
                 ?.let(::reminderCadenceOrNull)
                 ?: OverdueNotificationSettings.ReminderCadence.ONCE,
-            selectedListIds = preferences.getStringSet(KEY_SELECTED_LIST_IDS, emptySet()) ?: emptySet()
+            selectedListIds = preferences.getStringSet(selectedListIdsKey(accountId), emptySet()) ?: emptySet()
         )
     }
 
-    fun save(context: Context, settings: OverdueNotificationSettings) {
+    fun save(context: Context, settings: OverdueNotificationSettings, accountId: String? = null) {
         prefs(context).edit().apply {
             putBoolean(KEY_ENABLED, settings.enabled)
             putString(KEY_TIMING, settings.timing.name)
             putString(KEY_CADENCE, settings.cadence.name)
-            putStringSet(KEY_SELECTED_LIST_IDS, settings.selectedListIds)
+            putStringSet(selectedListIdsKey(accountId), settings.selectedListIds)
             apply()
         }
     }
+
+    private fun selectedListIdsKey(accountId: String?) = TokenManager.scopedKey(accountId, KEY_SELECTED_LIST_IDS)
 
     fun clear(context: Context) {
         prefs(context).edit().clear().apply()

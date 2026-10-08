@@ -21,7 +21,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lock
@@ -57,6 +60,7 @@ import com.baer.hado.widget.ListIconHaSyncManager
 import com.baer.hado.widget.ListIconManager
 import com.baer.hado.widget.ListIconPickerDialog
 import com.baer.hado.widget.ListIconPreview
+import com.baer.hado.widget.TodoWidgetWorker
 import com.baer.hado.widget.WidgetHttpClient
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -103,14 +107,21 @@ private val appLanguageOptions = listOf(
 @Composable
 fun AppSettingsScreen(
     onBack: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onAccountChanged: () -> Unit,
+    onAddServer: () -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val tokenManager = remember { TokenManager(context) }
+    // Icons and notification list choices belong to the server shown in the app.
+    val activeAccountId = remember { if (tokenManager.isDemoMode) null else tokenManager.activeAccountId }
+    var servers by remember { mutableStateOf(tokenManager.accounts.map { it.id to it.displayName }) }
+    var editServerId by remember { mutableStateOf<String?>(null) }
     var selectedLanguageTag by remember { mutableStateOf(currentAppLanguageTag(context)) }
     var showLanguageDialog by remember { mutableStateOf(false) }
     var notificationSettings by remember {
-        mutableStateOf(OverdueNotificationSettingsManager.load(context))
+        mutableStateOf(OverdueNotificationSettingsManager.load(context, activeAccountId))
     }
     var notificationPermissionDenied by remember { mutableStateOf(false) }
     var showTimingDialog by remember { mutableStateOf(false) }
@@ -126,7 +137,7 @@ fun AppSettingsScreen(
         if (granted) {
             notificationPermissionDenied = false
             notificationSettings = notificationSettings.copy(enabled = true)
-            OverdueNotificationSettingsManager.save(context, notificationSettings)
+            OverdueNotificationSettingsManager.save(context, notificationSettings, activeAccountId)
             OverdueNotificationScheduler.reschedule(context)
         } else {
             notificationPermissionDenied = true
@@ -149,7 +160,7 @@ fun AppSettingsScreen(
         if (validSelectedIds == notificationSettings.selectedListIds) return@LaunchedEffect
 
         notificationSettings = notificationSettings.copy(selectedListIds = validSelectedIds)
-        OverdueNotificationSettingsManager.save(context, notificationSettings)
+        OverdueNotificationSettingsManager.save(context, notificationSettings, activeAccountId)
         OverdueNotificationScheduler.reschedule(context)
     }
 
@@ -184,7 +195,7 @@ fun AppSettingsScreen(
         ) {
             Spacer(Modifier.height(4.dp))
 
-            if (TokenManager(context).isDemoMode) {
+            if (tokenManager.isDemoMode) {
                 Card(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.tertiaryContainer
@@ -213,7 +224,7 @@ fun AppSettingsScreen(
                     }
                 }
             } else if (availableLists.isNotEmpty()) {
-                AppListIconsSection(availableLists = availableLists)
+                AppListIconsSection(availableLists = availableLists, accountId = activeAccountId)
             }
 
             SettingsSection(title = stringResource(R.string.section_behavior)) {
@@ -309,7 +320,7 @@ fun AppSettingsScreen(
                             if (hasNotificationPermission(context)) {
                                 notificationPermissionDenied = false
                                 notificationSettings = notificationSettings.copy(enabled = true)
-                                OverdueNotificationSettingsManager.save(context, notificationSettings)
+                                OverdueNotificationSettingsManager.save(context, notificationSettings, activeAccountId)
                                 OverdueNotificationScheduler.reschedule(context)
                             } else {
                                 notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -317,7 +328,7 @@ fun AppSettingsScreen(
                         } else {
                             notificationPermissionDenied = false
                             notificationSettings = notificationSettings.copy(enabled = false)
-                            OverdueNotificationSettingsManager.save(context, notificationSettings)
+                            OverdueNotificationSettingsManager.save(context, notificationSettings, activeAccountId)
                             OverdueNotificationScheduler.reschedule(context)
                         }
                     },
@@ -385,13 +396,48 @@ fun AppSettingsScreen(
                 }
             }
 
+            if (!tokenManager.isDemoMode) {
+                SettingsSection(title = stringResource(R.string.section_servers)) {
+                    servers.forEach { (id, name) ->
+                        val isActive = id == activeAccountId
+                        SettingsItem(
+                            headline = name,
+                            supporting = tokenManager.account(id)?.serverUrl,
+                            trailingText = if (isActive) stringResource(R.string.label_server_active) else null,
+                            onClick = { editServerId = id },
+                            leadingContent = {
+                                Icon(
+                                    if (isActive) Icons.Default.CheckCircle else Icons.Default.Dns,
+                                    contentDescription = null,
+                                    tint = if (isActive) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        )
+                        HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
+                    }
+                    SettingsItem(
+                        headline = stringResource(R.string.action_add_server),
+                        supporting = stringResource(R.string.settings_add_server_supporting),
+                        onClick = onAddServer,
+                        leadingContent = {
+                            Icon(
+                                Icons.Default.Add,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    )
+                }
+            }
+
             SettingsSection(title = stringResource(R.string.section_account)) {
                 SettingsItem(
                     headline = stringResource(R.string.action_logout),
                     headlineColor = MaterialTheme.colorScheme.error,
                     supporting = stringResource(R.string.settings_logout_supporting),
                     onClick = {
-                        TokenManager(context).clearAll()
+                        tokenManager.clearAll()
                         OverdueNotificationScheduler.cancelAll(context)
                         onLogout()
                     },
@@ -469,7 +515,7 @@ fun AppSettingsScreen(
             onDismiss = { showTimingDialog = false },
             onSelected = { timing ->
                 notificationSettings = notificationSettings.copy(timing = timing)
-                OverdueNotificationSettingsManager.save(context, notificationSettings)
+                OverdueNotificationSettingsManager.save(context, notificationSettings, activeAccountId)
                 OverdueNotificationScheduler.reschedule(context)
                 showTimingDialog = false
             }
@@ -485,9 +531,48 @@ fun AppSettingsScreen(
             onDismiss = { showCadenceDialog = false },
             onSelected = { cadence ->
                 notificationSettings = notificationSettings.copy(cadence = cadence)
-                OverdueNotificationSettingsManager.save(context, notificationSettings)
+                OverdueNotificationSettingsManager.save(context, notificationSettings, activeAccountId)
                 OverdueNotificationScheduler.reschedule(context)
                 showCadenceDialog = false
+            }
+        )
+    }
+
+    editServerId?.let { id ->
+        val account = tokenManager.account(id) ?: return@let
+        ServerDialog(
+            initialName = account.name.orEmpty(),
+            displayName = account.displayName,
+            serverUrl = account.serverUrl.orEmpty(),
+            isActive = id == activeAccountId,
+            onDismiss = { editServerId = null },
+            onSave = { name ->
+                account.name = name
+                servers = tokenManager.accounts.map { it.id to it.displayName }
+                TodoWidgetWorker.enqueueOneTime(context)
+                editServerId = null
+            },
+            onUse = { name ->
+                account.name = name
+                tokenManager.activeAccountId = id
+                OverdueNotificationScheduler.reschedule(context)
+                editServerId = null
+                onAccountChanged()
+            },
+            onSignOut = {
+                editServerId = null
+                if (tokenManager.removeAccount(id)) {
+                    OverdueNotificationScheduler.cancelAll(context)
+                    onLogout()
+                } else {
+                    OverdueNotificationScheduler.reschedule(context)
+                    TodoWidgetWorker.enqueueOneTime(context)
+                    if (id == activeAccountId) {
+                        onAccountChanged()
+                    } else {
+                        servers = tokenManager.accounts.map { it.id to it.displayName }
+                    }
+                }
             }
         )
     }
@@ -499,12 +584,92 @@ fun AppSettingsScreen(
             onDismiss = { showNotificationListsDialog = false },
             onSave = { selectedIds ->
                 notificationSettings = notificationSettings.copy(selectedListIds = selectedIds)
-                OverdueNotificationSettingsManager.save(context, notificationSettings)
+                OverdueNotificationSettingsManager.save(context, notificationSettings, activeAccountId)
                 OverdueNotificationScheduler.reschedule(context)
                 showNotificationListsDialog = false
             }
         )
     }
+}
+
+@Composable
+private fun ServerDialog(
+    initialName: String,
+    displayName: String,
+    serverUrl: String,
+    isActive: Boolean,
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit,
+    onUse: (String) -> Unit,
+    onSignOut: () -> Unit
+) {
+    var name by remember { mutableStateOf(initialName) }
+    var confirmSignOut by remember { mutableStateOf(false) }
+    if (confirmSignOut) {
+        AlertDialog(
+            onDismissRequest = { confirmSignOut = false },
+            title = {
+                Text(stringResource(R.string.dialog_sign_out_server_title, displayName))
+            },
+            text = { Text(stringResource(R.string.dialog_sign_out_server_message)) },
+            confirmButton = {
+                TextButton(onClick = onSignOut) {
+                    Text(stringResource(R.string.action_sign_out), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmSignOut = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
+        )
+        return
+    }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.dialog_server_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = serverUrl,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text(stringResource(R.string.label_server_name)) },
+                    placeholder = { Text(Uri.parse(serverUrl).host.orEmpty()) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { onSave(name.trim()) }),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                TextButton(onClick = { confirmSignOut = true }) {
+                    Text(
+                        text = stringResource(R.string.action_sign_out_server),
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            if (isActive) {
+                TextButton(onClick = { onSave(name.trim()) }) {
+                    Text(stringResource(R.string.action_save))
+                }
+            } else {
+                TextButton(onClick = { onUse(name.trim()) }) {
+                    Text(stringResource(R.string.action_use_server))
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = if (isActive) onDismiss else { { onSave(name.trim()) } }) {
+                Text(stringResource(if (isActive) R.string.action_cancel else R.string.action_save))
+            }
+        }
+    )
 }
 
 private fun notificationListSummary(
@@ -647,7 +812,8 @@ private fun AboutSection() {
 
 @Composable
 private fun AppListIconsSection(
-    availableLists: List<Triple<String, String, String?>>
+    availableLists: List<Triple<String, String, String?>>,
+    accountId: String?
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -662,9 +828,10 @@ private fun AppListIconsSection(
 
     LaunchedEffect(context) {
         syncAvailability = withContext(Dispatchers.IO) {
-            ListIconHaSyncManager.getSyncAvailability(context)
+            ListIconHaSyncManager.getSyncAvailability(context, accountId)
         }
     }
+    fun iconKey(entityId: String) = TokenManager.scopedKey(accountId, entityId)
 
     var pendingImageEntityId by remember { mutableStateOf<String?>(null) }
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -672,11 +839,11 @@ private fun AppListIconsSection(
     ) { uri: Uri? ->
         val entityId = pendingImageEntityId
         if (uri != null && entityId != null) {
-            val saved = ListIconManager.setImage(context, entityId, uri)
+            val saved = ListIconManager.setImage(context, iconKey(entityId), uri)
             if (saved) {
                 iconVersion++
                 scope.launch(Dispatchers.IO) {
-                    ListIconHaSyncManager.restoreOriginalIconIfNeeded(context, entityId)
+                    ListIconHaSyncManager.restoreOriginalIconIfNeeded(context, accountId, entityId)
                 }
             }
             iconDialogEntityId = null
@@ -696,7 +863,7 @@ private fun AppListIconsSection(
 
         availableLists.forEach { (entityId, name, haIcon) ->
             val resolved = remember(entityId, iconVersion) {
-                ListIconManager.resolveIcon(context, entityId, haIcon)
+                ListIconManager.resolveIcon(context, iconKey(entityId), haIcon)
             }
 
             SettingsItem(
@@ -735,11 +902,12 @@ private fun AppListIconsSection(
             onMdiPicked = { mdiIcon ->
                 val entityId = iconDialogEntityId!!
                 val currentHaIcon = iconDialogHaIcon
-                ListIconManager.setMdi(context, entityId, mdiIcon)
+                ListIconManager.setMdi(context, iconKey(entityId), mdiIcon)
                 iconVersion++
                 scope.launch(Dispatchers.IO) {
                     ListIconHaSyncManager.syncMdiOverride(
                         context = context,
+                        accountId = accountId,
                         entityId = entityId,
                         mdiIcon = mdiIcon,
                         currentHaIcon = currentHaIcon
@@ -750,11 +918,12 @@ private fun AppListIconsSection(
             onEmojiPicked = { emoji ->
                 val entityId = iconDialogEntityId!!
                 val currentHaIcon = iconDialogHaIcon
-                ListIconManager.setEmoji(context, entityId, emoji)
+                ListIconManager.setEmoji(context, iconKey(entityId), emoji)
                 iconVersion++
                 scope.launch(Dispatchers.IO) {
                     ListIconHaSyncManager.syncEmojiOverride(
                         context = context,
+                        accountId = accountId,
                         entityId = entityId,
                         emoji = emoji,
                         currentHaIcon = currentHaIcon
@@ -769,10 +938,10 @@ private fun AppListIconsSection(
             },
             onClear = {
                 val entityId = iconDialogEntityId!!
-                ListIconManager.clearIcon(context, entityId)
+                ListIconManager.clearIcon(context, iconKey(entityId))
                 iconVersion++
                 scope.launch(Dispatchers.IO) {
-                    ListIconHaSyncManager.restoreOriginalIconIfNeeded(context, entityId)
+                    ListIconHaSyncManager.restoreOriginalIconIfNeeded(context, accountId, entityId)
                 }
                 iconDialogEntityId = null
                 iconDialogResolvedIcon = null

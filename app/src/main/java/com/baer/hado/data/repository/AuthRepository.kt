@@ -8,6 +8,7 @@ import com.baer.hado.data.api.TokenRefreshInterceptor.Companion.AUTH_REDIRECT_UR
 import com.baer.hado.data.local.TokenManager
 import com.baer.hado.data.model.TokenResponse
 import com.baer.hado.notifications.OverdueNotificationScheduler
+import com.baer.hado.widget.TodoWidgetWorker
 import dagger.hilt.android.qualifiers.ApplicationContext
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -44,11 +45,12 @@ class AuthRepository @Inject constructor(
                 clientId = AUTH_CLIENT_ID
             )
 
-            tokenManager.serverUrl = serverUrl.trimEnd('/')
-            tokenManager.accessToken = response.accessToken
-            tokenManager.refreshToken = response.refreshToken
-            tokenManager.tokenExpiry =
-                System.currentTimeMillis() + (response.expiresIn * 1000)
+            tokenManager.addOrUpdateAccount(
+                serverUrl = serverUrl,
+                accessToken = response.accessToken,
+                refreshToken = response.refreshToken,
+                expiresAtMillis = System.currentTimeMillis() + (response.expiresIn * 1000)
+            )
 
             Result.success(response)
         } catch (e: Exception) {
@@ -59,6 +61,18 @@ class AuthRepository @Inject constructor(
     fun logout() {
         tokenManager.clearAll()
         OverdueNotificationScheduler.cancelAll(context)
+    }
+
+    /** Signs out of the active server only. Returns true when no server is left. */
+    fun removeActiveAccount(): Boolean {
+        val allGone = tokenManager.removeAccount(tokenManager.activeAccountId)
+        if (allGone) {
+            OverdueNotificationScheduler.cancelAll(context)
+        } else {
+            OverdueNotificationScheduler.reschedule(context)
+            TodoWidgetWorker.enqueueOneTime(context)
+        }
+        return allGone
     }
 
     val isLoggedIn: Boolean get() = tokenManager.isLoggedIn

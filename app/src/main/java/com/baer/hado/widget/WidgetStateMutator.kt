@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.updateAppWidgetState
 import com.baer.hado.data.local.AddItemPosition
+import com.baer.hado.data.local.TokenManager
 import com.baer.hado.data.model.TodoItem
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -15,12 +16,13 @@ object WidgetStateMutator {
 
     suspend fun addItem(
         context: Context,
+        accountId: String?,
         entityId: String,
         item: TodoItem,
         position: AddItemPosition = AddItemPosition.TOP,
         preferredAppWidgetId: Int? = null
     ): Set<Int> {
-        return mutateMatchingWidgets(context, entityId, preferredAppWidgetId) { list ->
+        return mutateMatchingWidgets(context, accountId, entityId, preferredAppWidgetId) { list ->
             val filtered = list.items.filterNot { it.uid == item.uid }
             when (position) {
                 AddItemPosition.TOP -> list.copy(items = listOf(item) + filtered)
@@ -32,17 +34,19 @@ object WidgetStateMutator {
     /** Replaces an existing item in place across widgets showing [entityId] (optimistic detail edit). */
     suspend fun updateItem(
         context: Context,
+        accountId: String?,
         entityId: String,
         item: TodoItem,
         preferredAppWidgetId: Int? = null
     ): Set<Int> {
-        return mutateMatchingWidgets(context, entityId, preferredAppWidgetId) { list ->
+        return mutateMatchingWidgets(context, accountId, entityId, preferredAppWidgetId) { list ->
             list.copy(items = list.items.map { if (it.uid == item.uid) item else it })
         }
     }
 
     private suspend fun mutateMatchingWidgets(
         context: Context,
+        accountId: String?,
         entityId: String,
         preferredAppWidgetId: Int?,
         transform: (WidgetListData) -> WidgetListData
@@ -57,8 +61,13 @@ object WidgetStateMutator {
             glanceToWidgetId
         }
 
+        val tokenManager = TokenManager(context)
         val affectedWidgetIds = linkedSetOf<Int>()
         for ((glanceId, appWidgetId) in orderedTargets) {
+            // Same entity id on another server is a different list.
+            if (!tokenManager.isDemoMode &&
+                WidgetSettingsManager.accountIdFor(context, appWidgetId, tokenManager) != accountId
+            ) continue
             var updated = false
             updateAppWidgetState(context, glanceId) { prefs ->
                 val listsJson = prefs[TodoWidgetKeys.ALL_LISTS_KEY] ?: return@updateAppWidgetState

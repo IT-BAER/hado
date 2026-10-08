@@ -8,10 +8,12 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.baer.hado.data.local.LocalTodoStore
 import com.baer.hado.data.local.TokenManager
-import com.baer.hado.data.model.HaState
 import com.baer.hado.data.model.TodoItem
-import com.baer.hado.data.repository.TodoRepository
+import com.baer.hado.widget.TodoWidgetWorker
+import com.baer.hado.widget.WidgetHttpClient
+import com.baer.hado.widget.WidgetListData
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import java.time.LocalDate
@@ -21,8 +23,7 @@ import java.time.LocalDateTime
 class OverdueNotificationWorker @AssistedInject constructor(
     @Assisted private val appContext: Context,
     @Assisted workerParams: WorkerParameters,
-    private val tokenManager: TokenManager,
-    private val todoRepository: TodoRepository
+    private val tokenManager: TokenManager
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
@@ -32,33 +33,42 @@ class OverdueNotificationWorker @AssistedInject constructor(
             return Result.success()
         }
 
-        val lists = todoRepository.getTodoLists().getOrElse {
-            return Result.retry()
-        }.filterSelected(settings)
-
-        val snapshots = buildListSnapshots(lists) ?: return Result.retry()
-        val now = LocalDateTime.now()
-        val activeEntries = snapshots.flatMap { snapshot ->
-            snapshot.items
-                .filter { !it.isCompleted && !it.due.isNullOrBlank() }
-                .map { item ->
-                    NotificationEntry(
-                        listId = snapshot.list.entityId,
-                        listName = snapshot.list.attributes.friendlyName ?: snapshot.list.entityId,
-                        item = item
-                    )
+        // Every signed-in server is checked; Local Mode has a single local "server" (null).
+        val accountIds: List<String?> = if (tokenManager.isDemoMode) listOf(null) else tokenManager.accountIds
+        var anyFetchFailed = false
+        var anyFetchSucceeded = false
+        val activeEntries = mutableListOf<NotificationEntry>()
+        for (accountId in accountIds) {
+            val lists = fetchLists(accountId)
+            if (lists == null) {
+                anyFetchFailed = true
+                continue
+            }
+            anyFetchSucceeded = true
+            val selectedListIds = OverdueNotificationSettingsManager.load(appContext, accountId).selectedListIds
+            lists
+                .filter { selectedListIds.isEmpty() || it.entityId in selectedListIds }
+                .forEach { list ->
+                    list.items
+                        .filter { !it.isCompleted && !it.due.isNullOrBlank() }
+                        .mapTo(activeEntries) { item ->
+                            NotificationEntry(
+                                accountId = accountId,
+                                listId = list.entityId,
+                                listName = list.name,
+                                item = item
+                            )
+                        }
                 }
         }
+        if (!anyFetchSucceeded) return Result.retry()
+        val now = LocalDateTime.now()
 
-        val activeBaseKeys = activeEntries.mapTo(mutableSetOf()) { entry ->
-            OverdueNotificationStateStore.baseKey(
-                listId = entry.listId,
-                itemUid = entry.item.uid,
-                dueValue = entry.item.due.orEmpty(),
-                timing = settings.timing
-            )
+        // An unreachable server's items are unknown; pruning now would re-send its reminders later.
+        if (!anyFetchFailed) {
+            val activeBaseKeys = activeEntries.mapTo(mutableSetOf()) { entry -> baseKey(entry, settings) }
+            OverdueNotificationStateStore.prune(appContext, activeBaseKeys)
         }
-        OverdueNotificationStateStore.prune(appContext, activeBaseKeys)
 
         val dueNow = activeEntries.filter { entry -> shouldNotifyNow(entry, settings, now) }
         if (dueNow.isNotEmpty()) {
@@ -67,6 +77,7 @@ class OverdueNotificationWorker @AssistedInject constructor(
                 items = dueNow.map { entry ->
                     OverdueNotificationItem(
                         notificationId = notificationIdFor(entry, settings),
+                        accountId = entry.accountId,
                         listId = entry.listId,
                         listName = entry.listName,
                         itemUid = entry.item.uid,
@@ -85,15 +96,19 @@ class OverdueNotificationWorker @AssistedInject constructor(
         return Result.success()
     }
 
-    private suspend fun buildListSnapshots(lists: List<HaState>): List<ListSnapshot>? {
-        val snapshots = mutableListOf<ListSnapshot>()
-        for (list in lists) {
-            val items = todoRepository.getTodoItems(list.entityId).getOrElse {
-                return null
+    /** All lists with items for one server, or null when that server could not be read completely. */
+    private fun fetchLists(accountId: String?): List<WidgetListData>? {
+        if (accountId == null) {
+            val localStore = LocalTodoStore(appContext)
+            return localStore.getLists().map { list ->
+                WidgetListData(
+                    entityId = list.entityId,
+                    name = list.attributes.friendlyName ?: list.entityId,
+                    items = localStore.getItems(list.entityId)
+                )
             }
-            snapshots += ListSnapshot(list = list, items = items)
         }
-        return snapshots
+        return TodoWidgetWorker.fetchHaLists(appContext, WidgetHttpClient(appContext, accountId), strict = true)
     }
 
     private fun shouldNotifyNow(
@@ -173,7 +188,7 @@ class OverdueNotificationWorker @AssistedInject constructor(
         settings: OverdueNotificationSettings
     ): String {
         return OverdueNotificationStateStore.baseKey(
-            listId = entry.listId,
+            listId = TokenManager.scopedKey(entry.accountId, entry.listId),
             itemUid = entry.item.uid,
             dueValue = entry.item.due.orEmpty(),
             timing = settings.timing
@@ -213,13 +228,6 @@ class OverdueNotificationWorker @AssistedInject constructor(
         return now.toLocalDate().plusDays(1).atTime(9, 0)
     }
 
-    private fun List<HaState>.filterSelected(
-        settings: OverdueNotificationSettings
-    ): List<HaState> {
-        if (settings.selectedListIds.isEmpty()) return this
-        return filter { it.entityId in settings.selectedListIds }
-    }
-
     private fun hasNotificationPermission(context: Context): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true
         return ContextCompat.checkSelfPermission(
@@ -228,12 +236,8 @@ class OverdueNotificationWorker @AssistedInject constructor(
         ) == PackageManager.PERMISSION_GRANTED
     }
 
-    private data class ListSnapshot(
-        val list: HaState,
-        val items: List<TodoItem>
-    )
-
     private data class NotificationEntry(
+        val accountId: String?,
         val listId: String,
         val listName: String,
         val item: TodoItem

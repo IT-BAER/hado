@@ -1,6 +1,7 @@
 package com.baer.hado.ui.login
 
 import android.content.Context
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.baer.hado.data.local.TokenManager
@@ -26,14 +27,18 @@ data class LoginUiState(
 class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val tokenManager: TokenManager,
-    @ApplicationContext private val appContext: Context
+    @ApplicationContext private val appContext: Context,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+
+    /** True when an already signed-in user adds another server. */
+    val isAddServerMode: Boolean = savedStateHandle.get<Boolean>(ARG_ADD_SERVER) ?: false
 
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
     init {
-        if (authRepository.isLoggedIn) {
+        if (authRepository.isLoggedIn && !isAddServerMode) {
             _uiState.value = _uiState.value.copy(isAuthenticated = true)
         }
     }
@@ -125,10 +130,12 @@ class LoginViewModel @Inject constructor(
             "https://$url"
         } else url
 
-        tokenManager.serverUrl = normalizedUrl.trimEnd('/')
-        tokenManager.accessToken = token
-        tokenManager.refreshToken = null
-        tokenManager.tokenExpiry = System.currentTimeMillis() + (315360000L * 1000)
+        tokenManager.addOrUpdateAccount(
+            serverUrl = normalizedUrl,
+            accessToken = token,
+            refreshToken = null,
+            expiresAtMillis = System.currentTimeMillis() + (315360000L * 1000)
+        )
         OverdueNotificationScheduler.reschedule(appContext)
 
         _uiState.value = _uiState.value.copy(isAuthenticated = true)
@@ -146,5 +153,9 @@ class LoginViewModel @Inject constructor(
         tokenManager.isDemoMode = true
         OverdueNotificationScheduler.reschedule(appContext)
         _uiState.value = _uiState.value.copy(isAuthenticated = true)
+    }
+
+    companion object {
+        const val ARG_ADD_SERVER = "add"
     }
 }

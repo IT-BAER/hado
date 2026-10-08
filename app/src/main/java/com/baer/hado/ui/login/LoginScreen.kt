@@ -59,6 +59,7 @@ import com.baer.hado.ui.theme.AppSpacing
 @Composable
 fun LoginScreen(
     onAuthenticated: () -> Unit,
+    onCancel: (() -> Unit)? = null,
     viewModel: LoginViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -112,6 +113,8 @@ fun LoginScreen(
                 },
                 onSaveToken = { viewModel.saveWithToken() },
                 onTryDemo = { viewModel.enterDemoMode() },
+                isAddServerMode = viewModel.isAddServerMode,
+                onCancel = onCancel,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
@@ -128,6 +131,8 @@ private fun LoginForm(
     onConnectOAuth: () -> Unit,
     onSaveToken: () -> Unit,
     onTryDemo: () -> Unit,
+    isAddServerMode: Boolean = false,
+    onCancel: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var showTokenSection by remember { mutableStateOf(uiState.token.isNotBlank()) }
@@ -164,7 +169,7 @@ private fun LoginForm(
             )
 
             Text(
-                text = stringResource(R.string.app_subtitle),
+                text = stringResource(if (isAddServerMode) R.string.login_add_server_title else R.string.app_subtitle),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -305,7 +310,16 @@ private fun LoginForm(
             )
         }
 
-        Card(
+        if (onCancel != null) {
+            OutlinedButton(
+                onClick = onCancel,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(stringResource(R.string.action_cancel))
+            }
+        }
+
+        if (!isAddServerMode) Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.tertiaryContainer

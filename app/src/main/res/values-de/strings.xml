@@ -214,4 +214,20 @@
     <string name="move_loss_due">Fälligkeitsdatum geht verloren</string>
     <string name="move_loss_status">Wird als nicht erledigt markiert</string>
     <string name="error_reorder_failed">Neue Reihenfolge konnte nicht gespeichert werden</string>
+    <string name="login_add_server_title">Weiteren Home-Assistant-Server hinzufügen</string>
+    <string name="cd_switch_server">Server wechseln</string>
+    <string name="action_add_server">Server hinzufügen</string>
+    <string name="section_server">Server</string>
+    <string name="settings_widget_title">Widget-Titel</string>
+    <string name="section_servers">Server</string>
+    <string name="label_server_active">Aktiv</string>
+    <string name="settings_add_server_supporting">Bei einer weiteren Home-Assistant-Instanz anmelden</string>
+    <string name="dialog_server_title">Server</string>
+    <string name="label_server_name">Name</string>
+    <string name="action_sign_out_server">Von diesem Server abmelden</string>
+    <string name="action_use_server">Diesen Server verwenden</string>
+    <string name="dialog_sign_out_server_title">Von %1$s abmelden?</string>
+    <string name="dialog_sign_out_server_message">Widgets mit diesem Server bleiben leer, bis in ihren Einstellungen ein anderer Server gewählt wird.</string>
+    <string name="action_sign_out">Abmelden</string>
+    <string name="widget_server_removed">Server entfernt. Server in den Widget-Einstellungen wählen.</string>
 </resources>

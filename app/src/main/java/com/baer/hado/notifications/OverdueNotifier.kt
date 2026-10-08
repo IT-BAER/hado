@@ -14,6 +14,7 @@ import com.baer.hado.ui.MainActivity
 
 data class OverdueNotificationItem(
     val notificationId: Int,
+    val accountId: String?,
     val listId: String,
     val listName: String,
     val itemUid: String,
@@ -114,6 +115,7 @@ object OverdueNotifier {
     ): PendingIntent {
         val intent = Intent(context, OverdueNotificationActionReceiver::class.java).apply {
             this.action = action
+            putExtra(OverdueNotificationActionReceiver.EXTRA_ACCOUNT_ID, item.accountId)
             putExtra(OverdueNotificationActionReceiver.EXTRA_LIST_ID, item.listId)
             putExtra(OverdueNotificationActionReceiver.EXTRA_LIST_NAME, item.listName)
             putExtra(OverdueNotificationActionReceiver.EXTRA_ITEM_UID, item.itemUid)

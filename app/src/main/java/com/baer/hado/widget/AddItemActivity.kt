@@ -112,8 +112,10 @@ class AddItemActivity : ComponentActivity() {
             .takeIf { it != AppWidgetManager.INVALID_APPWIDGET_ID }
         val tokenManager = TokenManager(this)
         val isLocalMode = tokenManager.isDemoMode
+        val accountId = targetAppWidgetId?.let { WidgetSettingsManager.accountIdFor(this, it, tokenManager) }
 
-        if (entityId.isNullOrBlank()) {
+        // A widget whose server was removed must not fall back to another server.
+        if (entityId.isNullOrBlank() || (targetAppWidgetId != null && !isLocalMode && accountId == null)) {
             finish()
             return
         }
@@ -125,7 +127,7 @@ class AddItemActivity : ComponentActivity() {
                     entityId = entityId,
                     listName = listName,
                     supportedFeatures = supportedFeatures,
-                    httpClient = WidgetHttpClient(this),
+                    httpClient = WidgetHttpClient(this, accountId),
                     isLocalMode = isLocalMode,
                     showOpenAppAction = !launchedFromApp,
                     onBack = { finish() },
@@ -195,8 +197,10 @@ fun TodoListEditor(
     val supportsDueDate = TodoListFeature.hasFeature(supportedFeatures, TodoListFeature.SET_DUE_DATE_ON_ITEM)
     val supportsDueDatetime = TodoListFeature.hasFeature(supportedFeatures, TodoListFeature.SET_DUE_DATETIME_ON_ITEM)
     // Load cached items instantly, then refresh from HA
+    // Cache and icon keys include the server so equal entity ids on two servers stay apart.
+    val storageKey = TokenManager.scopedKey(httpClient.accountId, entityId)
     val cachedItems = remember(entityId) {
-        val cached = ItemsCache.load(context, entityId)
+        val cached = ItemsCache.load(context, storageKey)
         Log.d("HAdo", "Cache for $entityId: ${cached?.size ?: "null"} items")
         cached
     }
@@ -226,7 +230,7 @@ fun TodoListEditor(
     val snackbarHostState = remember { SnackbarHostState() }
     val imeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     val resolvedIcon = remember(entityId) {
-        ListIconManager.resolveIcon(context, entityId)
+        ListIconManager.resolveIcon(context, storageKey)
     }
     // Always-current items ref for gesture callbacks (avoids stale closures)
     val currentItemsState by rememberUpdatedState(items)
@@ -251,7 +255,7 @@ fun TodoListEditor(
     }
 
     LaunchedEffect(entityId, items) {
-        ItemsCache.save(context, entityId, items)
+        ItemsCache.save(context, storageKey, items)
         onItemsChanged(items)
     }
 
@@ -296,7 +300,7 @@ fun TodoListEditor(
                             if (body != null) {
                                 val freshItems = parseItemsFromResponse(gson, body, entityId)
                                 items = freshItems
-                                ItemsCache.save(context, entityId, freshItems)
+                                ItemsCache.save(context, storageKey, freshItems)
                             }
                         }
                     }
@@ -354,7 +358,7 @@ fun TodoListEditor(
                 items = if (prepend) listOf(newItem) + items else items + listOf(newItem)
                 widgetAppWidgetId?.let { targetWidgetId ->
                     scope.launch {
-                        WidgetStateMutator.addItem(context, entityId, newItem, addPosition, targetWidgetId)
+                        WidgetStateMutator.addItem(context, httpClient.accountId, entityId, newItem, addPosition, targetWidgetId)
                     }
                 }
             }
@@ -409,6 +413,7 @@ fun TodoListEditor(
                                 widgetAppWidgetId?.let { targetWidgetId ->
                                     WidgetStateMutator.addItem(
                                         context,
+                                        httpClient.accountId,
                                         entityId,
                                         addedItem,
                                         addPosition,
@@ -707,7 +712,7 @@ fun TodoListEditor(
                             if (body != null) {
                                 val freshItems = parseItemsFromResponse(gson, body, entityId)
                                 withContext(Dispatchers.Main) { items = freshItems }
-                                ItemsCache.save(context, entityId, freshItems)
+                                ItemsCache.save(context, storageKey, freshItems)
                             }
                         }
                     }
@@ -1041,6 +1046,7 @@ fun TodoListEditor(
     moveCandidate?.let { item ->
         MoveToListDialog(
             context = context,
+            accountId = httpClient.accountId,
             item = items.firstOrNull { it.uid == item.uid } ?: item,
             targets = moveTargets,
             onDismiss = { moveCandidate = null },
@@ -1055,6 +1061,7 @@ fun TodoListEditor(
 @Composable
 private fun MoveToListDialog(
     context: Context,
+    accountId: String?,
     item: TodoItem,
     targets: List<HaState>,
     onDismiss: () -> Unit,
@@ -1069,7 +1076,7 @@ private fun MoveToListDialog(
                     val features = target.attributes.supportedFeatures ?: 0
                     val enabled = TodoListFeature.hasFeature(features, TodoListFeature.CREATE_TODO_ITEM)
                     val losses = remember(item, features) { buildMovePayload(item, features).losses }
-                    val icon = remember(target.entityId) { ListIconManager.resolveIcon(context, target.entityId) }
+                    val icon = remember(target.entityId) { ListIconManager.resolveIcon(context, TokenManager.scopedKey(accountId, target.entityId)) }
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

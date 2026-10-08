@@ -107,10 +107,13 @@ private fun WidgetSettingsScreen(
     onCancel: () -> Unit
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    val scope = rememberCoroutineScope()
 
     // Load existing settings
     val existingSettings = remember { WidgetSettingsManager.load(context, appWidgetId) }
+    val tokenManager = remember { TokenManager(context) }
+    val servers = remember {
+        if (tokenManager.isDemoMode) emptyList() else tokenManager.accounts.map { it.id to it.displayName }
+    }
 
     var selectedListIds by remember { mutableStateOf(existingSettings.selectedListIds) }
     var showCompleted by remember { mutableStateOf(existingSettings.showCompleted) }
@@ -124,6 +127,15 @@ private fun WidgetSettingsScreen(
     var showListIcons by remember { mutableStateOf(existingSettings.showListIcons) }
     var autoFocusOnOpen by remember { mutableStateOf(existingSettings.autoFocusOnOpen) }
     var listOrder by remember { mutableStateOf(existingSettings.listOrder) }
+    var customTitle by remember { mutableStateOf(existingSettings.customTitle) }
+    var accountId by remember {
+        mutableStateOf(
+            // New widgets and widgets whose server was removed start on the app's active server.
+            if (tokenManager.isDemoMode) null
+            else tokenManager.resolveWidgetAccountId(existingSettings.accountId)
+                ?: tokenManager.activeAccountId.takeIf { tokenManager.accountIds.isNotEmpty() }
+        )
+    }
 
     fun currentSettings() = WidgetSettings(
         selectedListIds = selectedListIds,
@@ -137,7 +149,9 @@ private fun WidgetSettingsScreen(
         showTitle = showTitle,
         showListIcons = showListIcons,
         autoFocusOnOpen = autoFocusOnOpen,
-        listOrder = listOrder
+        listOrder = listOrder,
+        customTitle = customTitle,
+        accountId = accountId
     )
 
     // Back gesture/button saves settings instead of discarding
@@ -149,19 +163,19 @@ private fun WidgetSettingsScreen(
     // Ordered lists for display (entity IDs in user-defined order)
     var orderedAvailableLists by remember { mutableStateOf<List<Triple<String, String, String?>>>(emptyList()) }
 
-    LaunchedEffect(Unit) {
-        scope.launch {
-            val fetched = fetchAvailableLists(context)
-            availableLists = fetched
-            // Apply saved order, or fall back to API order
-            orderedAvailableLists = if (listOrder.isEmpty()) {
-                fetched
-            } else {
-                val orderMap = listOrder.withIndex().associate { (i, id) -> id to i }
-                fetched.sortedBy { orderMap[it.first] ?: Int.MAX_VALUE }
-            }
-            isLoading = false
+    // Runs in the effect so a server change cancels the previous server's fetch.
+    LaunchedEffect(accountId) {
+        isLoading = true
+        val fetched = fetchAvailableLists(context, accountId)
+        availableLists = fetched
+        // Apply saved order, or fall back to API order
+        orderedAvailableLists = if (listOrder.isEmpty()) {
+            fetched
+        } else {
+            val orderMap = listOrder.withIndex().associate { (i, id) -> id to i }
+            fetched.sortedBy { orderMap[it.first] ?: Int.MAX_VALUE }
         }
+        isLoading = false
     }
 
     Scaffold(
@@ -189,6 +203,36 @@ private fun WidgetSettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // --- Server ---
+            if (servers.size > 1) {
+                SettingsSection(title = stringResource(R.string.section_server)) {
+                    servers.forEach { (id, name) ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable {
+                                    if (id != accountId) {
+                                        // List ids belong to one server, so the selection starts empty.
+                                        selectedListIds = emptySet()
+                                        listOrder = emptyList()
+                                        accountId = id
+                                    }
+                                }
+                                .padding(horizontal = 8.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = id == accountId,
+                                onClick = null
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(text = name, style = MaterialTheme.typography.bodyLarge)
+                        }
+                    }
+                }
+            }
+
             // --- Lists selection ---
             SettingsSection(title = stringResource(R.string.section_lists_to_show)) {
                 if (isLoading) {
@@ -342,7 +386,8 @@ private fun WidgetSettingsScreen(
             if (availableLists.isNotEmpty()) {
                 ListIconsSection(
                     availableLists = availableLists,
-                    selectedListIds = selectedListIds
+                    selectedListIds = selectedListIds,
+                    accountId = accountId
                 )
             }
 
@@ -449,6 +494,18 @@ private fun WidgetSettingsScreen(
                         onCheckedChange = { showTitle = it }
                     )
                 }
+
+                OutlinedTextField(
+                    value = customTitle,
+                    onValueChange = { customTitle = it },
+                    label = { Text(stringResource(R.string.settings_widget_title)) },
+                    placeholder = { Text(stringResource(R.string.app_name)) },
+                    singleLine = true,
+                    enabled = showTitle,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 8.dp)
+                )
 
                 HorizontalDivider()
 
@@ -658,7 +715,8 @@ private fun WidgetSettingsScreen(
 @Composable
 private fun ListIconsSection(
     availableLists: List<Triple<String, String, String?>>,
-    selectedListIds: Set<String>
+    selectedListIds: Set<String>,
+    accountId: String?
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
@@ -672,11 +730,12 @@ private fun ListIconsSection(
     // Force recomposition after icon changes
     var iconVersion by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(context) {
+    LaunchedEffect(context, accountId) {
         syncAvailability = withContext(Dispatchers.IO) {
-            ListIconHaSyncManager.getSyncAvailability(context)
+            ListIconHaSyncManager.getSyncAvailability(context, accountId)
         }
     }
+    fun iconKey(entityId: String) = TokenManager.scopedKey(accountId, entityId)
 
     // Image picker launcher
     var pendingImageEntityId by remember { mutableStateOf<String?>(null) }
@@ -685,11 +744,11 @@ private fun ListIconsSection(
     ) { uri: Uri? ->
         val entityId = pendingImageEntityId
         if (uri != null && entityId != null) {
-            val saved = ListIconManager.setImage(context, entityId, uri)
+            val saved = ListIconManager.setImage(context, iconKey(entityId), uri)
             if (saved) {
                 iconVersion++
                 scope.launch(Dispatchers.IO) {
-                    ListIconHaSyncManager.restoreOriginalIconIfNeeded(context, entityId)
+                    ListIconHaSyncManager.restoreOriginalIconIfNeeded(context, accountId, entityId)
                 }
             }
             iconDialogEntityId = null
@@ -715,8 +774,8 @@ private fun ListIconsSection(
         }
 
         listsToShow.forEach { (entityId, name, haIcon) ->
-            val resolved = remember(entityId, iconVersion) {
-                ListIconManager.resolveIcon(context, entityId, haIcon)
+            val resolved = remember(entityId, iconVersion, accountId) {
+                ListIconManager.resolveIcon(context, iconKey(entityId), haIcon)
             }
 
             Row(
@@ -765,11 +824,12 @@ private fun ListIconsSection(
             onMdiPicked = { mdiIcon ->
                 val entityId = iconDialogEntityId!!
                 val currentHaIcon = iconDialogHaIcon
-                ListIconManager.setMdi(context, entityId, mdiIcon)
+                ListIconManager.setMdi(context, iconKey(entityId), mdiIcon)
                 iconVersion++
                 scope.launch(Dispatchers.IO) {
                     ListIconHaSyncManager.syncMdiOverride(
                         context = context,
+                        accountId = accountId,
                         entityId = entityId,
                         mdiIcon = mdiIcon,
                         currentHaIcon = currentHaIcon
@@ -780,11 +840,12 @@ private fun ListIconsSection(
             onEmojiPicked = { emoji ->
                 val entityId = iconDialogEntityId!!
                 val currentHaIcon = iconDialogHaIcon
-                ListIconManager.setEmoji(context, entityId, emoji)
+                ListIconManager.setEmoji(context, iconKey(entityId), emoji)
                 iconVersion++
                 scope.launch(Dispatchers.IO) {
                     ListIconHaSyncManager.syncEmojiOverride(
                         context = context,
+                        accountId = accountId,
                         entityId = entityId,
                         emoji = emoji,
                         currentHaIcon = currentHaIcon
@@ -799,10 +860,10 @@ private fun ListIconsSection(
             },
             onClear = {
                 val entityId = iconDialogEntityId!!
-                ListIconManager.clearIcon(context, entityId)
+                ListIconManager.clearIcon(context, iconKey(entityId))
                 iconVersion++
                 scope.launch(Dispatchers.IO) {
-                    ListIconHaSyncManager.restoreOriginalIconIfNeeded(context, entityId)
+                    ListIconHaSyncManager.restoreOriginalIconIfNeeded(context, accountId, entityId)
                 }
                 iconDialogEntityId = null
                 iconDialogResolvedIcon = null
@@ -861,7 +922,10 @@ private fun SettingsSection(
     }
 }
 
-private suspend fun fetchAvailableLists(context: android.content.Context): List<Triple<String, String, String?>> {
+private suspend fun fetchAvailableLists(
+    context: android.content.Context,
+    accountId: String?
+): List<Triple<String, String, String?>> {
     return withContext(Dispatchers.IO) {
         try {
             val tokenManager = TokenManager(context)
@@ -876,7 +940,7 @@ private suspend fun fetchAvailableLists(context: android.content.Context): List<
                 }
             }
 
-            val httpClient = WidgetHttpClient(context)
+            val httpClient = WidgetHttpClient(context, accountId ?: return@withContext emptyList())
             if (!httpClient.isLoggedIn) return@withContext emptyList()
 
             val response = httpClient.get("api/states") ?: return@withContext emptyList()

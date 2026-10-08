@@ -1,9 +1,7 @@
 package com.baer.hado.di
 
-import com.baer.hado.data.api.AuthInterceptor
 import com.baer.hado.data.api.HaApiService
 import com.baer.hado.data.api.TokenRefreshInterceptor
-import com.baer.hado.data.local.TokenManager
 import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides
@@ -23,7 +21,6 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideOkHttpClient(
-        authInterceptor: AuthInterceptor,
         tokenRefreshInterceptor: TokenRefreshInterceptor
     ): OkHttpClient {
         val logging = HttpLoggingInterceptor().apply {
@@ -34,7 +31,6 @@ object NetworkModule {
         }
 
         return OkHttpClient.Builder()
-            .addInterceptor(authInterceptor)
             .addInterceptor(tokenRefreshInterceptor)
             .addInterceptor(logging)
             .connectTimeout(15, TimeUnit.SECONDS)
@@ -47,14 +43,10 @@ object NetworkModule {
     @Singleton
     fun provideRetrofit(
         okHttpClient: OkHttpClient,
-        tokenManager: TokenManager,
         gson: Gson
     ): Retrofit {
-        val baseUrl = tokenManager.serverUrl?.trimEnd('/')?.plus("/")
-            ?: "http://localhost/"
-
         return Retrofit.Builder()
-            .baseUrl(baseUrl)
+            .baseUrl(TokenRefreshInterceptor.PLACEHOLDER_BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
