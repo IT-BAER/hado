@@ -5,6 +5,22 @@ All notable changes to HAdo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-10-08
+
+### Added
+- Sign in to several Home Assistant servers, for example home and a holiday flat: Settings > Servers > Add server
+- Each widget shows the lists of one server; pick the server in the widget settings
+- Give each widget its own title instead of "HAdo"
+- Switch servers from the top bar of the app when more than one server is signed in
+- Rename a server, or sign out of one server and keep the others
+- A widget whose server was signed out says so and points to the widget settings
+
+### Changed
+- Overdue reminders check all signed-in servers; the reminder list selection is stored per server
+
+### Fixed
+- The app keeps the Home Assistant refresh token after a token refresh, so the sign-in no longer runs out
+
 ## [1.2.0] - 2026-09-15
 
 ### Fixed

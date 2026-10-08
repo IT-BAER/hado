@@ -1,6 +1,6 @@
-HAdo 1.2.0
+HAdo 1.3.0
 
-• Due times follow the Android 24-hour setting, so they show AM/PM when 24-hour format is off
-• Move an item to another list: long-press an item, tap "Move to list" and pick the target list
-• Moving keeps the title, description, due date and done status when the target list supports them
-• Before you move, the list picker warns when a target list would drop the description, the time, the due date or the done status
+• Sign in to several Home Assistant servers, for example home and a holiday flat: Settings > Servers > Add server
+• Each widget shows the lists of one server; pick the server in the widget settings
+• Give each widget its own title instead of "HAdo"
+• Switch servers from the top bar of the app when more than one server is signed in
