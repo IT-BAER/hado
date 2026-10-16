@@ -5,6 +5,18 @@ All notable changes to HAdo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-10-16
+
+### Added
+- Quick add from the widget: tap + next to a list name to add items in a small card above the keyboard, without opening the app
+- The quick add card stays open for the next item and offers Today, Tomorrow or a date when the list supports due dates
+- Add items by voice: tap the mic in the quick add card; the recognized text is filled in for you to check
+- Optional mic button on the widget: Widget settings > Voice button
+- Hide the list name on a widget that shows only one list: Widget settings > Hide list name
+
+### Changed
+- Tapping a list name on the widget still opens the full list; the new + opens quick add
+
 ## [1.3.0] - 2026-10-08
 
 ### Added

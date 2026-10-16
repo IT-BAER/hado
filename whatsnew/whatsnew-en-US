@@ -1,6 +1,6 @@
-HAdo 1.3.0
+HAdo 1.4.0
 
-• Sign in to several Home Assistant servers, for example home and a holiday flat: Settings > Servers > Add server
-• Each widget shows the lists of one server; pick the server in the widget settings
-• Give each widget its own title instead of "HAdo"
-• Switch servers from the top bar of the app when more than one server is signed in
+• Quick add from the widget: tap + next to a list name to add items in a small card above the keyboard
+• The quick add card stays open for the next item and offers Today, Tomorrow or a date
+• Add items by voice: tap the mic in the quick add card, or turn on the widget voice button
+• Hide the list name on a widget that shows only one list
