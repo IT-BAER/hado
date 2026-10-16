@@ -113,6 +113,18 @@
     <string name="settings_auto_focus_on_open_desc">打开列表时自动聚焦新建项目输入框</string>    <string name="section_appearance">外观</string>
     <string name="settings_show_title">显示小组件标题</string>
     <string name="settings_show_title_desc">显示 HAdo 图标和标题栏</string>
+    <string name="settings_hide_single_list_name">隐藏列表名称</string>
+    <string name="settings_hide_single_list_name_desc">当小部件只显示一个列表时隐藏列表标题</string>
+    <string name="settings_hide_single_list_name_disabled">仅当小部件显示一个列表时</string>
+    <string name="settings_widget_mic">语音按钮</string>
+    <string name="settings_widget_mic_desc">在 + 旁显示麦克风，用语音添加项目</string>
+    <string name="quick_add_open_list">打开列表</string>
+    <string name="quick_add_pick_date">日期</string>
+    <string name="quick_add_listening">正在聆听…</string>
+    <string name="cd_voice_input">语音添加</string>
+    <string name="cd_close">关闭</string>
+    <string name="voice_permission_denied">语音输入需要麦克风权限</string>
+    <string name="voice_error">语音输入失败</string>
     <string name="section_font_size">字体大小</string>
     <string name="section_item_height">项目高度</string>
     <string name="section_bg_opacity">背景不透明度</string>

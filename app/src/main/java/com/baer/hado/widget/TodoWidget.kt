@@ -3,6 +3,8 @@ package com.baer.hado.widget
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.BitmapFactory
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -25,6 +27,7 @@ import androidx.glance.appwidget.lazy.items
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.LocalContext
+import androidx.glance.action.Action
 import androidx.glance.currentState
 import androidx.glance.Image
 import androidx.glance.layout.Alignment
@@ -116,6 +119,9 @@ class TodoWidget : GlanceAppWidget() {
             }
         }
 
+        val hideListHeader = settings.hideSingleListName && lists.size == 1
+        val showMic = settings.showWidgetMic && VoiceInput.isAvailable(context)
+
         val outerPadding = if (settings.compactMode) 6.dp else 12.dp
         val headerBottomPad = if (settings.compactMode) 4.dp else 8.dp
         val isDarkTheme = (LocalContext.current.resources.configuration.uiMode and
@@ -165,6 +171,10 @@ class TodoWidget : GlanceAppWidget() {
                             maxLines = 1
                         )
                     }
+                    if (hideListHeader) {
+                        QuickAddButtons(lists.first(), appWidgetId, showMic)
+                        Spacer(GlanceModifier.width(4.dp))
+                    }
                     Image(
                         provider = ImageProvider(R.drawable.ic_widget_refresh),
                         contentDescription = LocalContext.current.getString(R.string.cd_refresh),
@@ -199,7 +209,9 @@ class TodoWidget : GlanceAppWidget() {
                         ListIconManager.resolveIcon(context, TokenManager.scopedKey(settings.accountId, list.entityId)) != null
                 }
                 lists.forEachIndexed { index, list ->
-                    rows.add(WidgetRow.Header(list.entityId, list.name, list.iconType, list.iconValue, list.supportedFeatures, isFirstHeader = index == 0))
+                    if (!hideListHeader) {
+                        rows.add(WidgetRow.Header(list.entityId, list.name, list.iconType, list.iconValue, list.supportedFeatures, isFirstHeader = index == 0))
+                    }
                     val activeItems = list.items.filter { !it.isCompleted }
                     val completedItems = list.items.filter { it.isCompleted }
                     if (activeItems.isEmpty() && completedItems.isEmpty()) {
@@ -212,13 +224,18 @@ class TodoWidget : GlanceAppWidget() {
                         rows.add(WidgetRow.Item(list.entityId, item, list.name, list.supportedFeatures))
                     }
                 }
+                // Without header and top bar the widget has no other add entry point.
+                if (hideListHeader && !settings.showTitle) {
+                    rows.add(WidgetRow.AddRow(lists.first().entityId))
+                }
 
                 LazyColumn(modifier = GlanceModifier.fillMaxSize()) {
                     items(rows, itemId = { it.stableId }) { row ->
                         when (row) {
-                            is WidgetRow.Header -> ListHeader(row.entityId, row.name, row.iconType, row.iconValue, row.supportedFeatures, row.isFirstHeader, settings, anyListHasIcon, appWidgetId)
+                            is WidgetRow.Header -> ListHeader(row.entityId, row.name, row.iconType, row.iconValue, row.supportedFeatures, row.isFirstHeader, settings, anyListHasIcon, appWidgetId, showMic)
                             is WidgetRow.Item -> TodoItemRow(row.item, row.entityId, row.listName, row.supportedFeatures, settings, pendingToggleIds.contains(pendingToggleKey(row.entityId, row.item.uid)), appWidgetId)
                             is WidgetRow.EmptyHint -> EmptyHintRow(settings)
+                            is WidgetRow.AddRow -> AddRow(lists.first(), settings, appWidgetId, showMic)
                         }
                     }
                 }
@@ -227,7 +244,7 @@ class TodoWidget : GlanceAppWidget() {
     }
 
     @Composable
-    private fun ListHeader(entityId: String, name: String, iconType: String?, iconValue: String?, supportedFeatures: Int?, isFirstHeader: Boolean, settings: WidgetSettings, anyListHasIcon: Boolean, appWidgetId: String) {
+    private fun ListHeader(entityId: String, name: String, iconType: String?, iconValue: String?, supportedFeatures: Int?, isFirstHeader: Boolean, settings: WidgetSettings, anyListHasIcon: Boolean, appWidgetId: String, showMic: Boolean) {
         val topPad = when {
             settings.compactMode && isFirstHeader -> 10.dp
             settings.compactMode -> 6.dp
@@ -250,74 +267,171 @@ class TodoWidget : GlanceAppWidget() {
         Row(
             modifier = GlanceModifier
                 .fillMaxWidth()
-                .clickable(
-                    actionRunCallback<AddItemAction>(
-                        actionParametersOf(
-                            AddItemAction.PARAM_ENTITY_ID to entityId,
-                            AddItemAction.PARAM_LIST_NAME to name,
-                            AddItemAction.PARAM_SUPPORTED_FEATURES to (supportedFeatures ?: 0).toString(),
-                            AddItemAction.PARAM_AUTO_FOCUS to settings.autoFocusOnOpen.toString(),
-                            AddItemAction.PARAM_WIDGET_ID to appWidgetId
-                        )
-                    )
-                )
-                .padding(top = topPad, bottom = bottomPad, start = hzPad, end = hzPad),
+                .padding(start = hzPad, end = hzPad - 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Icon: emoji as text, image as bitmap, mdi as emoji fallback, or placeholder for alignment
-            if (settings.showListIcons) {
-                if (effectiveIconType == "emoji" && effectiveIconValue != null) {
-                    Text(
-                        text = effectiveIconValue,
-                        style = TextStyle(fontSize = settings.fontSize.titleSp.sp),
-                        maxLines = 1
+            Row(
+                modifier = GlanceModifier
+                    .defaultWeight()
+                    .clickable(
+                        actionRunCallback<AddItemAction>(
+                            actionParametersOf(
+                                AddItemAction.PARAM_ENTITY_ID to entityId,
+                                AddItemAction.PARAM_LIST_NAME to name,
+                                AddItemAction.PARAM_SUPPORTED_FEATURES to (supportedFeatures ?: 0).toString(),
+                                AddItemAction.PARAM_AUTO_FOCUS to settings.autoFocusOnOpen.toString(),
+                                AddItemAction.PARAM_WIDGET_ID to appWidgetId
+                            )
+                        )
                     )
-                    Spacer(GlanceModifier.width(6.dp))
-                } else if (effectiveIconType == "mdi" && effectiveIconValue != null) {
-                    Text(
-                        text = ListIconManager.mapMdiToEmoji(effectiveIconValue) ?: "📋",
-                        style = TextStyle(fontSize = settings.fontSize.titleSp.sp),
-                        maxLines = 1
-                    )
-                    Spacer(GlanceModifier.width(6.dp))
-                } else if (effectiveIconType == "image" && effectiveIconValue != null) {
-                    val bitmap = BitmapFactory.decodeFile(effectiveIconValue)
-                    if (bitmap != null) {
-                        Image(
-                            provider = ImageProvider(bitmap),
-                            contentDescription = null,
-                            modifier = GlanceModifier
-                                .size(iconSize)
-                                .cornerRadius(iconSize / 2)
+                    .padding(top = topPad, bottom = bottomPad),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Icon: emoji as text, image as bitmap, mdi as emoji fallback, or placeholder for alignment
+                if (settings.showListIcons) {
+                    if (effectiveIconType == "emoji" && effectiveIconValue != null) {
+                        Text(
+                            text = effectiveIconValue,
+                            style = TextStyle(fontSize = settings.fontSize.titleSp.sp),
+                            maxLines = 1
                         )
                         Spacer(GlanceModifier.width(6.dp))
-                    } else {
-                        val defaultIcon = ListIconManager.resolveIcon(context, TokenManager.scopedKey(settings.accountId, entityId))
-                        if (defaultIcon?.type == ListIconManager.IconType.EMOJI) {
-                            Text(
-                                text = defaultIcon.value,
-                                style = TextStyle(fontSize = settings.fontSize.titleSp.sp),
-                                maxLines = 1
+                    } else if (effectiveIconType == "mdi" && effectiveIconValue != null) {
+                        Text(
+                            text = ListIconManager.mapMdiToEmoji(effectiveIconValue) ?: "📋",
+                            style = TextStyle(fontSize = settings.fontSize.titleSp.sp),
+                            maxLines = 1
+                        )
+                        Spacer(GlanceModifier.width(6.dp))
+                    } else if (effectiveIconType == "image" && effectiveIconValue != null) {
+                        val bitmap = BitmapFactory.decodeFile(effectiveIconValue)
+                        if (bitmap != null) {
+                            Image(
+                                provider = ImageProvider(bitmap),
+                                contentDescription = null,
+                                modifier = GlanceModifier
+                                    .size(iconSize)
+                                    .cornerRadius(iconSize / 2)
                             )
                             Spacer(GlanceModifier.width(6.dp))
-                        } else if (anyListHasIcon) {
-                            Spacer(GlanceModifier.width(iconSize + 6.dp))
+                        } else {
+                            val defaultIcon = ListIconManager.resolveIcon(context, TokenManager.scopedKey(settings.accountId, entityId))
+                            if (defaultIcon?.type == ListIconManager.IconType.EMOJI) {
+                                Text(
+                                    text = defaultIcon.value,
+                                    style = TextStyle(fontSize = settings.fontSize.titleSp.sp),
+                                    maxLines = 1
+                                )
+                                Spacer(GlanceModifier.width(6.dp))
+                            } else if (anyListHasIcon) {
+                                Spacer(GlanceModifier.width(iconSize + 6.dp))
+                            }
                         }
+                    } else if (anyListHasIcon) {
+                        // Placeholder spacer to align with lists that have icons
+                        Spacer(GlanceModifier.width(iconSize + 6.dp))
                     }
-                } else if (anyListHasIcon) {
-                    // Placeholder spacer to align with lists that have icons
-                    Spacer(GlanceModifier.width(iconSize + 6.dp))
                 }
+                Text(
+                    text = name,
+                    style = TextStyle(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = settings.fontSize.titleSp.sp,
+                        color = GlanceTheme.colors.onSurface
+                    ),
+                    maxLines = 1
+                )
             }
-            Text(
-                text = name,
-                style = TextStyle(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = settings.fontSize.titleSp.sp,
-                    color = GlanceTheme.colors.onSurface
-                ),
-                maxLines = 1
+            QuickAddButtons(entityId, name, supportedFeatures, appWidgetId, showMic)
+        }
+    }
+
+    @Composable
+    private fun QuickAddButtons(list: WidgetListData, appWidgetId: String, showMic: Boolean) {
+        QuickAddButtons(list.entityId, list.name, list.supportedFeatures, appWidgetId, showMic)
+    }
+
+    @Composable
+    private fun QuickAddButtons(entityId: String, name: String, supportedFeatures: Int?, appWidgetId: String, showMic: Boolean) {
+        if (showMic) {
+            WidgetIconButton(
+                R.drawable.ic_widget_mic,
+                R.string.cd_voice_input,
+                quickAddAction(entityId, name, supportedFeatures, appWidgetId, startVoice = true)
             )
+        }
+        WidgetIconButton(
+            R.drawable.ic_widget_add,
+            R.string.cd_add_item,
+            quickAddAction(entityId, name, supportedFeatures, appWidgetId, startVoice = false)
+        )
+    }
+
+    @Composable
+    private fun WidgetIconButton(@DrawableRes icon: Int, @StringRes description: Int, action: Action) {
+        Box(
+            modifier = GlanceModifier.size(36.dp).cornerRadius(18.dp).clickable(action),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                provider = ImageProvider(icon),
+                contentDescription = LocalContext.current.getString(description),
+                modifier = GlanceModifier.size(22.dp),
+                colorFilter = ColorFilter.tint(GlanceTheme.colors.primary)
+            )
+        }
+    }
+
+    private fun quickAddAction(entityId: String, name: String, supportedFeatures: Int?, appWidgetId: String, startVoice: Boolean): Action =
+        actionRunCallback<QuickAddAction>(
+            actionParametersOf(
+                QuickAddAction.PARAM_ENTITY_ID to entityId,
+                QuickAddAction.PARAM_LIST_NAME to name,
+                QuickAddAction.PARAM_SUPPORTED_FEATURES to (supportedFeatures ?: 0).toString(),
+                QuickAddAction.PARAM_WIDGET_ID to appWidgetId,
+                QuickAddAction.PARAM_START_VOICE to startVoice.toString()
+            )
+        )
+
+    @Composable
+    private fun AddRow(list: WidgetListData, settings: WidgetSettings, appWidgetId: String, showMic: Boolean) {
+        val hzPad = if (settings.compactMode) 6.dp else 12.dp
+        Row(
+            modifier = GlanceModifier
+                .fillMaxWidth()
+                .padding(start = if (hzPad > 8.dp) (hzPad - 8.dp) else 2.dp, end = hzPad - 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                modifier = GlanceModifier
+                    .defaultWeight()
+                    .clickable(quickAddAction(list.entityId, list.name, list.supportedFeatures, appWidgetId, startVoice = false)),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(modifier = GlanceModifier.size(40.dp), contentAlignment = Alignment.Center) {
+                    Image(
+                        provider = ImageProvider(R.drawable.ic_widget_add),
+                        contentDescription = null,
+                        modifier = GlanceModifier.size(20.dp),
+                        colorFilter = ColorFilter.tint(GlanceTheme.colors.primary)
+                    )
+                }
+                Text(
+                    text = LocalContext.current.getString(R.string.cd_add_item),
+                    style = TextStyle(
+                        fontSize = settings.fontSize.itemSp.sp,
+                        color = GlanceTheme.colors.primary
+                    ),
+                    maxLines = 1
+                )
+            }
+            if (showMic) {
+                WidgetIconButton(
+                    R.drawable.ic_widget_mic,
+                    R.string.cd_voice_input,
+                    quickAddAction(list.entityId, list.name, list.supportedFeatures, appWidgetId, startVoice = true)
+                )
+            }
         }
     }
 
@@ -496,6 +610,10 @@ sealed class WidgetRow {
 
     data class EmptyHint(val entityId: String) : WidgetRow() {
         override val stableId: Long get() = (entityId + "_empty").hashCode().toLong()
+    }
+
+    data class AddRow(val entityId: String) : WidgetRow() {
+        override val stableId: Long get() = (entityId + "_add").hashCode().toLong()
     }
 }
 

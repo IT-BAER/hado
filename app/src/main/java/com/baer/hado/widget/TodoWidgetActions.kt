@@ -96,6 +96,36 @@ class AddItemAction : ActionCallback {
     }
 }
 
+class QuickAddAction : ActionCallback {
+    override suspend fun onAction(
+        context: Context,
+        glanceId: GlanceId,
+        parameters: ActionParameters
+    ) {
+        val entityId = parameters[PARAM_ENTITY_ID] ?: return
+        val intent = Intent(context, QuickAddActivity::class.java).apply {
+            putExtra("entity_id", entityId)
+            putExtra("list_name", parameters[PARAM_LIST_NAME] ?: "")
+            putExtra("supported_features", parameters[PARAM_SUPPORTED_FEATURES]?.toIntOrNull() ?: 0)
+            putExtra("start_voice", parameters[PARAM_START_VOICE]?.toBooleanStrictOrNull() ?: false)
+            putExtra(
+                "app_widget_id",
+                parameters[PARAM_WIDGET_ID]?.toIntOrNull() ?: AppWidgetManager.INVALID_APPWIDGET_ID
+            )
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
+    }
+
+    companion object {
+        val PARAM_ENTITY_ID = ActionParameters.Key<String>("quick_add_entity_id")
+        val PARAM_LIST_NAME = ActionParameters.Key<String>("quick_add_list_name")
+        val PARAM_SUPPORTED_FEATURES = ActionParameters.Key<String>("quick_add_supported_features")
+        val PARAM_START_VOICE = ActionParameters.Key<String>("quick_add_start_voice")
+        val PARAM_WIDGET_ID = ActionParameters.Key<String>("quick_add_widget_id")
+    }
+}
+
 class ToggleItemAction : ActionCallback {
 
     override suspend fun onAction(

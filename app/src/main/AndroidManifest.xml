@@ -4,6 +4,17 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Only for in-app voice input when no speech dialog app exists; asked at first mic tap. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <queries>
+        <intent>
+            <action android:name="android.speech.action.RECOGNIZE_SPEECH" />
+        </intent>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+    </queries>
 
     <application
         android:name=".HadoApp"
@@ -38,6 +49,15 @@
             android:excludeFromRecents="true"
             android:theme="@style/Theme.HAdo.FastLaunch"
             android:taskAffinity="" />
+
+        <!-- Quick-add card floating above the keyboard (widget + / mic tap) -->
+        <activity
+            android:name=".widget.QuickAddActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:theme="@style/Theme.HAdo.TransparentFade"
+            android:taskAffinity=""
+            android:windowSoftInputMode="adjustResize" />
 
         <!-- Item detail popup floating over the home screen (widget item tap) -->
         <activity

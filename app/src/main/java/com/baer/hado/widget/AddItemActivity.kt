@@ -1394,14 +1394,14 @@ private fun clearAddInputFocus(
 }
 
 /** The newly added item plus whether HA already placed it first among active items. */
-private data class AddedItem(val item: TodoItem, val alreadyFirstActive: Boolean)
+internal data class AddedItem(val item: TodoItem, val alreadyFirstActive: Boolean)
 
 /**
  * Resolves the newly added item by finding the new UID after an add_item call,
  * and reports whether it is already the first active item (so a redundant move
  * to the top can be skipped).
  */
-private fun resolveAddedItem(
+internal fun resolveAddedItem(
     httpClient: WidgetHttpClient,
     gson: Gson,
     entityId: String,
@@ -1432,7 +1432,7 @@ private fun resolveAddedItem(
 }
 
 /** Items of [entityId] from HA, or null when the request failed. */
-private fun fetchListItems(httpClient: WidgetHttpClient, gson: Gson, entityId: String): List<TodoItem>? {
+internal fun fetchListItems(httpClient: WidgetHttpClient, gson: Gson, entityId: String): List<TodoItem>? {
     val payload = gson.toJson(mapOf("entity_id" to entityId))
     return httpClient.post("api/services/todo/get_items?return_response", payload)?.use { resp ->
         val body = resp.body?.string()

@@ -25,7 +25,9 @@ data class WidgetSettings(
     val autoFocusOnOpen: Boolean = false,
     val listOrder: List<String> = emptyList(), // entity IDs in display order
     val customTitle: String = "", // blank = app name
-    val accountId: String? = null // HA server; null = primary server (widgets from before multi-server)
+    val accountId: String? = null, // HA server; null = primary server (widgets from before multi-server)
+    val hideSingleListName: Boolean = false, // only applies when exactly one list is shown
+    val showWidgetMic: Boolean = false
 ) {
     enum class FontSize(@StringRes val labelResId: Int, val titleSp: Float, val itemSp: Float, val headerSp: Float) {
         SMALL(R.string.font_small, 15f, 14f, 12f),
@@ -59,6 +61,8 @@ object WidgetSettingsManager {
     private const val KEY_LIST_ORDER = "list_order_json_"
     private const val KEY_CUSTOM_TITLE = "custom_title_"
     private const val KEY_ACCOUNT_ID = "account_id_"
+    private const val KEY_HIDE_SINGLE_LIST_NAME = "hide_single_list_name_"
+    private const val KEY_SHOW_WIDGET_MIC = "show_widget_mic_"
     private const val LEGACY_GLOBAL_REFRESH_INTERVAL = "refresh_interval"
 
     private fun prefs(context: Context) =
@@ -117,7 +121,9 @@ object WidgetSettingsManager {
                 else Gson().fromJson(json, object : TypeToken<List<String>>() {}.type)
             } catch (_: Exception) { emptyList() },
             customTitle = p.getString("$KEY_CUSTOM_TITLE$appWidgetId", "") ?: "",
-            accountId = p.getString("$KEY_ACCOUNT_ID$appWidgetId", null)
+            accountId = p.getString("$KEY_ACCOUNT_ID$appWidgetId", null),
+            hideSingleListName = p.getBoolean("$KEY_HIDE_SINGLE_LIST_NAME$appWidgetId", false),
+            showWidgetMic = p.getBoolean("$KEY_SHOW_WIDGET_MIC$appWidgetId", false)
         )
     }
 
@@ -137,6 +143,8 @@ object WidgetSettingsManager {
             putString("$KEY_LIST_ORDER$appWidgetId", Gson().toJson(settings.listOrder))
             putString("$KEY_CUSTOM_TITLE$appWidgetId", settings.customTitle.trim())
             putString("$KEY_ACCOUNT_ID$appWidgetId", settings.accountId)
+            putBoolean("$KEY_HIDE_SINGLE_LIST_NAME$appWidgetId", settings.hideSingleListName)
+            putBoolean("$KEY_SHOW_WIDGET_MIC$appWidgetId", settings.showWidgetMic)
             apply()
         }
     }
@@ -165,6 +173,8 @@ object WidgetSettingsManager {
             remove("$KEY_LIST_ORDER$appWidgetId")
             remove("$KEY_CUSTOM_TITLE$appWidgetId")
             remove("$KEY_ACCOUNT_ID$appWidgetId")
+            remove("$KEY_HIDE_SINGLE_LIST_NAME$appWidgetId")
+            remove("$KEY_SHOW_WIDGET_MIC$appWidgetId")
             apply()
         }
     }

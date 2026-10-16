@@ -44,6 +44,32 @@ object WidgetStateMutator {
         }
     }
 
+    /** Swaps the item [oldUid] for [item], e.g. an optimistic placeholder for the item HA created. */
+    suspend fun replaceItem(
+        context: Context,
+        accountId: String?,
+        entityId: String,
+        oldUid: String,
+        item: TodoItem,
+        preferredAppWidgetId: Int? = null
+    ): Set<Int> {
+        return mutateMatchingWidgets(context, accountId, entityId, preferredAppWidgetId) { list ->
+            list.copy(items = list.items.map { if (it.uid == oldUid) item else it })
+        }
+    }
+
+    suspend fun removeItem(
+        context: Context,
+        accountId: String?,
+        entityId: String,
+        uid: String,
+        preferredAppWidgetId: Int? = null
+    ): Set<Int> {
+        return mutateMatchingWidgets(context, accountId, entityId, preferredAppWidgetId) { list ->
+            list.copy(items = list.items.filterNot { it.uid == uid })
+        }
+    }
+
     private suspend fun mutateMatchingWidgets(
         context: Context,
         accountId: String?,

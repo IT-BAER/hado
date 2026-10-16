@@ -113,6 +113,18 @@
     <string name="settings_auto_focus_on_open_desc">Automatisch het nieuwe-itemveld focussen bij het openen van een lijst</string>    <string name="section_appearance">Uiterlijk</string>
     <string name="settings_show_title">Widgettitel tonen</string>
     <string name="settings_show_title_desc">HAdo-pictogram en titelbalk weergeven</string>
+    <string name="settings_hide_single_list_name">Lijstnaam verbergen</string>
+    <string name="settings_hide_single_list_name_desc">Lijstkop verbergen als de widget maar één lijst toont</string>
+    <string name="settings_hide_single_list_name_disabled">Alleen als de widget één lijst toont</string>
+    <string name="settings_widget_mic">Spraakknop</string>
+    <string name="settings_widget_mic_desc">Microfoon naast + tonen om items met spraak toe te voegen</string>
+    <string name="quick_add_open_list">Lijst openen</string>
+    <string name="quick_add_pick_date">Datum</string>
+    <string name="quick_add_listening">Luistert…</string>
+    <string name="cd_voice_input">Met spraak toevoegen</string>
+    <string name="cd_close">Sluiten</string>
+    <string name="voice_permission_denied">Spraakinvoer heeft toegang tot de microfoon nodig</string>
+    <string name="voice_error">Spraakinvoer mislukt</string>
     <string name="section_font_size">Lettergrootte</string>
     <string name="section_item_height">Itemhoogte</string>
     <string name="section_bg_opacity">Achtergronddekking</string>

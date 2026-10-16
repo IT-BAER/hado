@@ -32,6 +32,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -128,6 +129,8 @@ private fun WidgetSettingsScreen(
     var autoFocusOnOpen by remember { mutableStateOf(existingSettings.autoFocusOnOpen) }
     var listOrder by remember { mutableStateOf(existingSettings.listOrder) }
     var customTitle by remember { mutableStateOf(existingSettings.customTitle) }
+    var hideSingleListName by remember { mutableStateOf(existingSettings.hideSingleListName) }
+    var showWidgetMic by remember { mutableStateOf(existingSettings.showWidgetMic) }
     var accountId by remember {
         mutableStateOf(
             // New widgets and widgets whose server was removed start on the app's active server.
@@ -151,7 +154,9 @@ private fun WidgetSettingsScreen(
         autoFocusOnOpen = autoFocusOnOpen,
         listOrder = listOrder,
         customTitle = customTitle,
-        accountId = accountId
+        accountId = accountId,
+        hideSingleListName = hideSingleListName,
+        showWidgetMic = showWidgetMic
     )
 
     // Back gesture/button saves settings instead of discarding
@@ -466,6 +471,33 @@ private fun WidgetSettingsScreen(
                         onCheckedChange = { autoFocusOnOpen = it }
                     )
                 }
+
+                HorizontalDivider()
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { showWidgetMic = !showWidgetMic }
+                        .padding(horizontal = 8.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.settings_widget_mic),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            text = stringResource(R.string.settings_widget_mic_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = showWidgetMic,
+                        onCheckedChange = { showWidgetMic = it }
+                    )
+                }
             }
 
             // --- Show title ---
@@ -525,6 +557,46 @@ private fun WidgetSettingsScreen(
                     Switch(
                         checked = showListIcons,
                         onCheckedChange = { showListIcons = it }
+                    )
+                }
+
+                HorizontalDivider()
+
+                // Only takes effect when exactly one list is shown.
+                val shownListCount = if (selectedListIds.isEmpty()) {
+                    availableLists.size
+                } else {
+                    availableLists.count { it.first in selectedListIds }
+                }
+                val hideNameEnabled = shownListCount == 1
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(enabled = hideNameEnabled) { hideSingleListName = !hideSingleListName }
+                        .padding(horizontal = 8.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.settings_hide_single_list_name),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = if (hideNameEnabled) Color.Unspecified
+                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                        )
+                        Text(
+                            text = stringResource(
+                                if (hideNameEnabled) R.string.settings_hide_single_list_name_desc
+                                else R.string.settings_hide_single_list_name_disabled
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = hideSingleListName,
+                        onCheckedChange = { hideSingleListName = it },
+                        enabled = hideNameEnabled
                     )
                 }
             }
