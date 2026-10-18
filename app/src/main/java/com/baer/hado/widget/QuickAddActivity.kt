@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
@@ -99,7 +100,9 @@ class QuickAddActivity : ComponentActivity() {
     private val saveMutex = Mutex()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
+        // Light bar icons over the dim in both themes, and no nav scrim on top of the dim.
+        val bars = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+        enableEdgeToEdge(statusBarStyle = bars, navigationBarStyle = bars)
         super.onCreate(savedInstanceState)
 
         val entityId = intent.getStringExtra("entity_id")

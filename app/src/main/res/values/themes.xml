@@ -27,4 +27,12 @@
         <item name="android:windowContentOverlay">@null</item>
         <item name="android:backgroundDimEnabled">false</item>
     </style>
+
+    <!-- Without windowDrawsSystemBarBackgrounds the system paints opaque black bars behind
+         status and navigation bar instead of showing the dimmed home screen. -->
+    <style name="Theme.HAdo.QuickAdd" parent="Theme.HAdo.TransparentFade">
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
 </resources>

@@ -55,7 +55,7 @@
             android:name=".widget.QuickAddActivity"
             android:exported="false"
             android:excludeFromRecents="true"
-            android:theme="@style/Theme.HAdo.TransparentFade"
+            android:theme="@style/Theme.HAdo.QuickAdd"
             android:taskAffinity=""
             android:windowSoftInputMode="adjustResize" />
 
