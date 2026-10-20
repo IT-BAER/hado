@@ -5,11 +5,6 @@ All notable changes to HAdo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Added
-- Deep link `hado://list/<entity_id>` (e.g. `hado://list/todo.shopping`) opens HAdo on that list, handy for Home Assistant notification buttons (thanks @chelming)
-
 ## [1.4.0] - 2026-10-16
 
 ### Added
@@ -18,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add items by voice: tap the mic in the quick add card; the recognized text is filled in for you to check
 - Optional mic button on the widget: Widget settings > Voice button
 - Hide the list name on a widget that shows only one list: Widget settings > Hide list name
+- Deep link `hado://list/<entity_id>` (e.g. `hado://list/todo.shopping`) opens HAdo on that list, handy for Home Assistant notification buttons (thanks @chelming)
 
 ### Changed
 - Tapping a list name on the widget still opens the full list; the new + opens quick add
