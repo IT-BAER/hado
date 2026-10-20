@@ -6,6 +6,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import com.baer.hado.ui.home.HomeScreen
 import com.baer.hado.ui.login.LoginScreen
 import com.baer.hado.ui.login.LoginViewModel
@@ -15,6 +16,9 @@ object Routes {
     const val LOGIN = "login"
     const val HOME = "home"
     const val SETTINGS = "settings"
+    /** Optional home argument: entity id of the list to open, e.g. todo.shopping. */
+    const val ARG_LIST = "entityId"
+    const val DEEP_LINK_LIST = "hado://list/{$ARG_LIST}"
     const val ADD_SERVER = "add_server?${LoginViewModel.ARG_ADD_SERVER}={${LoginViewModel.ARG_ADD_SERVER}}"
     const val ADD_SERVER_NAV = "add_server?${LoginViewModel.ARG_ADD_SERVER}=true"
 }
@@ -53,7 +57,15 @@ fun NavGraph(
                 onCancel = { navController.popBackStack() }
             )
         }
-        composable(Routes.HOME) {
+        composable(
+            Routes.HOME,
+            arguments = listOf(navArgument(Routes.ARG_LIST) {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            }),
+            deepLinks = listOf(navDeepLink { uriPattern = Routes.DEEP_LINK_LIST })
+        ) {
             HomeScreen(
                 onLoggedOut = {
                     navController.navigate(Routes.LOGIN) {

@@ -39,7 +39,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-
+            <!-- hado://list/<entity_id> opens that to-do list (e.g. from an HA notification action) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="hado" android:host="list" />
+            </intent-filter>
         </activity>
 
         <!-- Full screen editor for widget lists -->

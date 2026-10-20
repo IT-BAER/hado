@@ -2,6 +2,7 @@ package com.baer.hado.ui.home
 
 import android.content.Context
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.baer.hado.data.local.AppPreferencesManager
@@ -11,6 +12,7 @@ import com.baer.hado.data.model.TodoItem
 import com.baer.hado.data.repository.AuthRepository
 import com.baer.hado.data.repository.TodoRepository
 import com.baer.hado.notifications.OverdueNotificationScheduler
+import com.baer.hado.ui.navigation.Routes
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -49,6 +51,7 @@ class HomeViewModel @Inject constructor(
     private val todoRepository: TodoRepository,
     private val authRepository: AuthRepository,
     private val tokenManager: TokenManager,
+    savedStateHandle: SavedStateHandle,
     @ApplicationContext private val appContext: Context
 ) : ViewModel() {
 
@@ -105,6 +108,9 @@ class HomeViewModel @Inject constructor(
     private var loadingEntityId: String? = null
     private var activeLoadToken = 0L
 
+    /** List asked for by a deep link; applied as soon as it is known to exist, then cleared. */
+    private var requestedListId: String? = savedStateHandle[Routes.ARG_LIST]
+
     init {
         _uiState.value = _uiState.value.copy(isLocalMode = tokenManager.isDemoMode)
         refreshServers()
@@ -125,8 +131,11 @@ class HomeViewModel @Inject constructor(
             todoRepository.getTodoLists().fold(
                 onSuccess = { lists ->
                     val ordered = applyOrder(lists)
-                    val selectedId = _uiState.value.selectedListId
-                        ?.takeIf { currentId -> ordered.any { it.entityId == currentId } }
+                    val requested = requestedListId?.takeIf { id -> ordered.any { it.entityId == id } }
+                    requestedListId = null
+                    val selectedId = requested
+                        ?: _uiState.value.selectedListId
+                            ?.takeIf { currentId -> ordered.any { it.entityId == currentId } }
                         ?: ordered.firstOrNull()?.entityId
 
                     _uiState.value = _uiState.value.copy(
