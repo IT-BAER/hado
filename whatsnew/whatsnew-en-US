@@ -1,6 +1,6 @@
 HAdo 1.4.0
 
-• Quick add from the widget: tap + next to a list name to add items in a small card above the keyboard
-• The quick add card stays open for the next item and offers Today, Tomorrow or a date
+• Quick add from the widget: tap + next to a list name to add items without opening the app
 • Add items by voice: tap the mic in the quick add card, or turn on the widget voice button
 • Hide the list name on a widget that shows only one list
+• Deep link hado://list/<entity_id> opens a list, e.g. from a Home Assistant notification
