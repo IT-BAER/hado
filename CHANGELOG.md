@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Deep link `hado://list/<entity_id>` (e.g. `hado://list/todo.shopping`) opens HAdo on that list, handy for Home Assistant notification buttons
+- Deep link `hado://list/<entity_id>` (e.g. `hado://list/todo.shopping`) opens HAdo on that list, handy for Home Assistant notification buttons (thanks @chelming)
 
 ## [1.4.0] - 2026-10-16
 
