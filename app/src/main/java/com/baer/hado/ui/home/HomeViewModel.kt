@@ -161,15 +161,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /** Deep link to a list while Home is open. Unknown ids are ignored once lists are loaded. */
-    fun requestList(entityId: String) {
-        if (_uiState.value.todoLists.isEmpty()) {
-            requestedListId = entityId
-        } else if (_uiState.value.todoLists.any { it.entityId == entityId }) {
-            selectList(entityId)
-        }
-    }
-
     fun selectList(entityId: String) {
         if (_uiState.value.selectedListId == entityId) return
         _uiState.value = _uiState.value.copy(selectedListId = entityId, error = null)

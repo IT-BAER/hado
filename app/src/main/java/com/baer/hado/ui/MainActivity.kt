@@ -43,6 +43,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        // NavController handles the launch intent's deep link itself; logged out, that would skip Login.
+        if (!tokenManager.isLoggedIn) intent.data = null
 
         setContent {
             HadoTheme {

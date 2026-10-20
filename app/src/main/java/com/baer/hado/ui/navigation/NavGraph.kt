@@ -65,9 +65,8 @@ fun NavGraph(
                 defaultValue = null
             }),
             deepLinks = listOf(navDeepLink { uriPattern = Routes.DEEP_LINK_LIST })
-        ) { backStackEntry ->
+        ) {
             HomeScreen(
-                requestedListId = backStackEntry.arguments?.getString(Routes.ARG_LIST),
                 onLoggedOut = {
                     navController.navigate(Routes.LOGIN) {
                         popUpTo(Routes.HOME) { inclusive = true }

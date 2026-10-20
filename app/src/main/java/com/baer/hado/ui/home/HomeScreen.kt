@@ -105,7 +105,6 @@ import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun HomeScreen(
-    requestedListId: String? = null,
     onLoggedOut: () -> Unit,
     onOpenSettings: () -> Unit,
     onAccountChanged: () -> Unit,
@@ -131,11 +130,6 @@ fun HomeScreen(
 
     LaunchedEffect(selectedList?.entityId) {
         isAddInputFocused = false
-    }
-
-    // Deep link (hado://list/<entity_id>) arriving while Home is already open.
-    LaunchedEffect(requestedListId) {
-        requestedListId?.let(viewModel::requestList)
     }
 
     LaunchedEffect(lifecycleOwner, uiState.selectedListId) {
