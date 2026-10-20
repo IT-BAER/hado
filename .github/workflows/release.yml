@@ -128,7 +128,8 @@ jobs:
           packageName: com.baer.hado
           releaseFiles: app/build/outputs/bundle/release/*.aab
           tracks: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.track || 'internal' }}
-          status: draft
+          # Internal goes live to testers at once; other tracks stay drafts for a manual rollout.
+          status: ${{ (github.event_name != 'workflow_dispatch' || github.event.inputs.track == 'internal') && 'completed' || 'draft' }}
           whatsNewDirectory: whatsnew
 
       - name: Create GitHub Release
