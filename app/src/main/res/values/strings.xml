@@ -99,6 +99,8 @@
     <string name="section_refresh_interval">Refresh Interval</string>
     <string name="refresh_description">How often the widget fetches new data from Home Assistant</string>
     <string name="section_list_icons">List Icons</string>
+    <string name="label_hide_list">Hide</string>
+    <string name="cd_reorder_list">Drag to reorder</string>
     <string name="section_notifications">Notifications</string>
     <string name="section_language">Language</string>
     <string name="label_app_language">App language</string>

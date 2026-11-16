@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lock
@@ -35,6 +36,12 @@ import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.zIndex
+import kotlin.math.abs
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -825,6 +832,20 @@ private fun AppListIconsSection(
     var iconDialogHaIcon by remember { mutableStateOf<String?>(null) }
     var iconDialogResolvedIcon by remember { mutableStateOf<ListIconManager.ResolvedIcon?>(null) }
     var iconVersion by remember { mutableIntStateOf(0) }
+    var order by remember(accountId, availableLists) {
+        val saved = AppPreferencesManager.loadListOrder(context, accountId)
+        val index = saved.withIndex().associate { (i, id) -> id to i }
+        mutableStateOf(
+            availableLists.map { it.first }.sortedBy { index[it] ?: Int.MAX_VALUE }
+        )
+    }
+    var draggingId by remember { mutableStateOf<String?>(null) }
+    var dragOffset by remember { mutableFloatStateOf(0f) }
+    val rowHeights = remember { mutableMapOf<String, Float>() }
+    val listsById = remember(availableLists) { availableLists.associateBy { it.first } }
+    var hiddenLists by remember(accountId) {
+        mutableStateOf(AppPreferencesManager.loadHiddenLists(context, accountId))
+    }
 
     LaunchedEffect(context) {
         syncAvailability = withContext(Dispatchers.IO) {
@@ -861,12 +882,60 @@ private fun AppListIconsSection(
             )
         }
 
-        availableLists.forEach { (entityId, name, haIcon) ->
+        order.forEach { entityId -> key(entityId) {
+          listsById[entityId]?.let { (_, name, haIcon) ->
             val resolved = remember(entityId, iconVersion) {
                 ListIconManager.resolveIcon(context, iconKey(entityId), haIcon)
             }
+            val isDragging = draggingId == entityId
 
             SettingsItem(
+                modifier = Modifier
+                    .onGloballyPositioned { rowHeights[entityId] = it.size.height.toFloat() }
+                    .zIndex(if (isDragging) 1f else 0f)
+                    .graphicsLayer { translationY = if (isDragging) dragOffset else 0f },
+                dragHandle = {
+                    Icon(
+                        imageVector = Icons.Default.DragIndicator,
+                        contentDescription = stringResource(R.string.cd_reorder_list),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .padding(end = 4.dp)
+                            .pointerInput(entityId) {
+                                detectDragGestures(
+                                    onDragStart = {
+                                        draggingId = entityId
+                                        dragOffset = 0f
+                                    },
+                                    onDrag = { change, amount ->
+                                        change.consume()
+                                        dragOffset += amount.y
+                                        val from = order.indexOf(entityId)
+                                        val neighbor = if (dragOffset > 0) order.getOrNull(from + 1)
+                                        else order.getOrNull(from - 1)
+                                        val h = neighbor?.let { rowHeights[it] }
+                                        if (neighbor != null && h != null && abs(dragOffset) > h / 2) {
+                                            val to = if (dragOffset > 0) from + 1 else from - 1
+                                            order = order.toMutableList().apply {
+                                                add(to, removeAt(from))
+                                            }
+                                            dragOffset -= if (dragOffset > 0) h else -h
+                                        }
+                                    },
+                                    onDragEnd = {
+                                        draggingId = null
+                                        dragOffset = 0f
+                                        AppPreferencesManager.saveListOrder(context, accountId, order)
+                                    },
+                                    onDragCancel = {
+                                        draggingId = null
+                                        dragOffset = 0f
+                                        AppPreferencesManager.saveListOrder(context, accountId, order)
+                                    }
+                                )
+                            }
+                    )
+                },
                 headline = name,
                 supporting = stringResource(R.string.label_tap_to_change),
                 onClick = {
@@ -885,13 +954,32 @@ private fun AppListIconsSection(
                         )
                     } ?: NoIconPlaceholder()
                 },
-                trailingText = stringResource(R.string.label_tap_to_change)
+                trailingContent = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(start = 8.dp)
+                    ) {
+                        Checkbox(
+                            checked = entityId in hiddenLists,
+                            onCheckedChange = { hide ->
+                                AppPreferencesManager.setListHidden(context, accountId, entityId, hide)
+                                hiddenLists = if (hide) hiddenLists + entityId else hiddenLists - entityId
+                            }
+                        )
+                        Text(
+                            text = stringResource(R.string.label_hide_list),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             )
 
-            if (entityId != availableLists.last().first) {
+            if (entityId != order.last()) {
                 HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
             }
-        }
+          }
+        } }
     }
 
     if (iconDialogEntityId != null) {
@@ -1196,7 +1284,9 @@ private fun SettingsItem(
     trailingText: String? = null,
     headlineColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface,
     onClick: (() -> Unit)? = null,
-    leadingContent: (@Composable () -> Unit)? = null
+    leadingContent: (@Composable () -> Unit)? = null,
+    trailingContent: (@Composable () -> Unit)? = null,
+    dragHandle: (@Composable () -> Unit)? = null
 ) {
     Row(
         modifier = modifier
@@ -1212,6 +1302,8 @@ private fun SettingsItem(
             .padding(horizontal = 12.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        dragHandle?.invoke()
+
         Box(
             modifier = Modifier.size(32.dp),
             contentAlignment = Alignment.Center
@@ -1244,6 +1336,8 @@ private fun SettingsItem(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+
+        trailingContent?.invoke()
     }
 }
 

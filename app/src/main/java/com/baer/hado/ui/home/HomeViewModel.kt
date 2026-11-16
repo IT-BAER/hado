@@ -58,31 +58,23 @@ class HomeViewModel @Inject constructor(
     companion object {
         private const val SELECTED_LIST_CACHE_TTL_MS = 5_000L
         private const val BACKGROUND_LIST_CACHE_TTL_MS = 15_000L
-        private const val LIST_ORDER_PREFS = "hado_app_prefs"
-        private const val KEY_LIST_ORDER = "list_order_json"
     }
 
-    private val listOrderKey: String
-        get() = TokenManager.scopedKey(
-            if (tokenManager.isDemoMode) null else tokenManager.activeAccountId,
-            KEY_LIST_ORDER
-        )
+    private fun loadSavedOrder(): List<String> =
+        AppPreferencesManager.loadListOrder(appContext, hiddenAccountId)
 
-    private fun loadSavedOrder(): List<String> {
-        val json = appContext.getSharedPreferences(LIST_ORDER_PREFS, Context.MODE_PRIVATE)
-            .getString(listOrderKey, null) ?: return emptyList()
-        return try {
-            Gson().fromJson(json, object : TypeToken<List<String>>() {}.type)
-        } catch (_: Exception) {
-            emptyList()
-        }
-    }
+    private fun saveOrder(order: List<String>) =
+        AppPreferencesManager.saveListOrder(appContext, hiddenAccountId, order)
 
-    private fun saveOrder(order: List<String>) {
-        appContext.getSharedPreferences(LIST_ORDER_PREFS, Context.MODE_PRIVATE)
-            .edit()
-            .putString(listOrderKey, Gson().toJson(order))
-            .apply()
+    private val hiddenAccountId: String?
+        get() = if (tokenManager.isDemoMode) null else tokenManager.activeAccountId
+
+    /** Every list HA returned, including ones the user hid. */
+    private var allLists: List<HaState> = emptyList()
+
+    private fun visibleLists(): List<HaState> {
+        val hidden = AppPreferencesManager.loadHiddenLists(appContext, hiddenAccountId)
+        return allLists.filterNot { it.entityId in hidden }
     }
 
     private fun applyOrder(lists: List<HaState>): List<HaState> {
@@ -98,7 +90,11 @@ class HomeViewModel @Inject constructor(
         val item = current.removeAt(fromIndex)
         current.add(toIndex, item)
         _uiState.value = _uiState.value.copy(todoLists = current)
-        saveOrder(current.map { it.entityId })
+        // Keep hidden lists in their saved slots instead of dropping them from the order.
+        val visibleIds = current.map { it.entityId }.toSet()
+        val hiddenIds = allLists.map { it.entityId }.filterNot { it in visibleIds }
+        allLists = current + allLists.filter { it.entityId in hiddenIds }
+        saveOrder(allLists.map { it.entityId })
     }
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -123,6 +119,20 @@ class HomeViewModel @Inject constructor(
             servers = tokenManager.accounts.map { it.id to it.displayName },
             activeServerId = tokenManager.activeAccountId.takeUnless { tokenManager.isDemoMode }
         )
+        refreshHiddenLists()
+    }
+
+    /** Settings can hide, unhide or reorder lists while Home stays on the back stack. */
+    private fun refreshHiddenLists() {
+        if (allLists.isEmpty()) return
+        allLists = applyOrder(allLists)
+        val visible = visibleLists()
+        if (visible.map { it.entityId } == _uiState.value.todoLists.map { it.entityId }) return
+        val current = _uiState.value.selectedListId
+        val selectedId = current?.takeIf { id -> visible.any { it.entityId == id } }
+            ?: visible.firstOrNull()?.entityId
+        _uiState.value = _uiState.value.copy(todoLists = visible, selectedListId = selectedId)
+        if (selectedId != current) selectedId?.let { loadItems(it) }
     }
 
     fun loadTodoLists() {
@@ -130,7 +140,8 @@ class HomeViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoadingLists = true, error = null)
             todoRepository.getTodoLists().fold(
                 onSuccess = { lists ->
-                    val ordered = applyOrder(lists)
+                    allLists = applyOrder(lists)
+                    val ordered = visibleLists()
                     val requested = requestedListId?.takeIf { id -> ordered.any { it.entityId == id } }
                     requestedListId = null
                     val selectedId = requested

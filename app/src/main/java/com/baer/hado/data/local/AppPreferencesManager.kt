@@ -19,6 +19,8 @@ object AppPreferencesManager {
     private const val KEY_ADD_ITEM_POSITION = "add_item_position"
     private const val KEY_CHECKBOX_ONLY = "app_checkbox_only"
     private const val KEY_HIDE_COMPLETED = "app_hide_completed"
+    private const val KEY_HIDDEN_LISTS = "hidden_list_ids"
+    private const val KEY_LIST_ORDER = "list_order_json"
 
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -61,6 +63,40 @@ object AppPreferencesManager {
     fun saveHideCompleted(context: Context, enabled: Boolean) {
         prefs(context).edit()
             .putBoolean(KEY_HIDE_COMPLETED, enabled)
+            .apply()
+    }
+
+    // --- List order (per account) ---
+
+    fun loadListOrder(context: Context, accountId: String?): List<String> {
+        val json = prefs(context).getString(TokenManager.scopedKey(accountId, KEY_LIST_ORDER), null)
+            ?: return emptyList()
+        return try {
+            com.google.gson.Gson().fromJson(json, object : com.google.gson.reflect.TypeToken<List<String>>() {}.type)
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    fun saveListOrder(context: Context, accountId: String?, order: List<String>) {
+        prefs(context).edit()
+            .putString(TokenManager.scopedKey(accountId, KEY_LIST_ORDER), com.google.gson.Gson().toJson(order))
+            .apply()
+    }
+
+    // --- Hidden lists (per account) ---
+
+    private fun hiddenListsKey(accountId: String?) =
+        TokenManager.scopedKey(accountId, KEY_HIDDEN_LISTS)
+
+    fun loadHiddenLists(context: Context, accountId: String?): Set<String> {
+        return prefs(context).getStringSet(hiddenListsKey(accountId), emptySet()).orEmpty().toSet()
+    }
+
+    fun setListHidden(context: Context, accountId: String?, entityId: String, hidden: Boolean) {
+        val updated = loadHiddenLists(context, accountId).let { if (hidden) it + entityId else it - entityId }
+        prefs(context).edit()
+            .putStringSet(hiddenListsKey(accountId), updated)
             .apply()
     }
 }
