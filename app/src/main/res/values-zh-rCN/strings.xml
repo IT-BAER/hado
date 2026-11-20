@@ -92,6 +92,8 @@
     <string name="section_refresh_interval">刷新间隔</string>
     <string name="refresh_description">小组件从 Home Assistant 获取新数据的频率</string>
     <string name="section_list_icons">列表图标</string>
+    <string name="label_hide_list">隐藏</string>
+    <string name="cd_reorder_list">拖动以重新排序</string>
     <string name="section_language">语言</string>
     <string name="label_app_language">应用语言</string>
     <string name="settings_language_supporting">立即更改应用语言。</string>

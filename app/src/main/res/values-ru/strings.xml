@@ -92,6 +92,8 @@
     <string name="section_refresh_interval">Интервал обновления</string>
     <string name="refresh_description">Как часто виджет получает новые данные из Home Assistant</string>
     <string name="section_list_icons">Значки списков</string>
+    <string name="label_hide_list">Скрыть</string>
+    <string name="cd_reorder_list">Перетащите, чтобы изменить порядок</string>
     <string name="section_language">Язык</string>
     <string name="label_app_language">Язык приложения</string>
     <string name="settings_language_supporting">Сразу изменить язык приложения.</string>

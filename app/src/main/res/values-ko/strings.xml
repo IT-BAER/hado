@@ -92,6 +92,8 @@
     <string name="section_refresh_interval">새로고침 간격</string>
     <string name="refresh_description">위젯이 Home Assistant에서 새 데이터를 가져오는 빈도</string>
     <string name="section_list_icons">목록 아이콘</string>
+    <string name="label_hide_list">숨기기</string>
+    <string name="cd_reorder_list">드래그하여 순서 변경</string>
     <string name="section_language">언어</string>
     <string name="label_app_language">앱 언어</string>
     <string name="settings_language_supporting">앱 언어를 즉시 변경합니다.</string>
