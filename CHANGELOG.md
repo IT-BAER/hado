@@ -5,7 +5,7 @@ All notable changes to HAdo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.4.1] - 2026-11-20
 
 ### Added
 - Hide lists you don't need on this phone: Settings > List Icons > Hide. Hidden lists are kept per server and drop out of the home screen tabs; a `hado://list/<entity_id>` link still opens them (thanks @chelming)
