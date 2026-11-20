@@ -5,6 +5,13 @@ All notable changes to HAdo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Hide lists you don't need on this phone: Settings > List Icons > Hide. Hidden lists are kept per server and drop out of the home screen tabs; a `hado://list/<entity_id>` link still opens them (thanks @chelming)
+- Reorder lists with the drag handle in Settings > List Icons; the order is shared with the home screen tabs (thanks @chelming)
+- Home Assistant blueprint that notifies you when you arrive at a zone with open items on a matching list; tapping the notification opens the list in HAdo. Import it from the README (thanks @chelming)
+
 ## [1.4.0] - 2026-10-16
 
 ### Added
