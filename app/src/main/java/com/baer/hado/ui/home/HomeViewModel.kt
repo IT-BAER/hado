@@ -13,6 +13,7 @@ import com.baer.hado.data.repository.AuthRepository
 import com.baer.hado.data.repository.TodoRepository
 import com.baer.hado.notifications.OverdueNotificationScheduler
 import com.baer.hado.ui.navigation.Routes
+import com.baer.hado.widget.TodoWidgetWorker
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -308,6 +309,7 @@ class HomeViewModel @Inject constructor(
     fun createList(name: String) {
         viewModelScope.launch {
             val newList = todoRepository.createList(name)
+            TodoWidgetWorker.enqueueOneTime(appContext)
             loadTodoLists()
             selectList(newList.entityId)
         }
@@ -316,6 +318,7 @@ class HomeViewModel @Inject constructor(
     fun deleteList(entityId: String) {
         viewModelScope.launch {
             todoRepository.deleteList(entityId)
+            TodoWidgetWorker.enqueueOneTime(appContext)
             _uiState.value = _uiState.value.copy(selectedListId = null)
             loadTodoLists()
         }
