@@ -49,6 +49,14 @@ cd hado
 
 The APK will be in `app/build/outputs/apk/debug/`.
 
+## Blueprints
+
+### To-do list reminder on arrival
+
+Notify when you arrive at a zone that has matching to-do lists with open items, and tap the notification to open the list in HAdo via the `hado://list/<entity_id>` deep link. Zones and lists can be matched by name or mapped explicitly (many zones to many lists). Needs HAdo 1.4.0+.
+
+<a href="https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FIT-BAER%2Fhado%2Fblob%2Fmain%2Fdocs%2Fexamples%2Fblueprints%2Fhado_location_list_reminder.yaml"><img src="https://my.home-assistant.io/badges/blueprint_import.svg" alt="Open your Home Assistant instance and show the blueprint import dialog with a specific blueprint pre-filled." width="300"></a>
+
 ## Tech Stack
 
 | Component | Library |
