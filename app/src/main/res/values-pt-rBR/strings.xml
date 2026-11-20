@@ -92,6 +92,8 @@
     <string name="section_refresh_interval">Intervalo de atualização</string>
     <string name="refresh_description">Com que frequência o widget busca novos dados do Home Assistant</string>
     <string name="section_list_icons">Ícones das listas</string>
+    <string name="label_hide_list">Ocultar</string>
+    <string name="cd_reorder_list">Arraste para reordenar</string>
     <string name="section_language">Idioma</string>
     <string name="label_app_language">Idioma do app</string>
     <string name="settings_language_supporting">Mude o idioma do aplicativo imediatamente.</string>

@@ -92,6 +92,8 @@
     <string name="section_refresh_interval">Vernieuwingsinterval</string>
     <string name="refresh_description">Hoe vaak de widget nieuwe gegevens ophaalt van Home Assistant</string>
     <string name="section_list_icons">Lijstpictogrammen</string>
+    <string name="label_hide_list">Verbergen</string>
+    <string name="cd_reorder_list">Sleep om te herschikken</string>
     <string name="section_language">Taal</string>
     <string name="label_app_language">App-taal</string>
     <string name="settings_language_supporting">Wijzig direct de taal van de app.</string>

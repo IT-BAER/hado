@@ -92,6 +92,8 @@
     <string name="section_refresh_interval">更新間隔</string>
     <string name="refresh_description">ウィジェットがHome Assistantから新しいデータを取得する頻度</string>
     <string name="section_list_icons">リストアイコン</string>
+    <string name="label_hide_list">非表示</string>
+    <string name="cd_reorder_list">ドラッグして並べ替え</string>
     <string name="section_language">言語</string>
     <string name="label_app_language">アプリの言語</string>
     <string name="settings_language_supporting">アプリの言語をすぐに変更します。</string>

@@ -96,6 +96,8 @@
     <string name="section_refresh_interval">Aktualisierungsintervall</string>
     <string name="refresh_description">Wie oft das Widget neue Daten von Home Assistant abruft</string>
     <string name="section_list_icons">Listensymbole</string>
+    <string name="label_hide_list">Ausblenden</string>
+    <string name="cd_reorder_list">Ziehen zum Neuordnen</string>
     <string name="section_notifications">Benachrichtigungen</string>
     <string name="section_language">Sprache</string>
     <string name="label_app_language">App-Sprache</string>

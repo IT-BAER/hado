@@ -72,9 +72,12 @@ class HomeViewModel @Inject constructor(
     /** Every list HA returned, including ones the user hid. */
     private var allLists: List<HaState> = emptyList()
 
+    /** A deep link opened this list; it stays in the tabs while this Home is open, even if hidden. */
+    private var deepLinkedListId: String? = null
+
     private fun visibleLists(): List<HaState> {
         val hidden = AppPreferencesManager.loadHiddenLists(appContext, hiddenAccountId)
-        return allLists.filterNot { it.entityId in hidden }
+        return allLists.filter { it.entityId !in hidden || it.entityId == deepLinkedListId }
     }
 
     private fun applyOrder(lists: List<HaState>): List<HaState> {
@@ -90,10 +93,10 @@ class HomeViewModel @Inject constructor(
         val item = current.removeAt(fromIndex)
         current.add(toIndex, item)
         _uiState.value = _uiState.value.copy(todoLists = current)
-        // Keep hidden lists in their saved slots instead of dropping them from the order.
-        val visibleIds = current.map { it.entityId }.toSet()
-        val hiddenIds = allLists.map { it.entityId }.filterNot { it in visibleIds }
-        allLists = current + allLists.filter { it.entityId in hiddenIds }
+        // Shown lists fill the shown slots in the new order; hidden lists keep their saved slots.
+        val shownIds = current.mapTo(HashSet()) { it.entityId }
+        val next = current.iterator()
+        allLists = allLists.map { if (it.entityId in shownIds && next.hasNext()) next.next() else it }
         saveOrder(allLists.map { it.entityId })
     }
 
@@ -141,9 +144,10 @@ class HomeViewModel @Inject constructor(
             todoRepository.getTodoLists().fold(
                 onSuccess = { lists ->
                     allLists = applyOrder(lists)
-                    val ordered = visibleLists()
-                    val requested = requestedListId?.takeIf { id -> ordered.any { it.entityId == id } }
+                    val requested = requestedListId?.takeIf { id -> allLists.any { it.entityId == id } }
                     requestedListId = null
+                    if (requested != null) deepLinkedListId = requested
+                    val ordered = visibleLists()
                     val selectedId = requested
                         ?: _uiState.value.selectedListId
                             ?.takeIf { currentId -> ordered.any { it.entityId == currentId } }
