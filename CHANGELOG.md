@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.4.1] - 2026-11-20
 
+### Fixed
+- The widget updates right away again: changes made in the app now show on the widget, and ticking an item on the widget redraws it even when the system holds back background work (reported on HyperOS)
+- Hiding or showing a list in Settings no longer switches the home screen to the neighbouring list
+
 ### Added
 - Hide lists you don't need on this phone: Settings > List Icons > Hide. Hidden lists are kept per server and drop out of the home screen tabs; a `hado://list/<entity_id>` link still opens them (thanks @chelming)
 - Reorder lists with the drag handle in Settings > List Icons; the order is shared with the home screen tabs (thanks @chelming)

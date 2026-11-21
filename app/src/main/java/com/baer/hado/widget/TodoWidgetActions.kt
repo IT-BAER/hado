@@ -227,7 +227,7 @@ class ToggleItemAction : ActionCallback {
                 }
             }
 
-            TodoWidget().update(context, widgetId)
+            TodoWidget().publish(context, widgetId)
         }
     }
 

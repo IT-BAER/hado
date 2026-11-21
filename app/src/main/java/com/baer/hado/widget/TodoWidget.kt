@@ -1,8 +1,10 @@
 package com.baer.hado.widget
 
+import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.BitmapFactory
+import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
@@ -20,7 +22,9 @@ import androidx.glance.ImageProvider
 import androidx.glance.action.actionParametersOf
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.action.actionRunCallback
+import androidx.glance.appwidget.compose
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.appwidget.lazy.items
@@ -49,6 +53,7 @@ import com.baer.hado.data.local.TokenManager
 import com.baer.hado.data.model.TodoItem
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.CancellationException
 
 data class WidgetListData(
     val entityId: String,
@@ -60,6 +65,23 @@ data class WidgetListData(
 )
 
 class TodoWidget : GlanceAppWidget() {
+
+    /**
+     * Draws [id] from its saved state at once, then lets Glance's session take over. update() alone
+     * waits for a WorkManager job, which HyperOS and restricted standby buckets can hold back for hours.
+     */
+    suspend fun publish(context: Context, id: GlanceId) {
+        try {
+            val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
+            val manager = AppWidgetManager.getInstance(context)
+            manager.updateAppWidget(appWidgetId, compose(context, id, manager.getAppWidgetOptions(appWidgetId)))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w("HAdo", "Direct widget render failed", e)
+        }
+        update(context, id)
+    }
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         provideContent {

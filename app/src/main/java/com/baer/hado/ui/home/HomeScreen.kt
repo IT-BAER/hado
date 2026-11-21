@@ -99,9 +99,11 @@ import com.baer.hado.ui.theme.AppSpacing
 import com.baer.hado.widget.ListIconManager
 import com.baer.hado.widget.ListIconPreview
 import com.baer.hado.widget.TodoListEditor
+import com.baer.hado.widget.TodoWidgetWorker
 import com.baer.hado.widget.WidgetHttpClient
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
 
 @Composable
 fun HomeScreen(
@@ -345,7 +347,10 @@ fun HomeScreen(
                     }
 
                     LaunchedEffect(pagerState, uiState.todoLists) {
+                        // On a list change the first value is the old page index, which now points at a
+                        // neighbour list (e.g. after hiding a list before the selected one); skip it.
                         snapshotFlow { pagerState.currentPage }
+                            .drop(1)
                             .collectLatest { page ->
                                 val pageList = uiState.todoLists.getOrNull(page) ?: return@collectLatest
                                 if (pageList.entityId != selectedListId) {
@@ -371,7 +376,10 @@ fun HomeScreen(
                             isLocalMode = uiState.isLocalMode,
                             showOpenAppAction = false,
                             onBack = {},
-                            onChanged = { viewModel.loadItems(pageList.entityId, force = true) },
+                            onChanged = {
+                                viewModel.loadItems(pageList.entityId, force = true)
+                                TodoWidgetWorker.enqueueOneTime(context)
+                            },
                             modifier = Modifier.fillMaxSize(),
                             showTopBar = false,
                             showListHeader = false,

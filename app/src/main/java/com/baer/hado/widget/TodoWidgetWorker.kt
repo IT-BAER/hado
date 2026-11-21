@@ -9,6 +9,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -78,7 +79,7 @@ class TodoWidgetWorker @AssistedInject constructor(
                 prefs[TodoWidgetKeys.APP_WIDGET_ID_KEY] = appWidgetId.toString()
                 prefs[TodoWidgetKeys.SERVER_REMOVED_KEY] = localLists == null && accountId == null
             }
-            TodoWidget().update(context, glanceId)
+            TodoWidget().publish(context, glanceId)
         }
         // Retry before re-chaining: a REPLACE enqueue under this work's own name would cancel the retry.
         if (anyFetchFailed) return Result.retry()
@@ -259,7 +260,9 @@ class TodoWidgetWorker @AssistedInject constructor(
         }
 
         fun enqueueOneTime(context: Context, appWidgetId: Int? = null) {
+            // Expedited: a plain one-time job can wait for hours in a restricted standby bucket.
             val builder = OneTimeWorkRequestBuilder<TodoWidgetWorker>()
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             if (appWidgetId != null) {
                 builder.setInputData(workDataOf(KEY_INPUT_APP_WIDGET_ID to appWidgetId))
             }
@@ -281,7 +284,7 @@ class TodoWidgetWorker @AssistedInject constructor(
                 prefs[TodoWidgetKeys.SETTINGS_JSON_KEY] = Gson().toJson(settings)
                 prefs[TodoWidgetKeys.APP_WIDGET_ID_KEY] = appWidgetId.toString()
             }
-            TodoWidget().update(context, glanceId)
+            TodoWidget().publish(context, glanceId)
         }
 
         private fun periodicWorkName(appWidgetId: Int): String = "$WORK_NAME_PERIODIC_PREFIX$appWidgetId"

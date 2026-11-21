@@ -114,7 +114,7 @@ object WidgetStateMutator {
             }
 
             if (updated) {
-                TodoWidget().update(context, glanceId)
+                TodoWidget().publish(context, glanceId)
                 affectedWidgetIds += appWidgetId
             }
         }
