@@ -200,7 +200,7 @@ actions:
             {% set ns.b = ns.b + [{
               'action': 'URI',
               'title': state_attr(e, 'friendly_name'),
-              'uri': 'hado://list/' ~ e}] %}
+              'uri': 'deep-link://hado://list/' ~ e}] %}
           {% endfor %}
         {% endif %}
         {{ ns.b }}
@@ -212,5 +212,5 @@ actions:
     message: "{{ summary | trim }}"
     data:
       tag: "todo-{{ place | slugify }}"
-      clickAction: "hado://list/{{ active_lists[0] }}"
+      clickAction: "deep-link://hado://list/{{ active_lists[0] }}"
       actions: "{{ buttons }}"
